@@ -23,6 +23,12 @@ http://www.theopensourcerer.com/2011/12/13/erppeek-a-tool-for-browsing-openerp-d
 INTERACTIVE USE
 ---------------
 
+ * Edit "erppeek.ini" to declare your environment(s)
+ * Run the script
+    ./erppeek.py --list
+    ./erppeek.py --env demo
+
+
 Main commands are:
 
     search(obj, domain)
