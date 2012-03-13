@@ -60,9 +60,7 @@ DEFAULT_USER = 'admin'
 DEFAULT_PASSWORD = 'admin'
 
 USAGE = """\
-Usage:
-    do(obj, method, *params)        # Generic 'service.execute'
-
+Usage (main commands):
     search(obj, domain)
     search(obj, domain, offset=0, limit=None, order=None)
                                     # Return a list of IDs
@@ -77,8 +75,20 @@ Usage:
     keys(obj)                       # List field names of the model
     fields(obj, names=None)         # Return details for the fields
     field(obj, name)                # Return details for the field
+
+    do(obj, method, *params)        # Generic 'service.execute'
+    wizard(name)                    # Return the 'id' of a new wizard
+    wizard(name_or_id, datas=None, action='init')
+                                    # Generic 'wizard.execute'
+
+    client                          # Client object, connected
+    client.modules(name)            # List modules matching pattern
+    client.upgrade(module1, module2, ...)
+                                    # Upgrade the modules
 """
 
+STABLE_STATES = ('uninstallable', 'uninstalled', 'installed')
+DOMAIN_OPERATORS = frozenset('!|&')
 # Supported operators are
 #   =, !=, >, >=, <, <=, like, ilike, in,
 #   not like, not ilike, not in, child_of
@@ -92,11 +102,37 @@ _term_re = re.compile(
 
 ini_path = os.path.splitext(__file__)[0] + '.ini'
 
+# Published object methods
+_methods = {
+    'db': ['create', 'drop', 'dump', 'restore', 'rename', 'list', 'list_lang',
+           'change_admin_password', 'server_version', 'migrate_databases'],
+    'common': ['about', 'login', 'timezone_get', 'get_server_environment',
+               'login_message', 'check_connectivity'],
+    'object': ['execute', 'exec_workflow'],
+    'wizard': ['execute', 'create'],
+    'report': ['report', 'report_get'],
+}
+_methods_6_1 = {
+    'db': ['create_database', 'db_exist'],
+    'common': ['get_stats', 'list_http_services', 'version',
+               'authenticate', 'get_os_time', 'get_sqlcount'],
+    'object': ['execute_kw'],
+    'wizard': [],
+    'report': ['render_report'],
+}
+# Hidden methods:
+#  - (not in 6.1) 'common': ['logout', 'ir_get', 'ir_set', 'ir_del']
+#  - (not in 6.1) 'object': ['obj_list']
+#  - 'db': ['get_progress']
+#  - 'common': ['get_available_updates', 'get_migration_scripts', 'set_loglevel']
 
-def read_config(section):
+
+def read_config(section=None):
     p = ConfigParser.SafeConfigParser()
     with open(ini_path) as f:
         p.readfp(f)
+    if section is None:
+        return p.sections()
     server = 'http://%s:%s' % (p.get(section, 'host'), p.get(section, 'port'))
     db = p.get(section, 'database')
     user = p.get(section, 'username')
@@ -149,13 +185,16 @@ def searchargs(params, kwargs=None):
     domain = params[0]
     for idx, term in enumerate(domain):
         if isinstance(term, basestring):
+            if term in DOMAIN_OPERATORS:
+                continue
             m = _term_re.match(term.strip())
             if not m:
-                continue
+                raise ValueError("Cannot parse term %r" % term)
             (field, operator, value) = m.groups()
             try:
                 value = literal_eval(value)
             except Exception:
+                # Interpret the value as a string
                 pass
             domain[idx] = (field, operator, value)
     if kwargs and len(params) == 1:
@@ -173,13 +212,37 @@ class Client(object):
 
     @faultmanagement
     def __init__(self, server, db, user, password):
-        sock = xmlrpclib.ServerProxy(server + '/xmlrpc/common')
-        uid = sock.login(db, user, password)
+        def get_proxy(name, prefix=server + '/xmlrpc/'):
+            return xmlrpclib.ServerProxy(prefix + name, allow_none=True)
+        self.common = common = get_proxy('common')
+        uid = common.login(db, user, password)
         if uid is False:
             raise RuntimeError('Invalid username or password')
-        sock = xmlrpclib.ServerProxy(server + '/xmlrpc/object', allow_none=True)
+        self.db = sockdb = get_proxy('db')
+        sock = get_proxy('object')
+        wizard = get_proxy('wizard')
+        report = get_proxy('report')
         self._server = server
+        self.server_version = ver = sockdb.server_version()
+        self.major_version = major_version = '.'.join(ver.split('.', 2)[:2])
+        # Authenticated endpoints
         self._execute = functools.partial(sock.execute, db, uid, password)
+        self.exec_workflow = functools.partial(sock.exec_workflow, db, uid, password)
+        self.wizard_execute = functools.partial(wizard.execute, db, uid, password)
+        self.wizard_create = functools.partial(wizard.create, db, uid, password)
+        self.report = functools.partial(report.report, db, uid, password)
+        self.report_get = functools.partial(report.report_get, db, uid, password)
+        m_db = _methods['db'][:]
+        m_common = _methods['common'][:]
+        # Set the special value returned by dir(...)
+        sockdb.__dir__ = lambda m=m_db: m
+        common.__dir__ = lambda m=m_common: m
+        if major_version[:2] != '5.':
+            # Only for OpenERP >= 6
+            self.execute_kw = functools.partial(sock.execute, db, uid, password)
+            self.render_report = functools.partial(report.render_report, db, uid, password)
+            m_db += _methods_6_1['db']
+            m_common += _methods_6_1['common']
 
     @classmethod
     def from_config(cls, environment):
@@ -216,6 +279,54 @@ class Client(object):
             print 'Ignoring: %s = %r' % item
         return self._execute(obj, method, *params)
 
+    @faultmanagement
+    def wizard(self, name, datas=None, action='init', context=None):
+        if isinstance(name, (int, long)):
+            wiz_id = name
+        else:
+            wiz_id = self.wizard_create(name)
+        if datas is None:
+            if action == 'init' and name != wiz_id:
+                return wiz_id
+            datas = {}
+        return self.wizard_execute(wiz_id, datas, action, context)
+
+    def _upgrade(self, modules, button):
+        # Click upgrade/install/uninstall button
+        ids = self.search('ir.module.module', [('name', 'in', modules)])
+        if ids is None:
+            return
+        self.execute('ir.module.module', button, ids)
+        mods = self.read('ir.module.module',
+                         [('state', 'not in', STABLE_STATES)], 'name state')
+        if not mods:
+            return
+        print '%s module(s) selected' % len(ids)
+        print '%s module(s) to update:' % len(mods)
+        for mod in mods:
+            print '  %(state)s\t%(name)s' % mod
+
+        if self.major_version[:2] == '5.':
+            # Wizard "Apply Scheduled Upgrades"
+            rv = self.wizard('module.upgrade', action='start')
+            if 'config' not in [state[0] for state in rv.get('state', ())]:
+                # Something bad happened
+                return rv
+        else:
+            self.execute('base.module.upgrade', 'upgrade_module', [])
+
+    def upgrade(self, *modules):
+        # Button "Schedule Upgrade"
+        return self._upgrade(modules, button='button_upgrade')
+
+    def install(self, *modules):
+        # Button "Schedule for Installation"
+        return self._upgrade(modules, button='button_install')
+
+    def uninstall(self, *modules):
+        # Button "Uninstall (beta)"
+        return self._upgrade(modules, button='button_uninstall')
+
     def search(self, obj, *params, **kwargs):
         return self.execute(obj, 'search', *params, **kwargs)
 
@@ -230,8 +341,24 @@ class Client(object):
         if models:
             return sorted([m['model'] for m in models])
 
+    def modules(self, name, installed=None):
+        domain = [('name', 'like', name)]
+        if installed is not None:
+            op = installed and '=' or '!='
+            domain.append(('state', op, 'installed'))
+        mods = self.read('ir.module.module', domain, 'name state')
+        if mods:
+            res = {}
+            for mod in mods:
+                if mod['state'] in res:
+                    res[mod['state']].append(mod['name'])
+                else:
+                    res[mod['state']] = [mod['name']]
+            return res
+
     def keys(self, obj):
-        return sorted(self.execute(obj, 'fields_get_keys'))
+        obj_keys = self.execute(obj, 'fields_get_keys')
+        return obj_keys and sorted(obj_keys)
 
     def fields(self, obj, names=None):
         return self.execute(obj, 'fields_get', names)
@@ -253,8 +380,8 @@ def main():
     parser = optparse.OptionParser(
             usage='%prog [options] [id [id ...]]',
             description='Inspect data on OpenERP objects')
-    parser.add_option('-m', '--model',
-            help='the type of object to find')
+    parser.add_option('-l', '--list', action='store_true', dest='list_env',
+            help='list sections of %r' % ini_path)
     parser.add_option('--env',
             help='read connection settings from the given '
                  'section of %r' % ini_path)
@@ -266,6 +393,8 @@ def main():
     parser.add_option('-p', '--password', default=DEFAULT_PASSWORD,
             help='password (yes this will be in your shell history and '
                  'ps from other users)')
+    parser.add_option('-m', '--model',
+            help='the type of object to find')
     parser.add_option('-s', '--search', action='append', dest='search',
             help='search condition (multiple allowed); alternatively, pass '
                  'multiple IDs as positional parameters after the options')
@@ -275,6 +404,10 @@ def main():
             help='use interactively')
 
     (args, ids) = parser.parse_args()
+
+    if args.list_env:
+        print 'Available settings: ', ' '.join(read_config())
+        return None, None
 
     if args.env:
         client = Client.from_config(args.env)
@@ -325,6 +458,7 @@ if __name__ == '__main__':
         # interactive usage
         print USAGE
         do = client.execute
+        wizard = client.wizard
         read = client.read
         search = client.search
         count = client.count
