@@ -80,6 +80,7 @@ Usage (main commands):
     wizard(name)                    # Return the 'id' of a new wizard
     wizard(name_or_id, datas=None, action='init')
                                     # Generic 'wizard.execute'
+    exec_workflow(obj, signal, id)  # Trigger workflow signal
 
     client                          # Client object, connected
     client.modules(name)            # List modules matching pattern
@@ -227,7 +228,7 @@ class Client(object):
         self.major_version = major_version = '.'.join(ver.split('.', 2)[:2])
         # Authenticated endpoints
         self._execute = functools.partial(sock.execute, db, uid, password)
-        self.exec_workflow = functools.partial(sock.exec_workflow, db, uid, password)
+        self._exec_workflow = functools.partial(sock.exec_workflow, db, uid, password)
         self.wizard_execute = functools.partial(wizard.execute, db, uid, password)
         self.wizard_create = functools.partial(wizard.create, db, uid, password)
         self.report = functools.partial(report.report, db, uid, password)
@@ -278,6 +279,10 @@ class Client(object):
         for item in kwargs.items():
             print 'Ignoring: %s = %r' % item
         return self._execute(obj, method, *params)
+
+    @faultmanagement
+    def exec_workflow(self, obj, signal, obj_id):
+        return self._exec_workflow(obj, signal, obj_id)
 
     @faultmanagement
     def wizard(self, name, datas=None, action='init', context=None):
@@ -459,6 +464,7 @@ if __name__ == '__main__':
         print USAGE
         do = client.execute
         wizard = client.wizard
+        exec_workflow = client.exec_workflow
         read = client.read
         search = client.search
         count = client.count

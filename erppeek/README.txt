@@ -25,8 +25,6 @@ INTERACTIVE USE
 
 Main commands are:
 
-    do(obj, method, *params)        # Generic 'service.execute'
-
     search(obj, domain)
     search(obj, domain, offset=0, limit=None, order=None)
                                     # Return a list of IDs
@@ -41,3 +39,14 @@ Main commands are:
     keys(obj)                       # List field names of the model
     fields(obj, names=None)         # Return details for the fields
     field(obj, name)                # Return details for the field
+
+    do(obj, method, *params)        # Generic 'service.execute'
+    wizard(name)                    # Return the 'id' of a new wizard
+    wizard(name_or_id, datas=None, action='init')
+                                    # Generic 'wizard.execute'
+    exec_workflow(obj, signal, id)  # Trigger workflow signal
+
+    client                          # Client object, connected
+    client.modules(name)            # List modules matching pattern
+    client.upgrade(module1, module2, ...)
+                                    # Upgrade the modules
