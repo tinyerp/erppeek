@@ -227,12 +227,14 @@ class Client(object):
         self.server_version = ver = sockdb.server_version()
         self.major_version = major_version = '.'.join(ver.split('.', 2)[:2])
         # Authenticated endpoints
-        self._execute = functools.partial(sock.execute, db, uid, password)
-        self._exec_workflow = functools.partial(sock.exec_workflow, db, uid, password)
-        self.wizard_execute = functools.partial(wizard.execute, db, uid, password)
-        self.wizard_create = functools.partial(wizard.create, db, uid, password)
-        self.report = functools.partial(report.report, db, uid, password)
-        self.report_get = functools.partial(report.report_get, db, uid, password)
+        def authenticated(method):
+            return functools.partial(method, db, uid, password)
+        self._execute = authenticated(sock.execute)
+        self._exec_workflow = authenticated(sock.exec_workflow)
+        self._wizard_execute = authenticated(wizard.execute)
+        self._wizard_create = authenticated(wizard.create)
+        self.report = authenticated(report.report)
+        self.report_get = authenticated(report.report_get)
         m_db = _methods['db'][:]
         m_common = _methods['common'][:]
         # Set the special value returned by dir(...)
@@ -240,8 +242,8 @@ class Client(object):
         common.__dir__ = lambda m=m_common: m
         if major_version[:2] != '5.':
             # Only for OpenERP >= 6
-            self.execute_kw = functools.partial(sock.execute, db, uid, password)
-            self.render_report = functools.partial(report.render_report, db, uid, password)
+            self.execute_kw = authenticated(sock.execute)
+            self.render_report = authenticated(report.render_report)
             m_db += _methods_6_1['db']
             m_common += _methods_6_1['common']
 
@@ -289,12 +291,12 @@ class Client(object):
         if isinstance(name, (int, long)):
             wiz_id = name
         else:
-            wiz_id = self.wizard_create(name)
+            wiz_id = self._wizard_create(name)
         if datas is None:
             if action == 'init' and name != wiz_id:
                 return wiz_id
             datas = {}
-        return self.wizard_execute(wiz_id, datas, action, context)
+        return self._wizard_execute(wiz_id, datas, action, context)
 
     def _upgrade(self, modules, button):
         # Click upgrade/install/uninstall button
