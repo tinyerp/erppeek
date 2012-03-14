@@ -46,7 +46,7 @@ Main commands are:
     fields(obj, names=None)         # Return details for the fields
     field(obj, name)                # Return details for the field
 
-    do(obj, method, *params)        # Generic 'service.execute'
+    do(obj, method, *params)        # Generic 'object.execute'
     wizard(name)                    # Return the 'id' of a new wizard
     wizard(name_or_id, datas=None, action='init')
                                     # Generic 'wizard.execute'
