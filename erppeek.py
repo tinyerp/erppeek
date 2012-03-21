@@ -322,23 +322,34 @@ class Client(object):
 
     @faultmanagement
     def execute(self, obj, method, *params, **kwargs):
-        if method in ('read', 'name_get') and params and issearchdomain(params[0]):
-            # Combine search+read
-            ids = self._execute(obj, 'search', *searchargs(params[:1], kwargs))
-            params = (ids,) + params[1:]
+        if method in ('read', 'name_get') and params:
+            context = kwargs.get('context')
+            if issearchdomain(params[0]):
+                # Combine search+read
+                search_params = searchargs(params[:1], kwargs)
+                ids = self._execute(obj, 'search', *search_params)
+            else:
+                ids = params[0]
+            if len(params) == 1:
+                if method == 'read':
+                    params = (ids, kwargs.pop('fields', None))
+                else:
+                    params = (ids,)
+            elif isinstance(params[1], basestring):
+                # transform: "zip city" --> ("zip", "city")
+                params = (ids, params[1].split()) + params[2:]
+            else:
+                params = (ids,) + params[1:]
         elif method == 'search':
             # Accept keyword arguments for the search method
             params = searchargs(params, kwargs)
-        elif method == 'search_count':
-            params = searchargs(params)
-        if method == 'read':
-            if len(params) == 1:
-                params = (params[0], kwargs.pop('fields', None))
-            if len(params) > 1 and isinstance(params[1], basestring):
-                # transform: "zip city" --> ("zip", "city")
-                params = (params[0], params[1].split()) + params[2:]
-        if method == 'read' and len(params) == 1:
-            params = (params[0], kwargs.pop('fields', None))
+            context = None
+        else:
+            if method == 'search_count':
+                params = searchargs(params)
+            context = kwargs.pop('context', None)
+        if context:
+            params = params + (context,)
         # Ignore extra keyword arguments
         for item in kwargs.items():
             print 'Ignoring: %s = %r' % item
@@ -406,7 +417,8 @@ class Client(object):
         return self.execute(obj, 'read', *params, **kwargs)
 
     def model(self, name):
-        models = self.execute('ir.model', 'read', [('model', 'like', name)], ('model',))
+        domain = [('model', 'like', name)]
+        models = self.execute('ir.model', 'read', domain, ('model',))
         if models:
             return sorted([m['model'] for m in models])
 
