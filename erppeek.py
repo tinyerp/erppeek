@@ -140,7 +140,10 @@ def read_config(section=None):
     server = 'http://%s:%s' % (p.get(section, 'host'), p.get(section, 'port'))
     db = p.get(section, 'database')
     user = p.get(section, 'username')
-    password = p.get(section, 'password')
+    if p.has_option(section, 'password'):
+        password = p.get(section, 'password')
+    else:
+        password = None
     return (server, db, user, password)
 
 
@@ -215,7 +218,7 @@ def searchargs(params, kwargs=None):
 class Client(object):
 
     @faultmanagement
-    def __init__(self, server, db, user, password):
+    def __init__(self, server, db, user, password=None):
         def get_proxy(name, prefix=server + '/xmlrpc/'):
             return xmlrpclib.ServerProxy(prefix + name, allow_none=True)
         self.db = get_proxy('db')
