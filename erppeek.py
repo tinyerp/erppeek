@@ -240,6 +240,7 @@ class Client(object):
             m_db += _methods_6_1['db']
             m_common += _methods_6_1['common']
         # Try to login
+        self.user = None
         self._login(user, password)
 
     @classmethod
@@ -257,7 +258,6 @@ class Client(object):
     def login(self, user, password=None):
         (uid, password) = self._auth(user, password)
         if uid is False:
-            self.user = None
             print 'Error: Invalid username or password'
             return
         self.user = user
@@ -565,17 +565,21 @@ def _interactive_client():
             g['client'] = client
         else:
             client = g['client']
-        g['do'] = client.execute
         global_names = ('wizard', 'exec_workflow', 'read', 'search',
                 'count', 'model', 'keys', 'fields', 'field', 'access')
-        for name in global_names:
-            g[name] = getattr(client, name, None)
         if client.user:
+            g['do'] = client.execute
+            for name in global_names:
+                g[name] = getattr(client, name)
             print 'Logged in as %r' % (client.user,)
+        else:
+            g['do'] = None
+            g.update(dict.fromkeys())
 
     def login(self, user):
         uid = self._login(user)
         if uid:
+            # If successful, register the new globals()
             self.connect()
 
     Client.login = login
