@@ -236,7 +236,7 @@ class Client(object):
             m_db += _methods_6_1['db']
             m_common += _methods_6_1['common']
         # Try to login
-        self.login(user, password)
+        self._login(user, password)
 
     @faultmanagement
     def login(self, user, password=None):
@@ -245,8 +245,10 @@ class Client(object):
             password = getpass('Password for %r: ' % user)
         uid = self.common.login(self._db, user, password)
         if uid is False:
-            raise RuntimeError('Invalid username or password')
+            print 'Error: Invalid username or password'
+            return
         self.user = user
+
         # Authenticated endpoints
         def authenticated(method):
             return functools.partial(method, self._db, uid, password)
@@ -260,6 +262,10 @@ class Client(object):
             # Only for OpenERP >= 6
             self.execute_kw = authenticated(self._object.execute_kw)
             self.render_report = authenticated(self._report.render_report)
+        return uid
+
+    # Needed for interactive use
+    _login = login
 
     @classmethod
     def from_config(cls, environment):
@@ -446,7 +452,7 @@ def main():
     if args.inspect or not args.model:
         try:
             # completion and history features
-            import readline
+            __import__('readline')
         except ImportError:
             pass
         os.environ['PYTHONINSPECT'] = '1'
@@ -476,25 +482,38 @@ def main():
     return (args.inspect and client), data
 
 
+def _interactive_client():
+    # Don't call multiple times
+    del globals()['_interactive_client']
+
+    def connect(env=None):
+        g = globals()
+        if env:
+            client = _connect(env)
+            g['client'] = client
+        else:
+            client = g['client']
+        g['do'] = client.execute
+        global_names = ('wizard', 'exec_workflow', 'read', 'search',
+                        'count', 'model', 'keys', 'fields', 'field')
+        for name in global_names:
+            g[name] = getattr(client, name, None)
+
+    def login(self, user):
+        uid = self._login(user)
+        if uid:
+            self.connect()
+
+    Client.login = login
+    Client.connect = staticmethod(connect)
+    connect()
+
+
 if __name__ == '__main__':
     client, data = main()
     if data is not None:
         pprint(data)
     if client:
         # interactive usage
-        def connect(env=None):
-            g = globals()
-            if env:
-                client = _connect(env)
-                g['client'] = client
-            else:
-                client = g['client']
-            g['do'] = client.execute
-            global_names = ('wizard', 'exec_workflow', 'read', 'search',
-                            'count', 'model', 'keys', 'fields', 'field')
-            for name in global_names:
-                g[name] = getattr(client, name)
-        Client.connect = staticmethod(connect)
-        del connect
+        _interactive_client()
         print USAGE
-        client.connect()
