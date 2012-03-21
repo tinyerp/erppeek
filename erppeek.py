@@ -75,6 +75,7 @@ Usage (main commands):
     keys(obj)                       # List field names of the model
     fields(obj, names=None)         # Return details for the fields
     field(obj, name)                # Return details for the field
+    access(obj, mode='read')        # Check access on the model
 
     do(obj, method, *params)        # Generic 'object.execute'
     wizard(name)                    # Return the 'id' of a new wizard
@@ -240,11 +241,9 @@ class Client(object):
 
     @faultmanagement
     def login(self, user, password=None):
-        if password is None:
-            from getpass import getpass
-            password = getpass('Password for %r: ' % user)
-        uid = self.common.login(self._db, user, password)
+        (uid, password) = self._auth(user, password)
         if uid is False:
+            self.user = None
             print 'Error: Invalid username or password'
             return
         self.user = user
@@ -264,8 +263,51 @@ class Client(object):
             self.render_report = authenticated(self._report.render_report)
         return uid
 
+    def _check_valid(self, uid, password):
+        execute = self._object.execute
+        try:
+            execute(self._db, uid, password, 'res.users', 'fields_get_keys')
+            return True
+        except xmlrpclib.Fault:
+            return False
+
+    def _auth(self, user, password):
+        cache_key = (self._server, self._db, user)
+        if password:
+            uid = None
+        else:
+            # Read from cache
+            uid, password = self._login.cache.get(cache_key) or (None, None)
+            # Read from table 'res.users'
+            if not uid and self.access('res.users', 'write'):
+                obj = self.read('res.users', [('login', '=', user)], 'password')
+                if obj:
+                    uid = obj[0]['id']
+                    password = obj[0]['password']
+                else:
+                    # Invalid user
+                    uid, password = False, False
+            # Ask for password
+            if not password:
+                from getpass import getpass
+                password = getpass('Password for %r: ' % user)
+        if uid:
+            # Check if password changed
+            if not self._check_valid(uid, password):
+                if cache_key in self._login.cache:
+                    del self._login.cache[cache_key]
+                uid = False
+        elif uid is None:
+            # Do a standard 'login'
+            uid = self.common.login(self._db, user, password)
+        if uid:
+            # Update cache
+            self._login.cache[cache_key] = (uid, password)
+        return (uid, password)
+
     # Needed for interactive use
     _login = login
+    _login.cache = {}
 
     @classmethod
     def from_config(cls, environment):
@@ -393,6 +435,13 @@ class Client(object):
     def field(self, obj, name):
         return self.execute(obj, 'fields_get', (name,))[name]
 
+    def access(self, obj, mode='read'):
+        try:
+            self._execute('ir.model.access', 'check', obj, mode)
+            return True
+        except (AttributeError, xmlrpclib.Fault):
+            return False
+
 
 def _displayhook(value, _printer=pprint,
                  __builtin__=__import__('__builtin__')):
@@ -444,11 +493,6 @@ def main():
         print 'Available settings: ', ' '.join(read_config())
         return None, None
 
-    if args.env:
-        client = _connect(args.env)
-    else:
-        client = Client(args.server, args.db, args.user, args.password)
-
     if args.inspect or not args.model:
         try:
             # completion and history features
@@ -456,8 +500,14 @@ def main():
         except ImportError:
             pass
         os.environ['PYTHONINSPECT'] = '1'
+        print USAGE
         if USE_PPRINT:
             sys.displayhook = _displayhook
+
+    if args.env:
+        client = _connect(args.env)
+    else:
+        client = Client(args.server, args.db, args.user, args.password)
 
     if not args.model:
         return client, None
@@ -498,6 +548,8 @@ def _interactive_client():
                         'count', 'model', 'keys', 'fields', 'field')
         for name in global_names:
             g[name] = getattr(client, name, None)
+        if client.user:
+            print 'Logged in as %r' % (client.user,)
 
     def login(self, user):
         uid = self._login(user)
@@ -506,6 +558,7 @@ def _interactive_client():
 
     Client.login = login
     Client.connect = staticmethod(connect)
+    # Create the globals
     connect()
 
 
@@ -516,4 +569,3 @@ if __name__ == '__main__':
     if client:
         # interactive usage
         _interactive_client()
-        print USAGE
