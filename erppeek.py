@@ -83,6 +83,8 @@ Usage (main commands):
     exec_workflow(obj, signal, id)  # Trigger workflow signal
 
     client                          # Client object, connected
+    client.login(user)              # Login with another user
+    client.connect(env)             # Connect to another env.
     client.modules(name)            # List modules matching pattern
     client.upgrade(module1, module2, ...)
                                     # Upgrade the modules
@@ -215,37 +217,49 @@ class Client(object):
     def __init__(self, server, db, user, password):
         def get_proxy(name, prefix=server + '/xmlrpc/'):
             return xmlrpclib.ServerProxy(prefix + name, allow_none=True)
-        self.common = common = get_proxy('common')
-        uid = common.login(db, user, password)
-        if uid is False:
-            raise RuntimeError('Invalid username or password')
-        self.db = sockdb = get_proxy('db')
-        sock = get_proxy('object')
-        wizard = get_proxy('wizard')
-        report = get_proxy('report')
+        self.db = get_proxy('db')
+        self.common = get_proxy('common')
+        self._object = get_proxy('object')
+        self._wizard = get_proxy('wizard')
+        self._report = get_proxy('report')
         self._server = server
-        self.server_version = ver = sockdb.server_version()
+        self._db = db
+        self.server_version = ver = self.db.server_version()
         self.major_version = major_version = '.'.join(ver.split('.', 2)[:2])
-        # Authenticated endpoints
-        def authenticated(method):
-            return functools.partial(method, db, uid, password)
-        self._execute = authenticated(sock.execute)
-        self._exec_workflow = authenticated(sock.exec_workflow)
-        self._wizard_execute = authenticated(wizard.execute)
-        self._wizard_create = authenticated(wizard.create)
-        self.report = authenticated(report.report)
-        self.report_get = authenticated(report.report_get)
         m_db = _methods['db'][:]
         m_common = _methods['common'][:]
         # Set the special value returned by dir(...)
-        sockdb.__dir__ = lambda m=m_db: m
-        common.__dir__ = lambda m=m_common: m
+        self.db.__dir__ = lambda m=m_db: m
+        self.common.__dir__ = lambda m=m_common: m
         if major_version[:2] != '5.':
             # Only for OpenERP >= 6
-            self.execute_kw = authenticated(sock.execute)
-            self.render_report = authenticated(report.render_report)
             m_db += _methods_6_1['db']
             m_common += _methods_6_1['common']
+        # Try to login
+        self.login(user, password)
+
+    @faultmanagement
+    def login(self, user, password=None):
+        if password is None:
+            from getpass import getpass
+            password = getpass('Password for %r: ' % user)
+        uid = self.common.login(self._db, user, password)
+        if uid is False:
+            raise RuntimeError('Invalid username or password')
+        self.user = user
+        # Authenticated endpoints
+        def authenticated(method):
+            return functools.partial(method, self._db, uid, password)
+        self._execute = authenticated(self._object.execute)
+        self._exec_workflow = authenticated(self._object.exec_workflow)
+        self._wizard_execute = authenticated(self._wizard.execute)
+        self._wizard_create = authenticated(self._wizard.create)
+        self.report = authenticated(self._report.report)
+        self.report_get = authenticated(self._report.report_get)
+        if self.major_version[:2] != '5.':
+            # Only for OpenERP >= 6
+            self.execute_kw = authenticated(self._object.execute_kw)
+            self.render_report = authenticated(self._report.render_report)
 
     @classmethod
     def from_config(cls, environment):
@@ -256,7 +270,7 @@ class Client(object):
         return self._server
 
     def __repr__(self):
-        return "<Client '%s'>" % self._server
+        return "<Client '%s#%s'>" % (self._server, self._db)
 
     @faultmanagement
     def execute(self, obj, method, *params, **kwargs):
@@ -383,6 +397,14 @@ def _displayhook(value, _printer=pprint,
     __builtin__._ = value
 
 
+def _connect(env):
+    client = Client.from_config(env)
+    # Tweak prompt
+    sys.ps1 = '%s >>> ' % env
+    sys.ps2 = '%s ... ' % env
+    return client
+
+
 def main():
     parser = optparse.OptionParser(
             usage='%prog [options] [id [id ...]]',
@@ -417,10 +439,7 @@ def main():
         return None, None
 
     if args.env:
-        client = Client.from_config(args.env)
-        # Tweak prompt
-        sys.ps1 = '%s >>> ' % args.env
-        sys.ps2 = '%s ... ' % args.env
+        client = _connect(args.env)
     else:
         client = Client(args.server, args.db, args.user, args.password)
 
@@ -463,14 +482,19 @@ if __name__ == '__main__':
         pprint(data)
     if client:
         # interactive usage
+        def connect(env=None):
+            g = globals()
+            if env:
+                client = _connect(env)
+                g['client'] = client
+            else:
+                client = g['client']
+            g['do'] = client.execute
+            global_names = ('wizard', 'exec_workflow', 'read', 'search',
+                            'count', 'model', 'keys', 'fields', 'field')
+            for name in global_names:
+                g[name] = getattr(client, name)
+        Client.connect = staticmethod(connect)
+        del connect
         print USAGE
-        do = client.execute
-        wizard = client.wizard
-        exec_workflow = client.exec_workflow
-        read = client.read
-        search = client.search
-        count = client.count
-        model = client.model
-        keys = client.keys
-        fields = client.fields
-        field = client.field
+        client.connect()
