@@ -239,6 +239,17 @@ class Client(object):
         # Try to login
         self._login(user, password)
 
+    @classmethod
+    def from_config(cls, environment):
+        return cls(*read_config(environment))
+
+    @property
+    def server(self):
+        return self._server
+
+    def __repr__(self):
+        return "<Client '%s#%s'>" % (self._server, self._db)
+
     @faultmanagement
     def login(self, user, password=None):
         (uid, password) = self._auth(user, password)
@@ -262,6 +273,10 @@ class Client(object):
             self.execute_kw = authenticated(self._object.execute_kw)
             self.render_report = authenticated(self._report.render_report)
         return uid
+
+    # Needed for interactive use
+    _login = login
+    _login.cache = {}
 
     def _check_valid(self, uid, password):
         execute = self._object.execute
@@ -304,21 +319,6 @@ class Client(object):
             # Update cache
             self._login.cache[cache_key] = (uid, password)
         return (uid, password)
-
-    # Needed for interactive use
-    _login = login
-    _login.cache = {}
-
-    @classmethod
-    def from_config(cls, environment):
-        return cls(*read_config(environment))
-
-    @property
-    def server(self):
-        return self._server
-
-    def __repr__(self):
-        return "<Client '%s#%s'>" % (self._server, self._db)
 
     @faultmanagement
     def execute(self, obj, method, *params, **kwargs):
