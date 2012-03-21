@@ -45,6 +45,7 @@ Main commands are:
     keys(obj)                       # List field names of the model
     fields(obj, names=None)         # Return details for the fields
     field(obj, name)                # Return details for the field
+    access(obj, mode='read')        # Check access on the model
 
     do(obj, method, *params)        # Generic 'object.execute'
     wizard(name)                    # Return the 'id' of a new wizard
