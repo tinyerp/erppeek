@@ -53,6 +53,8 @@ Main commands are:
     exec_workflow(obj, signal, id)  # Trigger workflow signal
 
     client                          # Client object, connected
+    client.login(user)              # Login with another user
+    client.connect(env)             # Connect to another env.
     client.modules(name)            # List modules matching pattern
     client.upgrade(module1, module2, ...)
                                     # Upgrade the modules
