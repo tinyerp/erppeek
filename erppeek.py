@@ -548,11 +548,18 @@ def main():
 
 
 def _interactive_client():
+    g = globals()
     # Don't call multiple times
-    del globals()['_interactive_client']
+    del g['_interactive_client']
+
+    class Usage(object):
+        def __call__(self):
+            print USAGE
+        __repr__ = lambda s: USAGE
+
+    g['usage'] = Usage()
 
     def connect(env=None):
-        g = globals()
         if env:
             client = _connect(env)
             g['client'] = client
@@ -560,7 +567,7 @@ def _interactive_client():
             client = g['client']
         g['do'] = client.execute
         global_names = ('wizard', 'exec_workflow', 'read', 'search',
-                        'count', 'model', 'keys', 'fields', 'field')
+                'count', 'model', 'keys', 'fields', 'field', 'access')
         for name in global_names:
             g[name] = getattr(client, name, None)
         if client.user:
