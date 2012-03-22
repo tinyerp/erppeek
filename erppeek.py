@@ -103,6 +103,7 @@ _term_re = re.compile(
         '(\S+)\s*'
         '(=|!=|>|>=|<|<=|like|ilike|in|not like|not ilike|not in|child_of)'
         '\s*(.*)')
+_fields_re = re.compile(r'(?:[^%]|^)%\(([^)]+)\)')
 
 ini_path = os.path.splitext(__file__)[0] + '.ini'
 
@@ -183,7 +184,7 @@ def issearchdomain(arg):
             (isinstance(arg[0], basestring) and arg[0].isdigit())))
 
 
-def searchargs(params, kwargs=None):
+def searchargs(params, kwargs=None, context=None):
     """Compute the 'search' parameters."""
     if not params:
         return ([],)
@@ -204,12 +205,12 @@ def searchargs(params, kwargs=None):
                 # Interpret the value as a string
                 pass
             domain[idx] = (field, operator, value)
-    if kwargs and len(params) == 1:
+    if (kwargs or context) and len(params) == 1:
         params = (domain,
                   kwargs.pop('offset', 0),
                   kwargs.pop('limit', None),
                   kwargs.pop('order', None),
-                  kwargs.pop('context', None))
+                  context)
     else:
         params = (domain,) + params[1:]
     return params
@@ -224,6 +225,7 @@ class Client(object):
         def get_proxy(name, prefix=server + '/xmlrpc/'):
             return xmlrpclib.ServerProxy(prefix + name, allow_none=True)
         self._environment = None
+        # Create the XML-RPC proxies
         self.db = get_proxy('db')
         self.common = get_proxy('common')
         self._object = get_proxy('object')
@@ -297,6 +299,7 @@ class Client(object):
     def _auth(self, user, password):
         cache_key = (self._server, self._db, user)
         if password:
+            # If password is explicit, call the 'login' method
             uid = None
         else:
             # Read from cache
@@ -324,7 +327,7 @@ class Client(object):
             # Do a standard 'login'
             uid = self.common.login(self._db, user, password)
         if uid:
-            # Update cache
+            # Update the cache
             self._login.cache[cache_key] = (uid, password)
         return (uid, password)
 
@@ -397,32 +400,27 @@ class Client(object):
 
     @faultmanagement
     def execute(self, obj, method, *params, **kwargs):
+        context = kwargs.pop('context', None)
         if method in ('read', 'name_get') and params:
-            context = kwargs.get('context')
             if issearchdomain(params[0]):
                 # Combine search+read
-                search_params = searchargs(params[:1], kwargs)
+                search_params = searchargs(params[:1], kwargs, context)
                 ids = self._execute(obj, 'search', *search_params)
             else:
                 ids = params[0]
-            if len(params) == 1:
-                if method == 'read':
-                    params = (ids, kwargs.pop('fields', None))
-                else:
-                    params = (ids,)
-            elif isinstance(params[1], basestring):
-                # transform: "zip city" --> ("zip", "city")
-                params = (ids, params[1].split()) + params[2:]
-            else:
+            if len(params) > 1:
                 params = (ids,) + params[1:]
+            elif method == 'read':
+                params = (ids, kwargs.pop('fields', None))
+            else:
+                params = (ids,)
         elif method == 'search':
             # Accept keyword arguments for the search method
-            params = searchargs(params, kwargs)
+            params = searchargs(params, kwargs, context)
             context = None
         else:
             if method == 'search_count':
                 params = searchargs(params)
-            context = kwargs.pop('context', None)
         if context:
             params = params + (context,)
         # Ignore extra keyword arguments
@@ -489,7 +487,39 @@ class Client(object):
         return self.execute(obj, 'search_count', domain or [])
 
     def read(self, obj, *params, **kwargs):
-        return self.execute(obj, 'read', *params, **kwargs)
+        """Wrapper for client.execute(obj, 'read', [...], ('a', 'b')).
+
+        The first argument is the 'model' name (example: 'res.partner')
+
+        The second argument, 'domain', accepts:
+         - [('name', '=', 'mushroom'), ('state', '!=', 'draft')]
+         - ['name = mushroom', 'state != draft']
+         - []
+
+        The third argument, 'fields', accepts:
+         - ('street', 'city')
+         - 'street city'
+         - '%(street)s %(city)s'
+        """
+        fmt = None
+        if len(params) > 1 and isinstance(params[1], basestring):
+            fmt = ('%(' in params[1]) and params[1]
+            if fmt:
+                fields = _fields_re.findall(params[1])
+            else:
+                # transform: "zip city" --> ("zip", "city")
+                fields = params[1].split()
+                if len(fields) == 1:
+                    fmt = list
+            params = (params[0], fields) + params[2:]
+        res = self.execute(obj, 'read', *params, **kwargs)
+        if not res:
+            return res
+        if fmt is list:
+            return [d[fields[0]] for d in res]
+        if fmt:
+            return [fmt % d for d in res]
+        return res
 
     def model(self, name):
         domain = [('model', 'like', name)]
