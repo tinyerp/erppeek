@@ -217,10 +217,13 @@ def searchargs(params, kwargs=None):
 
 class Client(object):
 
+    interactive = False
+
     @faultmanagement
     def __init__(self, server, db, user, password=None):
         def get_proxy(name, prefix=server + '/xmlrpc/'):
             return xmlrpclib.ServerProxy(prefix + name, allow_none=True)
+        self._environment = None
         self.db = get_proxy('db')
         self.common = get_proxy('common')
         self._object = get_proxy('object')
@@ -235,7 +238,7 @@ class Client(object):
         # Set the special value returned by dir(...)
         self.db.__dir__ = lambda m=m_db: m
         self.common.__dir__ = lambda m=m_common: m
-        if major_version[:2] != '5.':
+        if major_version != '5.0':
             # Only for OpenERP >= 6
             m_db += _methods_6_1['db']
             m_common += _methods_6_1['common']
@@ -245,7 +248,9 @@ class Client(object):
 
     @classmethod
     def from_config(cls, environment):
-        return cls(*read_config(environment))
+        client = cls(*read_config(environment))
+        client._environment = environment
+        return client
 
     @property
     def server(self):
@@ -271,7 +276,7 @@ class Client(object):
         self._wizard_create = authenticated(self._wizard.create)
         self.report = authenticated(self._report.report)
         self.report_get = authenticated(self._report.report_get)
-        if self.major_version[:2] != '5.':
+        if self.major_version != '5.0':
             # Only for OpenERP >= 6
             self.execute_kw = authenticated(self._object.execute_kw)
             self.render_report = authenticated(self._report.render_report)
@@ -322,6 +327,73 @@ class Client(object):
             # Update cache
             self._login.cache[cache_key] = (uid, password)
         return (uid, password)
+
+    @classmethod
+    def _set_interactive(cls, use_pprint=USE_PPRINT):
+        g = globals()
+        # Don't call multiple times
+        del Client._set_interactive
+
+        class Usage(object):
+            def __call__(self):
+                print USAGE
+            __repr__ = lambda s: USAGE
+
+        def connect(self, env=None):
+            if env:
+                client = self.from_config(env)
+            else:
+                client = self
+                env = self._environment or self._db
+            g['client'] = client
+            global_names = ('wizard', 'exec_workflow', 'read', 'search',
+                    'count', 'model', 'keys', 'fields', 'field', 'access')
+            # Tweak prompt
+            sys.ps1 = '%s >>> ' % env
+            sys.ps2 = '%s ... ' % env
+            # Logged in?
+            if client.user:
+                g['do'] = client.execute
+                for name in global_names:
+                    g[name] = getattr(client, name)
+                print 'Logged in as %r' % (client.user,)
+            else:
+                g['do'] = None
+                g.update(dict.fromkeys())
+
+        def login(self, user):
+            uid = self._login(user)
+            if uid:
+                # If successful, register the new globals()
+                self.connect()
+
+        if use_pprint:
+            def displayhook(value, _printer=pprint,
+                             __builtin__=__import__('__builtin__')):
+                # Pretty-format the output
+                if value is None:
+                    return
+                _printer(value)
+                __builtin__._ = value
+
+            sys.displayhook = displayhook
+
+        try:
+            # completion and history features
+            __import__('readline')
+        except ImportError:
+            pass
+
+        # Create the global helper
+        g['usage'] = usage = Usage()
+        # Set hooks to recreate the globals()
+        cls.interactive = True
+        cls.login = login
+        cls.connect = connect
+
+        # Enter interactive mode
+        os.environ['PYTHONINSPECT'] = '1'
+        usage()
 
     @faultmanagement
     def execute(self, obj, method, *params, **kwargs):
@@ -458,23 +530,6 @@ class Client(object):
             return False
 
 
-def _displayhook(value, _printer=pprint,
-                 __builtin__=__import__('__builtin__')):
-    # Pretty-format the output
-    if value is None:
-        return
-    _printer(value)
-    __builtin__._ = value
-
-
-def _connect(env):
-    client = Client.from_config(env)
-    # Tweak prompt
-    sys.ps1 = '%s >>> ' % env
-    sys.ps2 = '%s ... ' % env
-    return client
-
-
 def main():
     parser = optparse.OptionParser(
             usage='%prog [options] [id [id ...]]',
@@ -508,19 +563,11 @@ def main():
         print 'Available settings: ', ' '.join(read_config())
         return None, None
 
-    if args.inspect or not args.model:
-        try:
-            # completion and history features
-            __import__('readline')
-        except ImportError:
-            pass
-        os.environ['PYTHONINSPECT'] = '1'
-        print USAGE
-        if USE_PPRINT:
-            sys.displayhook = _displayhook
+    if (args.inspect or not args.model):
+        Client._set_interactive()
 
     if args.env:
-        client = _connect(args.env)
+        client = Client.from_config(args.env)
     else:
         client = Client(args.server, args.db, args.user, args.password)
 
@@ -544,54 +591,13 @@ def main():
     else:
         data = client.execute(args.model, 'read', ids)
 
-    return (args.inspect and client), data
-
-
-def _interactive_client():
-    g = globals()
-    # Don't call multiple times
-    del g['_interactive_client']
-
-    class Usage(object):
-        def __call__(self):
-            print USAGE
-        __repr__ = lambda s: USAGE
-
-    g['usage'] = Usage()
-
-    def connect(env=None):
-        if env:
-            client = _connect(env)
-            g['client'] = client
-        else:
-            client = g['client']
-        global_names = ('wizard', 'exec_workflow', 'read', 'search',
-                'count', 'model', 'keys', 'fields', 'field', 'access')
-        if client.user:
-            g['do'] = client.execute
-            for name in global_names:
-                g[name] = getattr(client, name)
-            print 'Logged in as %r' % (client.user,)
-        else:
-            g['do'] = None
-            g.update(dict.fromkeys())
-
-    def login(self, user):
-        uid = self._login(user)
-        if uid:
-            # If successful, register the new globals()
-            self.connect()
-
-    Client.login = login
-    Client.connect = staticmethod(connect)
-    # Create the globals
-    connect()
+    return client, data
 
 
 if __name__ == '__main__':
     client, data = main()
     if data is not None:
         pprint(data)
-    if client:
-        # interactive usage
-        _interactive_client()
+    if client and client.interactive:
+        # Set the globals()
+        client.connect()
