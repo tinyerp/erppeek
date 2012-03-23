@@ -245,10 +245,6 @@ class Client(object):
         client._environment = environment
         return client
 
-    @property
-    def server(self):
-        return self._server
-
     def __repr__(self):
         return "<Client '%s#%s'>" % (self._server, self._db)
 
