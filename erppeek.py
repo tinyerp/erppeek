@@ -52,8 +52,6 @@ except ImportError:
 
 __all__ = ['Client', 'read_config']
 
-USE_PPRINT = True
-
 DEFAULT_URL = 'http://localhost:8069'
 DEFAULT_DB = 'openerp'
 DEFAULT_USER = 'admin'
@@ -148,27 +146,6 @@ def read_config(section=None):
     return (server, db, user, password)
 
 
-def faultmanagement(f):
-    @functools.wraps(f)
-    def wrapper(*args, **kwargs):
-        try:
-            return f(*args, **kwargs)
-        except xmlrpclib.Fault, exc:
-            if not isinstance(exc.faultCode, basestring):
-                raise
-            exctype, sep, msg = exc.faultCode.partition('--')
-            if exctype.strip() != 'warning':
-                msg = exc.faultCode
-                if not msg.startswith('FATAL:'):
-                    msg += '\n' + exc.faultString
-            if f.__name__ == '__init__':
-                # Raise an error if the instance is not created
-                raise RuntimeError(msg.strip())
-            else:
-                print '%s: %s' % (type(exc).__name__, msg.strip())
-    return wrapper
-
-
 def issearchdomain(arg):
     """Check if the argument is a search domain.
 
@@ -188,13 +165,11 @@ def searchargs(params, kwargs=None, context=None):
     """Compute the 'search' parameters."""
     if not params:
         return ([],)
-    elif not isinstance(params[0], list):
-        return params
     domain = params[0]
+    if not isinstance(domain, list):
+        return params
     for idx, term in enumerate(domain):
-        if isinstance(term, basestring):
-            if term in DOMAIN_OPERATORS:
-                continue
+        if isinstance(term, basestring) and term not in DOMAIN_OPERATORS:
             m = _term_re.match(term.strip())
             if not m:
                 raise ValueError("Cannot parse term %r" % term)
@@ -216,36 +191,52 @@ def searchargs(params, kwargs=None, context=None):
     return params
 
 
+class ServerProxy(xmlrpclib.ServerProxy):
+    def __init__(self, server, endpoint, methods):
+        uri = server + '/xmlrpc/' + endpoint
+        xmlrpclib.ServerProxy.__init__(self, uri, allow_none=True)
+        self.__name__ = None
+        self._methods = sorted(methods)
+
+    def __dir__(self):
+        return self._methods
+
+    def __getattr__(self, name):
+        if name not in self._methods:
+            raise AttributeError('%r object has no attribute %r' %
+                                 (self.__class__.__name__, name))
+        m = xmlrpclib.ServerProxy.__getattr__(self, name)
+        m.__repr__ = m.__str__ = lambda: "<Method '%s' of %r>" % (name, self)
+        return m
+
+
 class Client(object):
 
     interactive = False
 
-    @faultmanagement
     def __init__(self, server, db, user, password=None):
-        def get_proxy(name, prefix=server + '/xmlrpc/'):
-            return xmlrpclib.ServerProxy(prefix + name, allow_none=True)
+        self._server = server
+        self._db = db
         self._environment = None
+        self.user = None
+        major_version = None
+
+        def get_proxy(name):
+            if major_version in ('5.0', None):
+                methods = _methods[name]
+            else:
+                # Only for OpenERP >= 6
+                methods = _methods[name] + _methods_6_1[name]
+            return ServerProxy(server, name, methods)
+        self.server_version = ver = get_proxy('db').server_version()
+        self.major_version = major_version = '.'.join(ver.split('.', 2)[:2])
         # Create the XML-RPC proxies
         self.db = get_proxy('db')
         self.common = get_proxy('common')
         self._object = get_proxy('object')
         self._wizard = get_proxy('wizard')
         self._report = get_proxy('report')
-        self._server = server
-        self._db = db
-        self.server_version = ver = self.db.server_version()
-        self.major_version = major_version = '.'.join(ver.split('.', 2)[:2])
-        m_db = _methods['db'][:]
-        m_common = _methods['common'][:]
-        # Set the special value returned by dir(...)
-        self.db.__dir__ = lambda m=m_db: m
-        self.common.__dir__ = lambda m=m_common: m
-        if major_version != '5.0':
-            # Only for OpenERP >= 6
-            m_db += _methods_6_1['db']
-            m_common += _methods_6_1['common']
         # Try to login
-        self.user = None
         self._login(user, password)
 
     @classmethod
@@ -261,7 +252,6 @@ class Client(object):
     def __repr__(self):
         return "<Client '%s#%s'>" % (self._server, self._db)
 
-    @faultmanagement
     def login(self, user, password=None):
         (uid, password) = self._auth(user, password)
         if uid is False:
@@ -306,7 +296,7 @@ class Client(object):
             uid, password = self._login.cache.get(cache_key) or (None, None)
             # Read from table 'res.users'
             if not uid and self.access('res.users', 'write'):
-                obj = self.read('res.users', [('login', '=', user)], 'password')
+                obj = self.read('res.users', [('login', '=', user)], 'id password')
                 if obj:
                     uid = obj[0]['id']
                     password = obj[0]['password']
@@ -332,15 +322,10 @@ class Client(object):
         return (uid, password)
 
     @classmethod
-    def _set_interactive(cls, use_pprint=USE_PPRINT):
+    def _set_interactive(cls):
         g = globals()
         # Don't call multiple times
         del Client._set_interactive
-
-        class Usage(object):
-            def __call__(self):
-                print USAGE
-            __repr__ = lambda s: USAGE
 
         def connect(self, env=None):
             if env:
@@ -365,40 +350,18 @@ class Client(object):
                 g.update(dict.fromkeys())
 
         def login(self, user):
-            uid = self._login(user)
-            if uid:
+            if self._login(user):
                 # If successful, register the new globals()
                 self.connect()
 
-        if use_pprint:
-            def displayhook(value, _printer=pprint,
-                             __builtin__=__import__('__builtin__')):
-                # Pretty-format the output
-                if value is None:
-                    return
-                _printer(value)
-                __builtin__._ = value
-
-            sys.displayhook = displayhook
-
-        try:
-            # completion and history features
-            __import__('readline')
-        except ImportError:
-            pass
-
-        # Create the global helper
-        g['usage'] = usage = Usage()
         # Set hooks to recreate the globals()
-        cls.interactive = True
         cls.login = login
         cls.connect = connect
 
         # Enter interactive mode
-        os.environ['PYTHONINSPECT'] = '1'
-        usage()
+        cls.interactive = True
+        _init_interactive()
 
-    @faultmanagement
     def execute(self, obj, method, *params, **kwargs):
         context = kwargs.pop('context', None)
         if method in ('read', 'name_get') and params:
@@ -428,11 +391,9 @@ class Client(object):
             print 'Ignoring: %s = %r' % item
         return self._execute(obj, method, *params)
 
-    @faultmanagement
     def exec_workflow(self, obj, signal, obj_id):
         return self._exec_workflow(obj, signal, obj_id)
 
-    @faultmanagement
     def wizard(self, name, datas=None, action='init', context=None):
         if isinstance(name, (int, long)):
             wiz_id = name
@@ -558,6 +519,52 @@ class Client(object):
             return True
         except (AttributeError, xmlrpclib.Fault):
             return False
+
+
+def _init_interactive(use_pprint=True, usage=USAGE):
+    import __builtin__
+    # Do not run twice
+    del globals()['_init_interactive']
+
+    # Open interactive session
+    os.environ['PYTHONINSPECT'] = '1'
+
+    def excepthook(exc_type, exc, tb, _original_hook=sys.excepthook):
+        # Print readable 'Fault' errors
+        if (issubclass(exc_type, xmlrpclib.Fault) and
+            isinstance(exc.faultCode, basestring)):
+            etype, _, msg = exc.faultCode.partition('--')
+            if etype.strip() != 'warning':
+                msg = exc.faultCode
+                if not msg.startswith('FATAL:'):
+                    msg += '\n' + exc.faultString
+            print '%s: %s' % (exc_type.__name__, msg.strip())
+        else:
+            _original_hook(exc_type, exc, tb)
+    sys.excepthook = excepthook
+
+    if use_pprint:
+        def displayhook(value, _printer=pprint, _builtin=__builtin__):
+            # Pretty-format the output
+            if value is None:
+                return
+            _printer(value)
+            _builtin._ = value
+        sys.displayhook = displayhook
+
+    try:
+        # completion and history features
+        __import__('readline')
+    except ImportError:
+        pass
+
+    class Usage(object):
+        def __call__(self):
+            print usage
+        __repr__ = lambda s: usage
+    __builtin__.usage = Usage()
+
+    print usage
 
 
 def main():
