@@ -212,8 +212,6 @@ class ServerProxy(xmlrpclib.ServerProxy):
 
 class Client(object):
 
-    interactive = False
-
     def __init__(self, server, db, user, password=None):
         self._server = server
         self._db = db
@@ -355,7 +353,6 @@ class Client(object):
         cls.connect = connect
 
         # Enter interactive mode
-        cls.interactive = True
         _init_interactive()
 
     def execute(self, obj, method, *params, **kwargs):
@@ -631,6 +628,6 @@ if __name__ == '__main__':
     client, data = main()
     if data is not None:
         pprint(data)
-    if client and client.interactive:
+    if hasattr(client, 'connect'):
         # Set the globals()
         client.connect()
