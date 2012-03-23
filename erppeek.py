@@ -609,9 +609,7 @@ def main():
     # bunch of IDs on the command line to print
     searchquery = []
     if args.search:
-        # print "search parsing"
         searchquery = searchargs((args.search,))[0]
-        # print searchquery
         ids = client.execute(args.model, 'search', searchquery)
 
     if ids is None:
