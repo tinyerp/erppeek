@@ -10,8 +10,8 @@ There are two modes:
 | It supports OpenERP 5.0, 6.0 and 6.1
 
 
-COMMAND LINE ARGUMENTS
-----------------------
+1. Command line arguments
+-------------------------
 
 See the `introduction on this page
 <http://www.theopensourcerer.com/2011/12/13/erppeek-a-tool-for-browsing-openerp-data-from-the-command-line/>`__
@@ -21,14 +21,26 @@ or::
 
 
 
-INTERACTIVE USE
----------------
+2. Interactive use
+------------------
 
- * Edit ``erppeek.ini`` to declare your environment(s)
- * Run the command::
+- Edit ``erppeek.ini`` to declare your environment(s)::
 
-    erppeek.py --list
-    erppeek.py --env demo
+   [DEFAULT]
+   host = localhost
+   port = 8069
+   database = openerp
+   username = admin
+   
+   [demo]
+   username = demo
+   password = demo
+
+
+- Run the command::
+
+    erppeek --list
+    erppeek --env demo
 
 
 Main commands are::
