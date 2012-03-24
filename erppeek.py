@@ -341,7 +341,7 @@ class Client(object):
                 print 'Logged in as %r' % (client.user,)
             else:
                 g['do'] = None
-                g.update(dict.fromkeys())
+                g.update(dict.fromkeys(global_names))
 
         def login(self, user):
             if self._login(user):
