@@ -6,30 +6,32 @@ There are two modes:
  (1) with command line arguments
  (2) as an interactive shell
 
-It requires python 2.5, 2.6 or 2.7.
-It supports OpenERP 5.0, 6.0 and 6.1
+| It requires python 2.5, 2.6 or 2.7.
+| It supports OpenERP 5.0, 6.0 and 6.1
 
 
 COMMAND LINE ARGUMENTS
 ----------------------
 
-See the introduction on this page
-http://www.theopensourcerer.com/2011/12/13/erppeek-a-tool-for-browsing-openerp-data-from-the-command-line/
- or
-./erppeek.py --help
+See the `introduction on this page
+<http://www.theopensourcerer.com/2011/12/13/erppeek-a-tool-for-browsing-openerp-data-from-the-command-line/>`__
+or::
+
+    erppeek --help
 
 
 
 INTERACTIVE USE
 ---------------
 
- * Edit "erppeek.ini" to declare your environment(s)
- * Run the script
-    ./erppeek.py --list
-    ./erppeek.py --env demo
+ * Edit ``erppeek.ini`` to declare your environment(s)
+ * Run the command::
+
+    erppeek.py --list
+    erppeek.py --env demo
 
 
-Main commands are:
+Main commands are::
 
     search(obj, domain)
     search(obj, domain, offset=0, limit=None, order=None)

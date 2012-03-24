@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """ erppeek.py -- OpenERP command line tool
+(derived from a script by Alan Bell)
 
-Authors: Alan Bell, Florent Xicluna
+Author: Florent Xicluna
 """
 from __future__ import with_statement
 
@@ -10,7 +11,7 @@ import xmlrpclib
 import ConfigParser
 import functools
 import optparse
-import os
+import os.path
 from pprint import pprint
 import re
 import sys
@@ -52,6 +53,7 @@ except ImportError:
 
 __all__ = ['Client', 'read_config']
 
+CONF_FILE = 'erppeek.ini'
 DEFAULT_URL = 'http://localhost:8069'
 DEFAULT_DB = 'openerp'
 DEFAULT_USER = 'admin'
@@ -103,7 +105,7 @@ _term_re = re.compile(
         '\s*(.*)')
 _fields_re = re.compile(r'(?:[^%]|^)%\(([^)]+)\)')
 
-ini_path = os.path.splitext(__file__)[0] + '.ini'
+ini_path = os.path.join(os.path.curdir, CONF_FILE)
 
 # Published object methods
 _methods = {
@@ -352,9 +354,6 @@ class Client(object):
         cls.login = login
         cls.connect = connect
 
-        # Enter interactive mode
-        _init_interactive()
-
     def execute(self, obj, method, *params, **kwargs):
         context = kwargs.pop('context', None)
         if method in ('read', 'name_get') and params:
@@ -514,13 +513,11 @@ class Client(object):
             return False
 
 
-def _init_interactive(use_pprint=True, usage=USAGE):
+def _interact(use_pprint=True, usage=USAGE):
     import __builtin__
+    import code
     # Do not run twice
-    del globals()['_init_interactive']
-
-    # Open interactive session
-    os.environ['PYTHONINSPECT'] = '1'
+    del globals()['_interact']
 
     def excepthook(exc_type, exc, tb, _original_hook=sys.excepthook):
         # Print readable 'Fault' errors
@@ -545,19 +542,14 @@ def _init_interactive(use_pprint=True, usage=USAGE):
             _builtin._ = value
         sys.displayhook = displayhook
 
-    try:
-        # completion and history features
-        __import__('readline')
-    except ImportError:
-        pass
-
     class Usage(object):
         def __call__(self):
             print usage
         __repr__ = lambda s: usage
     __builtin__.usage = Usage()
 
-    print usage
+    # UP to avoid an empty line
+    code.interact(banner='\033[A', local=globals())
 
 
 def main():
@@ -591,41 +583,34 @@ def main():
 
     if args.list_env:
         print 'Available settings: ', ' '.join(read_config())
-        return None, None
+        return
 
     if (args.inspect or not args.model):
         Client._set_interactive()
+        print USAGE
 
     if args.env:
         client = Client.from_config(args.env)
     else:
         client = Client(args.server, args.db, args.user, args.password)
 
-    if not args.model:
-        return client, None
-
-    # do some searching if they pass in a search query, this will return a
-    # bunch of IDs to pretty print or alternatively the user can pass in a
-    # bunch of IDs on the command line to print
-    searchquery = []
-    if args.search:
-        searchquery = searchargs((args.search,))[0]
-        ids = client.execute(args.model, 'search', searchquery)
-
-    if ids is None:
-        data = None
-    elif args.fields:
-        data = client.execute(args.model, 'read', ids, args.fields)
-    else:
-        data = client.execute(args.model, 'read', ids)
-
-    return client, data
-
-
-if __name__ == '__main__':
-    client, data = main()
-    if data is not None:
+    if args.model:
+        if args.search:
+            (searchquery,) = searchargs((args.search,))
+            ids = client.execute(args.model, 'search', searchquery)
+        if ids is None:
+            data = None
+        elif args.fields:
+            data = client.execute(args.model, 'read', ids, args.fields)
+        else:
+            data = client.execute(args.model, 'read', ids)
         pprint(data)
+
     if hasattr(client, 'connect'):
         # Set the globals()
         client.connect()
+        # Enter interactive mode
+        _interact()
+
+if __name__ == '__main__':
+    main()
