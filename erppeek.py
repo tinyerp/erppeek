@@ -51,6 +51,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
+__version__ = '0.2'
 __all__ = ['Client', 'read_config']
 
 CONF_FILE = 'erppeek.ini'
@@ -105,8 +106,6 @@ _term_re = re.compile(
         '\s*(.*)')
 _fields_re = re.compile(r'(?:[^%]|^)%\(([^)]+)\)')
 
-ini_path = os.path.join(os.path.curdir, CONF_FILE)
-
 # Published object methods
 _methods = {
     'db': ['create', 'drop', 'dump', 'restore', 'rename', 'list', 'list_lang',
@@ -134,7 +133,7 @@ _methods_6_1 = {
 
 def read_config(section=None):
     p = ConfigParser.SafeConfigParser()
-    with open(ini_path) as f:
+    with open(Client._config_file) as f:
         p.readfp(f)
     if section is None:
         return p.sections()
@@ -213,6 +212,8 @@ class ServerProxy(xmlrpclib.ServerProxy):
 
 
 class Client(object):
+
+    _config_file = os.path.join(os.path.curdir, CONF_FILE)
 
     def __init__(self, server, db, user, password=None):
         self._server = server
@@ -298,9 +299,9 @@ class Client(object):
                     password = obj[0]['password']
                 else:
                     # Invalid user
-                    uid, password = False, False
+                    uid = False
             # Ask for password
-            if not password:
+            if not password and uid is not False:
                 from getpass import getpass
                 password = getpass('Password for %r: ' % user)
         if uid:
@@ -373,9 +374,8 @@ class Client(object):
             # Accept keyword arguments for the search method
             params = searchargs(params, kwargs, context)
             context = None
-        else:
-            if method == 'search_count':
-                params = searchargs(params)
+        elif method == 'search_count':
+            params = searchargs(params)
         if context:
             params = params + (context,)
         # Ignore extra keyword arguments
@@ -412,7 +412,7 @@ class Client(object):
         for mod in mods:
             print '  %(state)s\t%(name)s' % mod
 
-        if self.major_version[:2] == '5.':
+        if self.major_version == '5.0':
             # Wizard "Apply Scheduled Upgrades"
             rv = self.wizard('module.upgrade', action='start')
             if 'config' not in [state[0] for state in rv.get('state', ())]:
@@ -548,19 +548,20 @@ def _interact(use_pprint=True, usage=USAGE):
         __repr__ = lambda s: usage
     __builtin__.usage = Usage()
 
-    # UP to avoid an empty line
+    # Key UP to avoid an empty line
     code.interact(banner='\033[A', local=globals())
 
 
 def main():
     parser = optparse.OptionParser(
-            usage='%prog [options] [id [id ...]]',
+            usage='%prog [options] [id [id ...]]', version=__version__,
             description='Inspect data on OpenERP objects')
     parser.add_option('-l', '--list', action='store_true', dest='list_env',
-            help='list sections of %r' % ini_path)
+            help='list sections of the configuration')
     parser.add_option('--env',
-            help='read connection settings from the given '
-                 'section of %r' % ini_path)
+            help='read connection settings from the given section')
+    parser.add_option('-c', '--config', dest='config', default=CONF_FILE,
+            help='specify alternate config file (default %r)' % CONF_FILE)
     parser.add_option('--server', default=DEFAULT_URL,
             help='full URL to the XML-RPC server '
                  '(default %s)' % DEFAULT_URL)
@@ -581,6 +582,7 @@ def main():
 
     (args, ids) = parser.parse_args()
 
+    Client._config_file = os.path.join(os.path.curdir, args.config)
     if args.list_env:
         print 'Available settings: ', ' '.join(read_config())
         return
