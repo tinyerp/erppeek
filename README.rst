@@ -2,7 +2,12 @@
 ERPpeek, a versatile tool for browsing OpenERP data
 ===================================================
 
-It carries three completing uses:
+Download the `latest release <http://pypi.python.org/pypi/ERPpeek>`__ from PyPI::
+
+    pip install erppeek
+
+
+ERPpeek carries three completing uses:
 
 (1) with command line arguments
 (2) as an interactive shell
