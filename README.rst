@@ -1,13 +1,23 @@
 
-ERPpeek, a tool for browsing OpenERP data from the command line
-===============================================================
+ERPpeek, a versatile tool for browsing OpenERP data
+===================================================
 
-There are two modes:
- (1) with command line arguments
- (2) as an interactive shell
+It carries three completing uses:
 
-| It requires python 2.5, 2.6 or 2.7.
-| It supports OpenERP 5.0, 6.0 and 6.1
+(1) with command line arguments
+(2) as an interactive shell
+(3) as a client library
+
+
+Key features:
+
+- single executable ``erppeek.py``, no external dependency
+- wrappers for ``search+read``, for data model introspection, etc...
+- simpler syntax for ``domain`` and ``fields``
+- full API accessible on the ``Client`` object for OpenERP 5.0 through 6.1
+- the module can be imported and used as a library: ``from erppeek import Client``
+- requires Python 2.5, 2.6 or 2.7.
+
 
 
 1. Command line arguments
@@ -20,30 +30,53 @@ or::
     erppeek --help
 
 
-
 2. Interactive use
 ------------------
 
-- Edit ``erppeek.ini`` to declare your environment(s)::
+Edit ``erppeek.ini`` and declare the environment(s)::
 
    [DEFAULT]
    host = localhost
    port = 8069
    database = openerp
    username = admin
-   
+
    [demo]
    username = demo
    password = demo
 
 
-- Run the command::
+Connect to the OpenERP server::
 
     erppeek --list
     erppeek --env demo
 
 
-Main commands are::
+This is a sample session::
+
+    demo >>> model('users')
+    ['res.users']
+    demo >>> count('res.users')
+    4
+    demo >>> read('ir.cron', ['active = False'], 'active function')
+    [{'active': False, 'function': 'run_mail_scheduler', 'id': 1},
+     {'active': False, 'function': 'run_bdr_scheduler', 'id': 2},
+     {'active': False, 'function': 'scheduled_fetch_new_scans', 'id': 9}]
+    demo >>>
+    demo >>> client.modules('delivery')
+    {'uninstalled': ['delivery', 'sale_delivery_report']}
+    demo >>> client.upgrade('base')
+    1 module(s) selected
+    42 module(s) to update:
+      to upgrade    account
+      to upgrade    account_chart
+      to upgrade    account_tax_include
+      to upgrade    base
+      ...
+    demo >>>
+
+
+Main commands::
 
     search(obj, domain)
     search(obj, domain, offset=0, limit=None, order=None)

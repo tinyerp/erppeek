@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """ erppeek.py -- OpenERP command line tool
-(derived from a script by Alan Bell)
 
 Author: Florent Xicluna
+(derived from a script by Alan Bell)
 """
 from __future__ import with_statement
 

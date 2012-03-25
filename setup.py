@@ -5,16 +5,16 @@ from __future__ import with_statement
 from setuptools import setup
 
 
-with open('README.txt') as f:
+with open('README.rst') as f:
     readme = f.read()
 
 setup(
     name='ERPpeek',
     version='0.2',
     license='BSD',
-    description='A tool for browsing OpenERP data from the command line',
+    description='Versatile tool for browsing OpenERP data',
     long_description=readme,
-    url='https://code.launchpad.net/~openerp-community/openerp-tools/erppeek',
+    url='https://github.com/florentx/erppeek',
     author='Florent Xicluna',
     author_email='florent.xicluna@gmail.com',
     py_modules=['erppeek'],
