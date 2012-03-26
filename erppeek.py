@@ -51,7 +51,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '0.2'
+__version__ = '0.3'
 __all__ = ['Client', 'read_config']
 
 CONF_FILE = 'erppeek.ini'
