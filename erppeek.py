@@ -51,7 +51,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '0.3'
+__version__ = '0.4'
 __all__ = ['Client', 'read_config']
 
 CONF_FILE = 'erppeek.ini'
@@ -531,7 +531,6 @@ def _interact(use_pprint=True, usage=USAGE):
             print '%s: %s' % (exc_type.__name__, msg.strip())
         else:
             _original_hook(exc_type, exc, tb)
-    sys.excepthook = excepthook
 
     if use_pprint:
         def displayhook(value, _printer=pprint, _builtin=__builtin__):
@@ -548,8 +547,23 @@ def _interact(use_pprint=True, usage=USAGE):
         __repr__ = lambda s: usage
     __builtin__.usage = Usage()
 
+    try:
+        __import__('readline')
+    except ImportError:
+        pass
+
+    class Console(code.InteractiveConsole):
+        def runcode(self, code):
+            try:
+                exec code in globals()
+            except SystemExit:
+                raise
+            except:
+                # Work around http://bugs.python.org/issue12643
+                excepthook(*sys.exc_info())
+
     # Key UP to avoid an empty line
-    code.interact(banner='\033[A', local=globals())
+    Console().interact('\033[A')
 
 
 def main():
