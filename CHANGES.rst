@@ -2,7 +2,7 @@ Changelog
 ---------
 
 
-0.5 (XXXX-XX-XX)
+0.5 (2012-03-29)
 ~~~~~~~~~~~~~~~~
 
 * Implement ``Client.__getattr__`` special attribute to call any object
@@ -18,11 +18,11 @@ Changelog
 * Add long options ``--search`` for ``-s``, ``--interact`` for ``-i``.
 
 
-0.4 (2012-03-29)
+0.4 (2012-03-28)
 ~~~~~~~~~~~~~~~~
 
-* Workaround for ``sys.excepthook`` ignored, related to Python issue
-  http://bugs.python.org/issue12643.
+* Workaround for ``sys.excepthook`` ignored, related to a
+  `Python issue <http://bugs.python.org/issue12643>`__.
 
 
 0.3 (2012-03-26)
