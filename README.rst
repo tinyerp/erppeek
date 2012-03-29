@@ -1,4 +1,4 @@
-
+===================================================
 ERPpeek, a versatile tool for browsing OpenERP data
 ===================================================
 
@@ -6,6 +6,11 @@ Download the `latest release <http://pypi.python.org/pypi/ERPpeek>`__ from PyPI:
 
     pip install erppeek
 
+.. contents::
+
+
+Overview
+--------
 
 ERPpeek carries three completing uses:
 
@@ -22,7 +27,6 @@ Key features:
 - full API accessible on the ``Client`` object for OpenERP 5.0 through 6.1
 - the module can be imported and used as a library: ``from erppeek import Client``
 - requires Python 2.5, 2.6 or 2.7.
-
 
 
 1. Command line arguments

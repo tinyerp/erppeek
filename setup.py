@@ -8,6 +8,9 @@ from setuptools import setup
 with open('README.rst') as f:
     readme = f.read()
 
+with open('CHANGES') as f:
+    readme += '\n\n\n' + f.read()
+
 setup(
     name='ERPpeek',
     version='0.4',
