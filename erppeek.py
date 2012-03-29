@@ -170,7 +170,7 @@ def searchargs(params, kwargs=None, context=None):
     if not params:
         return ([],)
     domain = params[0]
-    if isinstance(domain, basestring):
+    if isinstance(domain, (basestring, tuple)):
         domain = [domain]
         warnings.warn('Domain should be a list: %s' % domain)
     elif not isinstance(domain, list):
