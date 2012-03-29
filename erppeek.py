@@ -209,7 +209,6 @@ class Service(ServerProxy):
     def __init__(self, server, endpoint, methods):
         uri = server + '/xmlrpc/' + endpoint
         ServerProxy.__init__(self, uri, allow_none=True)
-        self.__name__ = None
         self._methods = sorted(methods)
 
     def __repr__(self):
@@ -221,11 +220,11 @@ class Service(ServerProxy):
         return self._methods
 
     def __getattr__(self, name):
-        if name not in self._methods:
-            raise AttributeError("'Service' object has no attribute %r" % name)
-        wrapper = lambda s, *args: s._ServerProxy__request(name, args)
-        wrapper.__name__ = name
-        return wrapper.__get__(self)
+        if name in self._methods:
+            wrapper = lambda s, *args: s._ServerProxy__request(name, args)
+            wrapper.__name__ = name
+            return wrapper.__get__(self)
+        raise AttributeError("'Service' object has no attribute %r" % name)
 
 
 class Client(object):
