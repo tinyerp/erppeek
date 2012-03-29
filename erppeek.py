@@ -7,8 +7,6 @@ Author: Florent Xicluna
 """
 from __future__ import with_statement
 
-import xmlrpclib
-import ConfigParser
 import functools
 import optparse
 import os.path
@@ -16,6 +14,15 @@ from pprint import pprint
 import re
 import sys
 import warnings
+try:                    # Python 3
+    import configparser
+    from xmlrpc.client import Fault, ServerProxy
+    basestring = str
+    int_types = int
+except ImportError:     # Python 2
+    import ConfigParser as configparser
+    from xmlrpclib import Fault, ServerProxy
+    int_types = int, long
 
 try:
     # first, try importing directly
@@ -133,7 +140,7 @@ _methods_6_1 = {
 
 
 def read_config(section=None):
-    p = ConfigParser.SafeConfigParser()
+    p = configparser.SafeConfigParser()
     with open(Client._config_file) as f:
         p.readfp(f)
     if section is None:
@@ -160,7 +167,7 @@ def issearchdomain(arg):
     """
     return isinstance(arg, (list, tuple, basestring)) and not (arg and (
             # Not a list of ids: [1, 2, 3]
-            isinstance(arg[0], (int, long)) or
+            isinstance(arg[0], int_types) or
             # Not a list of ids as str: ['1', '2', '3']
             (isinstance(arg[0], basestring) and arg[0].isdigit())))
 
@@ -198,23 +205,27 @@ def searchargs(params, kwargs=None, context=None):
     return params
 
 
-class ServerProxy(xmlrpclib.ServerProxy):
+class Service(ServerProxy):
     def __init__(self, server, endpoint, methods):
         uri = server + '/xmlrpc/' + endpoint
-        xmlrpclib.ServerProxy.__init__(self, uri, allow_none=True)
+        ServerProxy.__init__(self, uri, allow_none=True)
         self.__name__ = None
         self._methods = sorted(methods)
+
+    def __repr__(self):
+        rname = '%s%s' % (self._ServerProxy__host, self._ServerProxy__handler)
+        return '<Service %s>' % rname
+    __str__ = __repr__
 
     def __dir__(self):
         return self._methods
 
     def __getattr__(self, name):
         if name not in self._methods:
-            raise AttributeError('%r object has no attribute %r' %
-                                 (self.__class__.__name__, name))
-        m = xmlrpclib.ServerProxy.__getattr__(self, name)
-        m.__repr__ = m.__str__ = lambda: "<Method '%s' of %r>" % (name, self)
-        return m
+            raise AttributeError("'Service' object has no attribute %r" % name)
+        wrapper = lambda s, *args: s._ServerProxy__request(name, args)
+        wrapper.__name__ = name
+        return wrapper.__get__(self)
 
 
 class Client(object):
@@ -234,7 +245,7 @@ class Client(object):
             else:
                 # Only for OpenERP >= 6
                 methods = _methods[name] + _methods_6_1[name]
-            return ServerProxy(server, name, methods)
+            return Service(server, name, methods)
         self.server_version = ver = get_proxy('db').server_version()
         self.major_version = major_version = '.'.join(ver.split('.', 2)[:2])
         # Create the XML-RPC proxies
@@ -258,7 +269,7 @@ class Client(object):
     def login(self, user, password=None):
         (uid, password) = self._auth(user, password)
         if uid is False:
-            print 'Error: Invalid username or password'
+            print('Error: Invalid username or password')
             return
         self.user = user
 
@@ -286,7 +297,7 @@ class Client(object):
         try:
             execute(self._db, uid, password, 'res.users', 'fields_get_keys')
             return True
-        except xmlrpclib.Fault:
+        except Fault:
             return False
 
     def _auth(self, user, password):
@@ -349,7 +360,7 @@ class Client(object):
                 g['do'] = client.execute
                 for name in global_names:
                     g[name] = getattr(client, name)
-                print 'Logged in as %r' % (client.user,)
+                print('Logged in as %r' % (client.user,))
             else:
                 g['do'] = None
                 g.update(dict.fromkeys(global_names))
@@ -388,14 +399,14 @@ class Client(object):
             params = params + (context,)
         # Ignore extra keyword arguments
         for item in kwargs.items():
-            print 'Ignoring: %s = %r' % item
+            print('Ignoring: %s = %r' % item)
         return self._execute(obj, method, *params)
 
     def exec_workflow(self, obj, signal, obj_id):
         return self._exec_workflow(obj, signal, obj_id)
 
     def wizard(self, name, datas=None, action='init', context=None):
-        if isinstance(name, (int, long)):
+        if isinstance(name, int_types):
             wiz_id = name
         else:
             wiz_id = self._wizard_create(name)
@@ -415,10 +426,10 @@ class Client(object):
                          [('state', 'not in', STABLE_STATES)], 'name state')
         if not mods:
             return
-        print '%s module(s) selected' % len(ids)
-        print '%s module(s) to update:' % len(mods)
+        print('%s module(s) selected' % len(ids))
+        print('%s module(s) to update:' % len(mods))
         for mod in mods:
-            print '  %(state)s\t%(name)s' % mod
+            print('  %(state)s\t%(name)s' % mod)
 
         if self.major_version == '5.0':
             # Wizard "Apply Scheduled Upgrades"
@@ -517,52 +528,58 @@ class Client(object):
         try:
             self._execute('ir.model.access', 'check', obj, mode)
             return True
-        except (AttributeError, xmlrpclib.Fault):
+        except (AttributeError, Fault):
             return False
 
     def __getattr__(self, method):
         # miscellaneous object methods
-        def wrapper(obj, *params, **kwargs):
+        def wrapper(self, obj, *params, **kwargs):
             """Wrapper for client.execute(obj, %r, *params, **kwargs)."""
             return self.execute(obj, method, *params, **kwargs)
         wrapper.__name__ = method
         wrapper.__doc__ %= method
-        return wrapper
+        return wrapper.__get__(self)
 
 
 def _interact(use_pprint=True, usage=USAGE):
-    import __builtin__
     import code
+    try:
+        import builtins
+        _exec = getattr(builtins, 'exec')
+    except ImportError:
+        def _exec(code, g):
+            exec('exec code in g')
+        import __builtin__ as builtins
     # Do not run twice
     del globals()['_interact']
 
     def excepthook(exc_type, exc, tb, _original_hook=sys.excepthook):
         # Print readable 'Fault' errors
-        if (issubclass(exc_type, xmlrpclib.Fault) and
+        if (issubclass(exc_type, Fault) and
             isinstance(exc.faultCode, basestring)):
             etype, _, msg = exc.faultCode.partition('--')
             if etype.strip() != 'warning':
                 msg = exc.faultCode
                 if not msg.startswith('FATAL:'):
                     msg += '\n' + exc.faultString
-            print '%s: %s' % (exc_type.__name__, msg.strip())
+            print('%s: %s' % (exc_type.__name__, msg.strip()))
         else:
             _original_hook(exc_type, exc, tb)
 
     if use_pprint:
-        def displayhook(value, _printer=pprint, _builtin=__builtin__):
+        def displayhook(value, _printer=pprint, _builtins=builtins):
             # Pretty-format the output
             if value is None:
                 return
             _printer(value)
-            _builtin._ = value
+            _builtins._ = value
         sys.displayhook = displayhook
 
     class Usage(object):
         def __call__(self):
-            print usage
+            print(usage)
         __repr__ = lambda s: usage
-    __builtin__.usage = Usage()
+    builtins.usage = Usage()
 
     try:
         __import__('readline')
@@ -572,7 +589,7 @@ def _interact(use_pprint=True, usage=USAGE):
     class Console(code.InteractiveConsole):
         def runcode(self, code):
             try:
-                exec code in globals()
+                _exec(code, globals())
             except SystemExit:
                 raise
             except:
@@ -618,12 +635,12 @@ def main():
 
     Client._config_file = os.path.join(os.path.curdir, args.config)
     if args.list_env:
-        print 'Available settings: ', ' '.join(read_config())
+        print('Available settings:  ' + ' '.join(read_config()))
         return
 
     if (args.interact or not args.model):
         Client._set_interactive(write=args.write)
-        print USAGE
+        print(USAGE)
 
     if args.env:
         client = Client.from_config(args.env)

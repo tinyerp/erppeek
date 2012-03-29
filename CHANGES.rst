@@ -2,6 +2,15 @@ Changelog
 ---------
 
 
+0.6 (2012-??-??)
+~~~~~~~~~~~~~~~~
+
+* Support Python 3.
+
+* Return Client method instead of function when calling ``client.write``
+  or similar.
+
+
 0.5 (2012-03-29)
 ~~~~~~~~~~~~~~~~
 
