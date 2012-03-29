@@ -15,6 +15,7 @@ import os.path
 from pprint import pprint
 import re
 import sys
+import warnings
 
 try:
     # first, try importing directly
@@ -154,8 +155,10 @@ def issearchdomain(arg):
       - [('name', '=', 'mushroom'), ('state', '!=', 'draft')]
       - ['name = mushroom', 'state != draft']
       - []
+      - 'state != draft'
+      - ('state', '!=', 'draft')
     """
-    return isinstance(arg, list) and not (arg and (
+    return isinstance(arg, (list, tuple, basestring)) and not (arg and (
             # Not a list of ids: [1, 2, 3]
             isinstance(arg[0], (int, long)) or
             # Not a list of ids as str: ['1', '2', '3']
@@ -167,7 +170,10 @@ def searchargs(params, kwargs=None, context=None):
     if not params:
         return ([],)
     domain = params[0]
-    if not isinstance(domain, list):
+    if isinstance(domain, basestring):
+        domain = [domain]
+        warnings.warn('Domain should be a list: %s' % domain)
+    elif not isinstance(domain, list):
         return params
     for idx, term in enumerate(domain):
         if isinstance(term, basestring) and term not in DOMAIN_OPERATORS:
@@ -319,10 +325,14 @@ class Client(object):
         return (uid, password)
 
     @classmethod
-    def _set_interactive(cls):
+    def _set_interactive(cls, write=False):
         g = globals()
         # Don't call multiple times
         del Client._set_interactive
+        global_names = ['wizard', 'exec_workflow', 'read', 'search',
+                'count', 'model', 'keys', 'fields', 'field', 'access']
+        if write:
+            global_names.extend(['write', 'create', 'copy', 'unlink'])
 
         def connect(self, env=None):
             if env:
@@ -331,8 +341,6 @@ class Client(object):
                 client = self
                 env = self._environment or self._db
             g['client'] = client
-            global_names = ('wizard', 'exec_workflow', 'read', 'search',
-                    'count', 'model', 'keys', 'fields', 'field', 'access')
             # Tweak prompt
             sys.ps1 = '%s >>> ' % env
             sys.ps2 = '%s ... ' % env
@@ -480,7 +488,7 @@ class Client(object):
         if models:
             return sorted([m['model'] for m in models])
 
-    def modules(self, name, installed=None):
+    def modules(self, name='', installed=None):
         domain = [('name', 'like', name)]
         if installed is not None:
             op = installed and '=' or '!='
@@ -511,6 +519,15 @@ class Client(object):
             return True
         except (AttributeError, xmlrpclib.Fault):
             return False
+
+    def __getattr__(self, method):
+        # miscellaneous object methods
+        def wrapper(obj, *params, **kwargs):
+            """Wrapper for client.execute(obj, %r, *params, **kwargs)."""
+            return self.execute(obj, method, *params, **kwargs)
+        wrapper.__name__ = method
+        wrapper.__doc__ %= method
+        return wrapper
 
 
 def _interact(use_pprint=True, usage=USAGE):
@@ -562,6 +579,7 @@ def _interact(use_pprint=True, usage=USAGE):
                 # Work around http://bugs.python.org/issue12643
                 excepthook(*sys.exc_info())
 
+    warnings.simplefilter('always', UserWarning)
     # Key UP to avoid an empty line
     Console().interact('\033[A')
 
@@ -574,7 +592,7 @@ def main():
             help='list sections of the configuration')
     parser.add_option('--env',
             help='read connection settings from the given section')
-    parser.add_option('-c', '--config', dest='config', default=CONF_FILE,
+    parser.add_option('-c', '--config', default=CONF_FILE,
             help='specify alternate config file (default %r)' % CONF_FILE)
     parser.add_option('--server', default=DEFAULT_URL,
             help='full URL to the XML-RPC server '
@@ -586,13 +604,15 @@ def main():
                  'ps from other users)')
     parser.add_option('-m', '--model',
             help='the type of object to find')
-    parser.add_option('-s', '--search', action='append', dest='search',
+    parser.add_option('-s', '--search', action='append',
             help='search condition (multiple allowed); alternatively, pass '
                  'multiple IDs as positional parameters after the options')
-    parser.add_option('-f', action='append', dest='fields',
+    parser.add_option('-f', '--fields', action='append',
             help='restrict the output to certain fields (multiple allowed)')
-    parser.add_option('-i', action='store_true', dest='inspect',
+    parser.add_option('-i', '--interact', action='store_true',
             help='use interactively')
+    parser.add_option('--write', action='store_true',
+            help='enable "write", "create", "copy" and "unlink" helpers')
 
     (args, ids) = parser.parse_args()
 
@@ -601,8 +621,8 @@ def main():
         print 'Available settings: ', ' '.join(read_config())
         return
 
-    if (args.inspect or not args.model):
-        Client._set_interactive()
+    if (args.interact or not args.model):
+        Client._set_interactive(write=args.write)
         print USAGE
 
     if args.env:
