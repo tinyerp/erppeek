@@ -476,20 +476,24 @@ class Client(object):
         if len(params) > 1 and isinstance(params[1], basestring):
             fmt = ('%(' in params[1]) and params[1]
             if fmt:
-                fields = _fields_re.findall(params[1])
+                fields = _fields_re.findall(fmt)
             else:
                 # transform: "zip city" --> ("zip", "city")
                 fields = params[1].split()
                 if len(fields) == 1:
-                    fmt = list
+                    fmt = ()    # marker
             params = (params[0], fields) + params[2:]
         res = self.execute(obj, 'read', *params, **kwargs)
         if not res:
             return res
-        if fmt is list:
-            return [d[fields[0]] for d in res]
         if fmt:
-            return [fmt % d for d in res]
+            if isinstance(res, list):
+                return [fmt % d for d in res]
+            return fmt % res
+        if fmt == ():
+            if isinstance(res, list):
+                return [d[fields[0]] for d in res]
+            return res[fields[0]]
         return res
 
     def model(self, name):
