@@ -2,13 +2,15 @@ Changelog
 ---------
 
 
-0.6 (2012-??-??)
+0.6 (2012-04-03)
 ~~~~~~~~~~~~~~~~
 
 * Support Python 3.
 
 * Return Client method instead of function when calling ``client.write``
   or similar.
+
+* Fix the case where read() is called with a single id.
 
 
 0.5 (2012-03-29)
