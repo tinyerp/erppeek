@@ -13,7 +13,7 @@ with open('CHANGES.rst') as f:
 
 setup(
     name='ERPpeek',
-    version='0.6',
+    version='0.7',
     license='BSD',
     description='Versatile tool for browsing OpenERP data',
     long_description=readme,

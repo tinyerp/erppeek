@@ -59,7 +59,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '0.6'
+__version__ = '0.7'
 __all__ = ['Client', 'read_config']
 
 CONF_FILE = 'erppeek.ini'
@@ -229,6 +229,7 @@ class Service(ServerProxy):
 
 class Client(object):
 
+    _execute = None
     _config_file = os.path.join(os.path.curdir, CONF_FILE)
 
     def __init__(self, server, db, user, password=None):
@@ -531,7 +532,7 @@ class Client(object):
         try:
             self._execute('ir.model.access', 'check', obj, mode)
             return True
-        except (AttributeError, Fault):
+        except (TypeError, Fault):
             return False
 
     def __getattr__(self, method):
