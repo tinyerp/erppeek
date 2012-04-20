@@ -2,6 +2,12 @@ Changelog
 ---------
 
 
+0.8 (UNRELEASED)
+~~~~~~~~~~~~~~~~
+
+* Fix help(client) and repr(...).
+
+
 0.7 (2012-04-04)
 ~~~~~~~~~~~~~~~~
 

@@ -223,13 +223,11 @@ class Service(ServerProxy):
         if name in self._methods:
             wrapper = lambda s, *args: s._ServerProxy__request(name, args)
             wrapper.__name__ = name
-            return wrapper.__get__(self)
+            return wrapper.__get__(self, type(self))
         raise AttributeError("'Service' object has no attribute %r" % name)
 
 
 class Client(object):
-
-    _execute = None
     _config_file = os.path.join(os.path.curdir, CONF_FILE)
 
     def __init__(self, server, db, user, password=None):
@@ -238,6 +236,7 @@ class Client(object):
         self._environment = None
         self.user = None
         major_version = None
+        self._execute = None
 
         def get_proxy(name):
             if major_version in ('5.0', None):
@@ -536,13 +535,15 @@ class Client(object):
             return False
 
     def __getattr__(self, method):
+        if method.startswith('__'):
+            raise AttributeError("'Client' object has no attribute %r" % method)
         # miscellaneous object methods
         def wrapper(self, obj, *params, **kwargs):
             """Wrapper for client.execute(obj, %r, *params, **kwargs)."""
             return self.execute(obj, method, *params, **kwargs)
         wrapper.__name__ = method
         wrapper.__doc__ %= method
-        return wrapper.__get__(self)
+        return wrapper.__get__(self, type(self))
 
 
 def _interact(use_pprint=True, usage=USAGE):
