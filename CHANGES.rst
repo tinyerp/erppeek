@@ -7,6 +7,8 @@ Changelog
 
 * Fix help(client) and repr(...).
 
+* Add basic safeguards for argument types.
+
 
 0.7 (2012-04-04)
 ~~~~~~~~~~~~~~~~
