@@ -374,8 +374,10 @@ class Client(object):
         cls.connect = connect
 
     def execute(self, obj, method, *params, **kwargs):
+        assert isinstance(obj, basestring) and isinstance(method, basestring)
         context = kwargs.pop('context', None)
-        if method in ('read', 'name_get') and params:
+        if method in ('read', 'name_get'):
+            assert params
             if issearchdomain(params[0]):
                 # Combine search+read
                 search_params = searchargs(params[:1], kwargs, context)
@@ -402,6 +404,7 @@ class Client(object):
         return self._execute(obj, method, *params)
 
     def exec_workflow(self, obj, signal, obj_id):
+        assert isinstance(obj, basestring) and isinstance(signal, basestring)
         return self._exec_workflow(obj, signal, obj_id)
 
     def wizard(self, name, datas=None, action='init', context=None):
