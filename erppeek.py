@@ -419,9 +419,14 @@ class Client(object):
         return self._wizard_execute(wiz_id, datas, action, context)
 
     def _upgrade(self, modules, button):
+        # First, update the list of modules
+        updated, added = self.execute('ir.module.module', 'update_list')
+        if added:
+            print('%s module(s) added to the list' % added)
         # Click upgrade/install/uninstall button
         ids = self.search('ir.module.module', [('name', 'in', modules)])
-        if ids is None:
+        if not ids:
+            print('%s module(s) updated' % updated)
             return
         self.execute('ir.module.module', button, ids)
         mods = self.read('ir.module.module',
