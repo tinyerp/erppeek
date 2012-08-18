@@ -2,6 +2,15 @@ Changelog
 ---------
 
 
+0.9 (UNRELEASED)
+~~~~~~~~~~~~~~~~
+
+* Refresh the list of modules before install or upgrade.
+
+* List all modules which have state != 'uninstalled'
+  with ``client.modules(installed=True)``.
+
+
 0.8 (2012-04-24)
 ~~~~~~~~~~~~~~~~
 
