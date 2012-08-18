@@ -508,8 +508,8 @@ class Client(object):
     def modules(self, name='', installed=None):
         domain = [('name', 'like', name)]
         if installed is not None:
-            op = installed and '=' or '!='
-            domain.append(('state', op, 'installed'))
+            op = installed and '!=' or '='
+            domain.append(('state', op, 'uninstalled'))
         mods = self.read('ir.module.module', domain, 'name state')
         if mods:
             res = {}
