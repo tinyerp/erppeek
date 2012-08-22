@@ -1,6 +1,7 @@
 Changelog
 ---------
 
+.. currentmodule:: erppeek
 
 0.9 (UNRELEASED)
 ~~~~~~~~~~~~~~~~
@@ -12,18 +13,18 @@ Changelog
   ``client.model('res.company')`` and ``client.ResCompany`` return the same
   :class:`Model`.
 
-* Add documentation for the API.
-
 * Refresh the list of modules before install or upgrade.
 
 * List all modules which have ``state not in ('uninstalled', 'uninstallable')``
   when calling ``client.modules(installed=True)``.
 
+* Add documentation.
+
 
 0.8 (2012-04-24)
 ~~~~~~~~~~~~~~~~
 
-* Fix help(client) and repr(...).
+* Fix ``help(client)`` and ``repr(...)``.
 
 * Add basic safeguards for argument types.
 
@@ -42,7 +43,7 @@ Changelog
 * Return Client method instead of function when calling ``client.write``
   or similar.
 
-* Fix the case where read() is called with a single id.
+* Fix the case where :meth:`~Client.read()` is called with a single id.
 
 
 0.5 (2012-03-29)

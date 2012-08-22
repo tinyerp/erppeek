@@ -565,7 +565,7 @@ class Client(object):
          - ``[('name', '=', 'mushroom'), ('state', '!=', 'draft')]``
          - ``['name = mushroom', 'state != draft']``
          - ``[]``
-         - or a list of ids ``[1, 2, 3]``
+         - a list of ids ``[1, 2, 3]`` or a single id ``42``
 
         The third argument, `fields`, accepts:
          - ``('street', 'city')``
