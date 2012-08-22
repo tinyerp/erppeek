@@ -3,6 +3,14 @@ Changelog
 
 .. currentmodule:: erppeek
 
+0.x (UNRELEASED)
+~~~~~~~~~~~~~~~~
+
+* Add the ``--verbose`` switch to log the XML-RPC messages.
+  Lines are truncated at 79 chars.  Use ``-vv`` or ``-vvv``
+  to truncate at 179 or 9999 chars respectively.
+
+
 0.9.2 (2012-08-22)
 ~~~~~~~~~~~~~~~~~~
 

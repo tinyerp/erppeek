@@ -67,6 +67,7 @@ DEFAULT_URL = 'http://localhost:8069'
 DEFAULT_DB = 'openerp'
 DEFAULT_USER = 'admin'
 DEFAULT_PASSWORD = 'admin'
+MAXCOL = [79, 179, 9999]    # Line length in verbose mode
 
 USAGE = """\
 Usage (main commands):
@@ -253,10 +254,12 @@ class Service(ServerProxy):
     which should be exposed on this endpoint.  Use ``dir(...)`` on the
     instance to list them.
     """
-    def __init__(self, server, endpoint, methods):
+    def __init__(self, server, endpoint, methods, verbose=False):
         uri = server + '/xmlrpc/' + endpoint
         ServerProxy.__init__(self, uri, allow_none=True)
+        self._endpoint = endpoint
         self._methods = sorted(methods)
+        self._verbose = verbose
 
     def __repr__(self):
         rname = '%s%s' % (self._ServerProxy__host, self._ServerProxy__handler)
@@ -267,11 +270,29 @@ class Service(ServerProxy):
         return self._methods
 
     def __getattr__(self, name):
-        if name in self._methods:
+        if name not in self._methods:
+            raise AttributeError("'Service' object has no attribute %r" % name)
+        if self._verbose:
+            maxcol = MAXCOL[min(len(MAXCOL), self._verbose) - 1]
+
+            def wrapper(self, *args):
+                snt = ', '.join([repr(arg) for arg in args])
+                snt = '%s.%s(%s)' % (self._endpoint, name, snt)
+                if len(snt) > maxcol:
+                    suffix = '... L=%s' % len(snt)
+                    snt = snt[:maxcol - len(suffix)] + suffix
+                print('--> ' + snt)
+                res = self._ServerProxy__request(name, args)
+                rcv = str(res)
+                if len(rcv) > maxcol:
+                    suffix = '... L=%s' % len(rcv)
+                    rcv = rcv[:maxcol - len(suffix)] + suffix
+                print('<-- ' + rcv)
+                return res
+        else:
             wrapper = lambda s, *args: s._ServerProxy__request(name, args)
-            wrapper.__name__ = name
-            return wrapper.__get__(self, type(self))
-        raise AttributeError("'Service' object has no attribute %r" % name)
+        wrapper.__name__ = name
+        return wrapper.__get__(self, type(self))
 
 
 class Client(object):
@@ -285,7 +306,7 @@ class Client(object):
     """
     _config_file = os.path.join(os.path.curdir, CONF_FILE)
 
-    def __init__(self, server, db, user, password=None):
+    def __init__(self, server, db, user, password=None, verbose=False):
         self._server = server
         self._db = db
         self._environment = None
@@ -299,7 +320,7 @@ class Client(object):
             else:
                 # Only for OpenERP >= 6
                 methods = _methods[name] + _methods_6_1[name]
-            return Service(server, name, methods)
+            return Service(server, name, methods, verbose=verbose)
         self.server_version = ver = get_proxy('db').server_version()
         self.major_version = major_version = '.'.join(ver.split('.', 2)[:2])
         # Create the XML-RPC proxies
@@ -313,14 +334,15 @@ class Client(object):
         self._models = {}
 
     @classmethod
-    def from_config(cls, environment):
+    def from_config(cls, environment, verbose=False):
         """Create a connection to a defined environment.
 
         Read the settings from the section ``[environment]`` in the
         ``erppeek.ini`` file and return a connected :class:`Client`.
         See :func:`read_config` for details of the configuration file format.
         """
-        client = cls(*read_config(environment))
+        server, db, user, password = read_config(environment)
+        client = cls(server, db, user, password, verbose=verbose)
         client._environment = environment
         return client
 
@@ -401,18 +423,16 @@ class Client(object):
         return (uid, password)
 
     @classmethod
-    def _set_interactive(cls, write=False):
+    def _set_interactive(cls):
         g = globals()
         # Don't call multiple times
         del Client._set_interactive
         global_names = ['wizard', 'exec_workflow', 'read', 'search', 'count',
                         'model', 'models', 'keys', 'fields', 'field', 'access']
-        if write:
-            global_names.extend(['write', 'create', 'copy', 'unlink'])
 
         def connect(self, env=None):
             if env:
-                client = self.from_config(env)
+                client = self.from_config(env, verbose=self._verbose)
             else:
                 client = self
                 env = self._environment or self._db
@@ -1101,8 +1121,8 @@ def main():
         '-i', '--interact', action='store_true',
         help='use interactively')
     parser.add_option(
-        '--write', action='store_true',
-        help='enable "write", "create", "copy" and "unlink" helpers')
+        '-v', '--verbose', default=0, action='count',
+        help='verbose')
 
     (args, ids) = parser.parse_args()
 
@@ -1112,13 +1132,14 @@ def main():
         return
 
     if (args.interact or not args.model):
-        Client._set_interactive(write=args.write)
+        Client._set_interactive()
         print(USAGE)
 
     if args.env:
-        client = Client.from_config(args.env)
+        client = Client.from_config(args.env, verbose=args.verbose)
     else:
-        client = Client(args.server, args.db, args.user, args.password)
+        client = Client(args.server, args.db, args.user,
+                        args.password, args.verbose)
 
     if args.model:
         if args.search:
