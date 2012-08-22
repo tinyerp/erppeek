@@ -482,6 +482,8 @@ class Client(object):
                 ids = self._execute(obj, 'search', *search_params)
             else:
                 ids = params[0]
+            if not ids:
+                return []
             if len(params) > 1:
                 params = (ids,) + params[1:]
             elif method == 'read':
@@ -499,7 +501,6 @@ class Client(object):
         # Ignore extra keyword arguments
         for item in kwargs.items():
             print('Ignoring: %s = %r' % item)
-        # print('DBG: _execute(%r, %r, *%r)' % (obj, method, params))
         return self._execute(obj, method, *params)
 
     def exec_workflow(self, obj, signal, obj_id):
@@ -537,22 +538,26 @@ class Client(object):
         updated, added = self.execute('ir.module.module', 'update_list')
         if added:
             print('%s module(s) added to the list' % added)
-        # Click upgrade/install/uninstall button
-        ids = self.search('ir.module.module', [('name', 'in', modules)])
-        if not ids:
-            print('%s module(s) updated' % updated)
-            return
-        self.execute('ir.module.module', button, ids)
+        # Find modules
+        ids = modules and self.search('ir.module.module',
+                                      [('name', 'in', modules)])
+        if ids:
+            # Click upgrade/install/uninstall button
+            self.execute('ir.module.module', button, ids)
         mods = self.read('ir.module.module',
                          [('state', 'not in', STABLE_STATES)], 'name state')
         if not mods:
+            print('%s module(s)' % updated)
             return
         print('%s module(s) selected' % len(ids))
-        print('%s module(s) to update:' % len(mods))
+        print('%s module(s) to upgrade:' % len(mods))
         for mod in mods:
             print('  %(state)s\t%(name)s' % mod)
 
+        # Empty the models' cache
         self._models.clear()
+
+        # Apply scheduled upgrades
         if self.major_version == '5.0':
             # Wizard "Apply Scheduled Upgrades"
             rv = self.wizard('module.upgrade', action='start')
@@ -665,7 +670,7 @@ class Client(object):
             errmsg = 'Model not found.  These models exist:'
         else:
             errmsg = 'Model not found: %s' % (name,)
-        raise RuntimeError('\n * '.join([errmsg] + [str(m) for m in models.values()]))
+        print('\n * '.join([errmsg] + [str(m) for m in models.values()]))
 
     def modules(self, name='', installed=None):
         """Return a dictionary of modules.

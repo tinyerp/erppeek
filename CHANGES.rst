@@ -13,6 +13,10 @@ Changelog
 * Removed the ``--write`` switch because it's not really useful.
   Use :meth:`Record.write` or :meth:`client.write` for example.
 
+* Stop raising RuntimeError when calling ``Client.model(name)``.
+  Simply print the message if the name does not match.
+
+* Fix message wording on module install or upgrade.
 
 0.9.2 (2012-08-22)
 ~~~~~~~~~~~~~~~~~~
