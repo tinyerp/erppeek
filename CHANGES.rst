@@ -8,6 +8,9 @@ Changelog
 
 * Fix ``Record.write()`` and ``Record.unlink()`` methods.
 
+* Fix the caching of the ``Model`` keys and fields and the ``Record``
+  name.
+
 
 0.9.1 (2012-08-22)
 ~~~~~~~~~~~~~~~~~~

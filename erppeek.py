@@ -717,18 +717,13 @@ class Model(object):
     def __repr__(self):
         return "<Model '%s'>" % (self._name,)
 
-    @property
-    def _keys(self):
+    def _get_keys(self):
         obj_keys = self._execute('fields_get_keys')
         obj_keys.sort()
-        self.__dict__['_keys'] = obj_keys
         return obj_keys
 
-    @property
-    def _fields(self):
-        fields = self._execute('fields_get')
-        self.__dict__['_fields'] = fields
-        return fields
+    def _get_fields(self):
+        return self._execute('fields_get')
 
     def keys(self):
         """Return the keys of the model."""
@@ -789,16 +784,19 @@ class Model(object):
         new_id = self._execute('create', values, context=context)
         return Record(self, new_id, context=context)
 
-    def __getattr__(self, method):
-        if method in ('_keys', '_fields') or method.startswith('__'):
-            raise AttributeError("'Model' object has no attribute %r" % method)
+    def __getattr__(self, attr):
+        if attr in ('_keys', '_fields'):
+            self.__dict__[attr] = rv = getattr(self, '_get' + attr)()
+            return rv
+        if attr.startswith('__'):
+            raise AttributeError("'Model' object has no attribute %r" % attr)
 
         def wrapper(self, *params, **kwargs):
             """Wrapper for client.execute(%r, %r, *params, **kwargs)."""
-            return self._execute(method, *params, **kwargs)
-        wrapper.__name__ = method
-        wrapper.__doc__ %= (self._name, method)
-        self.__dict__[method] = mobj = wrapper.__get__(self, type(self))
+            return self._execute(attr, *params, **kwargs)
+        wrapper.__name__ = attr
+        wrapper.__doc__ %= (self._name, attr)
+        self.__dict__[attr] = mobj = wrapper.__get__(self, type(self))
         return mobj
 
 
@@ -874,14 +872,12 @@ class Record(object):
     def __str__(self):
         return self._name
 
-    @property
-    def _name(self):
+    def _get_name(self):
         try:
             (id_name,) = self._model._execute('name_get', [self.id])
             name = '[%d] %s' % (self.id, id_name[1])
         except Exception:
             name = '[%d] -' % (self.id,)
-        self.__dict__['_name'] = name
         return name
 
     @property
@@ -981,6 +977,9 @@ class Record(object):
     def __getattr__(self, attr):
         if attr in self._model._keys:
             return self[attr]
+        if attr == '_name':
+            self.__dict__['_name'] = name = self._get_name()
+            return name
         if attr.startswith('__'):
             raise AttributeError("'Record' object has no attribute %r" % attr)
         context = self._context
