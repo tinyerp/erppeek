@@ -130,12 +130,14 @@ object itself.  Please refer to the OpenERP documentation for more details.
 .. attribute:: Client.db
 
    Expose the ``db`` :class:`Service`.
+
    Examples: :meth:`Client.db.list` or :meth:`Client.db.server_version`
    RPC methods.
 
 .. attribute:: Client.common
 
    Expose the ``common`` :class:`Service`.
+
    Example: :meth:`Client.common.login_message` RPC method.
 
 .. data:: Client._object
@@ -177,9 +179,11 @@ In addition to the thin wrapper methods, the :class:`Client` provides a high
 level API which encapsulates objects into `Active Records
 <http://www.martinfowler.com/eaaCatalog/activeRecord.html>`_.
 
-The :class:`Model` is instantiated using the :meth:`Client.model` method or directly
-through camel case attributes.  Example: ``client.model('res.company')`` and
-``client.ResCompany`` return the same :class:`Model`.
+The :class:`Model` is instantiated using the :meth:`Client.model` method or
+directly through camel case attributes.
+
+Example: both ``client.model('res.company')`` and ``client.ResCompany`` return
+the same :class:`Model`.
 
 .. autoclass:: Model
    :members: keys, fields, field, access, create, browse
