@@ -273,10 +273,15 @@ class Service(ServerProxy):
         if name not in self._methods:
             raise AttributeError("'Service' object has no attribute %r" % name)
         if self._verbose:
+            def sanitize(args, _pos=(self._endpoint == 'db') and 999 or 2):
+                if len(args) > _pos:
+                    args = list(args)
+                    args[_pos] = '*'
+                return args
             maxcol = MAXCOL[min(len(MAXCOL), self._verbose) - 1]
 
             def wrapper(self, *args):
-                snt = ', '.join([repr(arg) for arg in args])
+                snt = ', '.join([repr(arg) for arg in sanitize(args)])
                 snt = '%s.%s(%s)' % (self._endpoint, name, snt)
                 if len(snt) > maxcol:
                     suffix = '... L=%s' % len(snt)
@@ -792,6 +797,7 @@ class Model(object):
         if issearchdomain(ids):
             ids = self._execute('search', ids, context=context)
         return RecordList(self, ids, context=context)
+
     # alias
     get = browse
 
