@@ -10,6 +10,9 @@ Changelog
   Lines are truncated at 79 chars.  Use ``-vv`` or ``-vvv``
   to truncate at 179 or 9999 chars respectively.
 
+* Removed the ``--write`` switch because it's not really useful.
+  Use :meth:`Record.write` or :meth:`client.write` for example.
+
 
 0.9.2 (2012-08-22)
 ~~~~~~~~~~~~~~~~~~
