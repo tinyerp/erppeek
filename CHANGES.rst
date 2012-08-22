@@ -5,10 +5,19 @@ Changelog
 0.9 (UNRELEASED)
 ~~~~~~~~~~~~~~~~
 
+* Add the Active Record pattern for convenience.  New classes :class:`Model`,
+  :class:`RecordList` and :class:`Record`.  The :meth:`Client.model` method
+  now returns a single :class:`Model` instance.  These models can be
+  reached using camel case attribute too.  Example:
+  ``client.model('res.company')`` and ``client.ResCompany`` return the same
+  :class:`Model`.
+
+* Add documentation for the API.
+
 * Refresh the list of modules before install or upgrade.
 
-* List all modules which have state != 'uninstalled'
-  with ``client.modules(installed=True)``.
+* List all modules which have ``state not in ('uninstalled', 'uninstallable')``
+  when calling ``client.modules(installed=True)``.
 
 
 0.8 (2012-04-24)

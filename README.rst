@@ -97,7 +97,8 @@ Main commands::
     read(obj, domain, fields=None, offset=0, limit=None, order=None)
                                     # Return values for the fields
 
-    model(name)                     # List models matching pattern
+    models(name)                    # List models matching pattern
+    model(name)                     # Return a Model instance
     keys(obj)                       # List field names of the model
     fields(obj, names=None)         # Return details for the fields
     field(obj, name)                # Return details for the field
