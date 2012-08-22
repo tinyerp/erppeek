@@ -675,7 +675,7 @@ class Client(object):
         return self.model(obj).fields(names=names)
 
     def field(self, obj, name):
-        """Wrapper for :meth:`Model.fields` method."""
+        """Wrapper for :meth:`Model.field` method."""
         return self.model(obj).field(name)
 
     def access(self, obj, mode='read'):
