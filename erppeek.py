@@ -862,15 +862,25 @@ class RecordList(object):
             raise AttributeError(errmsg)
         model_name = self._model._name
         context = self._context
-        execute = self._model.client.execute
+        if attr == 'read':
+            _read = self._model.client.read
 
-        def wrapper(self, *params, **kwargs):
-            """Wrapper for client.execute(%r, %r, [...], *params, **kwargs)."""
-            if context:
-                kwargs.setdefault('context', context)
-            return execute(model_name, attr, self._ids, *params, **kwargs)
+            def wrapper(self, *params, **kwargs):
+                """Wrapper for client.%s(%r, [...], *params, **kwargs)."""
+                if context:
+                    kwargs.setdefault('context', context)
+                return _read(model_name, self._ids, *params, **kwargs)
+            wrapper.__doc__ %= ('read', model_name)
+        else:
+            execute = self._model.client.execute
+
+            def wrapper(self, *params, **kwargs):
+                """Wrapper for client.%s(%r, %r, [...], *params, **kwargs)."""
+                if context:
+                    kwargs.setdefault('context', context)
+                return execute(model_name, attr, self._ids, *params, **kwargs)
+            wrapper.__doc__ %= ('execute', model_name, attr)
         wrapper.__name__ = attr
-        wrapper.__doc__ %= (model_name, attr)
         self.__dict__[attr] = mobj = wrapper.__get__(self, type(self))
         return mobj
 
@@ -889,6 +899,7 @@ class Record(object):
     :meth:`~Record.unlink` method is called.
     """
     def __init__(self, res_model, res_id, context=None):
+        # Bypass the __setattr__ method
         self.__dict__.update({
             'client': res_model.client,
             '_model_name': res_model._name,
@@ -940,7 +951,10 @@ class Record(object):
             context = self._context
         rv = self.client.read(self._model_name, self.id,
                               fields, context=context)
-        self.__dict__.update(rv)
+        if isinstance(rv, dict):
+            self._update(rv)
+        else:
+            self._update({fields: rv})
         return rv
 
     def write(self, values, context=None):

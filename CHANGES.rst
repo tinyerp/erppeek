@@ -16,7 +16,11 @@ Changelog
 * Stop raising RuntimeError when calling ``Client.model(name)``.
   Simply print the message if the name does not match.
 
+* Fix ``RecordList.read()`` and ``Record.read()`` methods to accept the
+  same diversity of ``fields`` arguments as the ``Client.read()`` method.
+
 * Fix message wording on module install or upgrade.
+
 
 0.9.2 (2012-08-22)
 ~~~~~~~~~~~~~~~~~~
