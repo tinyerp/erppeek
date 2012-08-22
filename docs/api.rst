@@ -188,15 +188,15 @@ through camel case attributes.  Example: ``client.model('res.company')`` and
 
    .. method:: read(fields=None, context=None)
 
-   Wrapper for the :meth:`Record.read` method.  Return a list.
+      Wrapper for the :meth:`Record.read` method.  Return a list.
 
    .. method:: unlink(context=None)
 
-   Wrapper for the :meth:`Record.unlink` method.
+      Wrapper for the :meth:`Record.unlink` method.
 
    .. method:: write(values, context=None)
 
-   Wrapper for the :meth:`Record.write` method.
+      Wrapper for the :meth:`Record.write` method.
 
 .. autoclass:: Record
    :members:
