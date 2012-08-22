@@ -5,6 +5,12 @@ from __future__ import with_statement
 from setuptools import setup
 
 
+def get_version(source='erppeek.py'):
+    with open(source) as f:
+        for line in f:
+            if line.startswith('__version__'):
+                return eval(line.split('=')[-1])
+
 with open('README.rst') as f:
     readme = f.read()
 
@@ -13,7 +19,7 @@ with open('README.rst') as f:
 
 setup(
     name='ERPpeek',
-    version='0.9.2',
+    version=get_version(),
     license='BSD',
     description='Versatile tool for browsing OpenERP data',
     long_description=readme,
