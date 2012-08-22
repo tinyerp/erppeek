@@ -13,7 +13,7 @@ with open('README.rst') as f:
 
 setup(
     name='ERPpeek',
-    version='0.9.1',
+    version='0.9.2',
     license='BSD',
     description='Versatile tool for browsing OpenERP data',
     long_description=readme,

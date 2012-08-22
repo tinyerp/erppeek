@@ -3,7 +3,7 @@ Changelog
 
 .. currentmodule:: erppeek
 
-0.9.2 (UNRELEASED)
+0.9.2 (2012-08-22)
 ~~~~~~~~~~~~~~~~~~
 
 * Fix ``Record.write()`` and ``Record.unlink()`` methods.
