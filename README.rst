@@ -63,9 +63,11 @@ Connect to the OpenERP server::
 
 This is a sample session::
 
-    demo >>> model('users')
-    ['res.users']
-    demo >>> count('res.users')
+    demo >>> model('res.users')
+    <Model 'res.users'>
+    demo >>> client.ResUsers is model('res.users')
+    True
+    demo >>> client.ResUsers.count()
     4
     demo >>> read('ir.cron', ['active = False'], 'active function')
     [{'active': False, 'function': 'run_mail_scheduler', 'id': 1},

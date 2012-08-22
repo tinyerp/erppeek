@@ -3,6 +3,13 @@ Changelog
 
 .. currentmodule:: erppeek
 
+0.9.1 (2012-08-22)
+~~~~~~~~~~~~~~~~~~
+
+* Fix ``client.model()`` method.  Add ``models()`` to the ``globals()``
+  in interactive mode.
+
+
 0.9 (2012-08-22)
 ~~~~~~~~~~~~~~~~
 

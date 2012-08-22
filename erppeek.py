@@ -59,7 +59,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '0.9'
+__version__ = '0.9.1'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service', 'read_config']
 
 CONF_FILE = 'erppeek.ini'
@@ -406,7 +406,7 @@ class Client(object):
         # Don't call multiple times
         del Client._set_interactive
         global_names = ['wizard', 'exec_workflow', 'read', 'search', 'count',
-                        'model', 'keys', 'fields', 'field', 'access']
+                        'model', 'models', 'keys', 'fields', 'field', 'access']
         if write:
             global_names.extend(['write', 'create', 'copy', 'unlink'])
 
@@ -639,7 +639,7 @@ class Client(object):
             errmsg = 'Model not found.  These models exist:'
         else:
             errmsg = 'Model not found: %s' % (name,)
-        raise RuntimeError('\n * '.join([errmsg] + models.values()))
+        raise RuntimeError('\n * '.join([errmsg] + [str(m) for m in models.values()]))
 
     def modules(self, name='', installed=None):
         """Return a dictionary of modules.
