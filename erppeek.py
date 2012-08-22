@@ -474,6 +474,7 @@ class Client(object):
         # Ignore extra keyword arguments
         for item in kwargs.items():
             print('Ignoring: %s = %r' % item)
+        # print('DBG: _execute(%r, %r, *%r)' % (obj, method, params))
         return self._execute(obj, method, *params)
 
     def exec_workflow(self, obj, signal, obj_id):
@@ -919,8 +920,8 @@ class Record(object):
         """Write the `values` in the :class:`Record`."""
         if context is None and self._context:
             context = self._context
-        rv = self.client.write(self._model_name, 'write', [self.id],
-                               values, context=context)
+        rv = self.client.execute(self._model_name, 'write', [self.id],
+                                 values, context=context)
         self._clear_cache()
         return rv
 
@@ -928,8 +929,8 @@ class Record(object):
         """Delete the current :class:`Record` from the database."""
         if context is None and self._context:
             context = self._context
-        rv = self.client.unlink(self._model_name, 'unlink', [self.id],
-                                context=context)
+        rv = self.client.execute(self._model_name, 'unlink', [self.id],
+                                 context=context)
         self._clear_cache()
         return rv
 
