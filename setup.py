@@ -8,16 +8,16 @@ from setuptools import setup
 with open('README.rst') as f:
     readme = f.read()
 
-with open('CHANGES.rst') as f:
-    readme += '\n\n\n' + f.read()
+# with open('CHANGES.rst') as f:
+#     readme += '\n\n\n' + f.read()
 
 setup(
     name='ERPpeek',
-    version='0.8',
+    version='0.9',
     license='BSD',
     description='Versatile tool for browsing OpenERP data',
     long_description=readme,
-    url='https://github.com/florentx/erppeek',
+    url='http://erppeek.readthedocs.org/',
     author='Florent Xicluna',
     author_email='florent.xicluna@gmail.com',
     py_modules=['erppeek'],

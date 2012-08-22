@@ -3,7 +3,7 @@ Changelog
 
 .. currentmodule:: erppeek
 
-0.9 (UNRELEASED)
+0.9 (2012-08-22)
 ~~~~~~~~~~~~~~~~
 
 * Add the Active Record pattern for convenience.  New classes :class:`Model`,
