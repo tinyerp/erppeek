@@ -110,9 +110,9 @@ DOMAIN_OPERATORS = frozenset('!|&')
 #  - redundant operators: '<>', '=like', '=ilike'
 #  - future operator(s) (6.1): '=?'
 _term_re = re.compile(
-        '(\S+)\s*'
-        '(=|!=|>|>=|<|<=|like|ilike|in|not like|not ilike|not in|child_of)'
-        '\s*(.*)')
+    '(\S+)\s*'
+    '(=|!=|>|>=|<|<=|like|ilike|in|not like|not ilike|not in|child_of)'
+    '\s*(.*)')
 _fields_re = re.compile(r'(?:[^%]|^)%\(([^)]+)\)')
 
 # Published object methods
@@ -204,10 +204,10 @@ def issearchdomain(arg):
       - ``('state', '!=', 'draft')``
     """
     return isinstance(arg, (list, tuple, basestring)) and not (arg and (
-            # Not a list of ids: [1, 2, 3]
-            isinstance(arg[0], int_types) or
-            # Not a list of ids as str: ['1', '2', '3']
-            (isinstance(arg[0], basestring) and arg[0].isdigit())))
+        # Not a list of ids: [1, 2, 3]
+        isinstance(arg[0], int_types) or
+        # Not a list of ids as str: ['1', '2', '3']
+        (isinstance(arg[0], basestring) and arg[0].isdigit())))
 
 
 def searchargs(params, kwargs=None, context=None):
@@ -405,8 +405,8 @@ class Client(object):
         g = globals()
         # Don't call multiple times
         del Client._set_interactive
-        global_names = ['wizard', 'exec_workflow', 'read', 'search',
-                'count', 'model', 'keys', 'fields', 'field', 'access']
+        global_names = ['wizard', 'exec_workflow', 'read', 'search', 'count',
+                        'model', 'keys', 'fields', 'field', 'access']
         if write:
             global_names.extend(['write', 'create', 'copy', 'unlink'])
 
@@ -689,6 +689,7 @@ class Client(object):
             rv = self.model(lowercase(method))
             self.__dict__[method] = rv
             return rv
+
         # miscellaneous object methods
         def wrapper(self, obj, *params, **kwargs):
             """Wrapper for client.execute(obj, %r, *params, **kwargs)."""
@@ -790,6 +791,7 @@ class Model(object):
     def __getattr__(self, method):
         if method in ('_keys', '_fields') or method.startswith('__'):
             raise AttributeError("'Model' object has no attribute %r" % method)
+
         def wrapper(self, *params, **kwargs):
             """Wrapper for client.execute(%r, %r, *params, **kwargs)."""
             return self._execute(method, *params, **kwargs)
@@ -831,6 +833,7 @@ class RecordList(object):
         model_name = self._model._name
         context = self._context
         execute = self._model.client.execute
+
         def wrapper(self, *params, **kwargs):
             """Wrapper for client.execute(%r, %r, [...], *params, **kwargs)."""
             if context:
@@ -980,6 +983,7 @@ class Record(object):
         if attr.startswith('__'):
             raise AttributeError("'Record' object has no attribute %r" % attr)
         context = self._context
+
         def wrapper(self, *params, **kwargs):
             """Wrapper for client.execute(%r, %r, %d, *params, **kwargs)."""
             if context:
@@ -1015,8 +1019,8 @@ def _interact(use_pprint=True, usage=USAGE):
 
     def excepthook(exc_type, exc, tb, _original_hook=sys.excepthook):
         # Print readable 'Fault' errors
-        if (issubclass(exc_type, Fault) and
-            isinstance(exc.faultCode, basestring)):
+        if ((issubclass(exc_type, Fault) and
+             isinstance(exc.faultCode, basestring))):
             etype, _, msg = exc.faultCode.partition('--')
             if etype.strip() != 'warning':
                 msg = exc.faultCode
@@ -1063,33 +1067,42 @@ def _interact(use_pprint=True, usage=USAGE):
 
 def main():
     parser = optparse.OptionParser(
-            usage='%prog [options] [id [id ...]]', version=__version__,
-            description='Inspect data on OpenERP objects')
-    parser.add_option('-l', '--list', action='store_true', dest='list_env',
-            help='list sections of the configuration')
-    parser.add_option('--env',
-            help='read connection settings from the given section')
-    parser.add_option('-c', '--config', default=CONF_FILE,
-            help='specify alternate config file (default %r)' % CONF_FILE)
-    parser.add_option('--server', default=DEFAULT_URL,
-            help='full URL to the XML-RPC server '
-                 '(default %s)' % DEFAULT_URL)
+        usage='%prog [options] [id [id ...]]', version=__version__,
+        description='Inspect data on OpenERP objects')
+    parser.add_option(
+        '-l', '--list', action='store_true', dest='list_env',
+        help='list sections of the configuration')
+    parser.add_option(
+        '--env',
+        help='read connection settings from the given section')
+    parser.add_option(
+        '-c', '--config', default=CONF_FILE,
+        help='specify alternate config file (default %r)' % CONF_FILE)
+    parser.add_option(
+        '--server', default=DEFAULT_URL,
+        help='full URL to the XML-RPC server (default %s)' % DEFAULT_URL)
     parser.add_option('-d', '--db', default=DEFAULT_DB, help='database')
     parser.add_option('-u', '--user', default=DEFAULT_USER, help='username')
-    parser.add_option('-p', '--password', default=DEFAULT_PASSWORD,
-            help='password (yes this will be in your shell history and '
-                 'ps from other users)')
-    parser.add_option('-m', '--model',
-            help='the type of object to find')
-    parser.add_option('-s', '--search', action='append',
-            help='search condition (multiple allowed); alternatively, pass '
-                 'multiple IDs as positional parameters after the options')
-    parser.add_option('-f', '--fields', action='append',
-            help='restrict the output to certain fields (multiple allowed)')
-    parser.add_option('-i', '--interact', action='store_true',
-            help='use interactively')
-    parser.add_option('--write', action='store_true',
-            help='enable "write", "create", "copy" and "unlink" helpers')
+    parser.add_option(
+        '-p', '--password', default=DEFAULT_PASSWORD,
+        help='password (yes this will be in your shell history and '
+             'ps from other users)')
+    parser.add_option(
+        '-m', '--model',
+        help='the type of object to find')
+    parser.add_option(
+        '-s', '--search', action='append',
+        help='search condition (multiple allowed); alternatively, pass '
+             'multiple IDs as positional parameters after the options')
+    parser.add_option(
+        '-f', '--fields', action='append',
+        help='restrict the output to certain fields (multiple allowed)')
+    parser.add_option(
+        '-i', '--interact', action='store_true',
+        help='use interactively')
+    parser.add_option(
+        '--write', action='store_true',
+        help='enable "write", "create", "copy" and "unlink" helpers')
 
     (args, ids) = parser.parse_args()
 
