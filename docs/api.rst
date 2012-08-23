@@ -16,6 +16,8 @@ be portable in the application with little effort.
    :local:
 
 
+.. _client-and-services:
+
 Client and Services
 -------------------
 
@@ -174,6 +176,8 @@ Python script or interactively in a Python session.
 
 .. automethod:: Client.uninstall
 
+
+.. _model-and-records:
 
 Model and Records
 -----------------

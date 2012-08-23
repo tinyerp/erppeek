@@ -7,6 +7,17 @@
 ERPpeek's documentation
 =======================
 
+*A versatile tool for browsing OpenERP data*
+
+The ERPpeek library communicates with any `OpenERP server
+<http://doc.openerp.com/>`_ using the standard XML-RPC interface.
+It provides both a :ref:`fully featured low-level API <client-and-services>`,
+and an encapsulation of the methods on :ref:`Active Record objects
+<model-and-records>`.  Additional helpers are provided to explore the model
+and administrate the server remotely.
+
+
+
 Contents:
 
 .. toctree::
