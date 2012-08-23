@@ -39,12 +39,15 @@ list or install OpenERP addons.
 Objects
 ~~~~~~~
 
-.. automethod:: Client.search(obj, domain, context=None)
+..
+   .. method:: Client.search(obj, domain, context=None)
+.. automethod:: Client.search(obj, domain, offset=0, limit=None, order=None, context=None)
 
 .. automethod:: Client.count(obj, domain, context=None)
 
-.. method:: Client.read(obj, ids, fields=None)
-            Client.read(obj, domain, fields=None)
+..
+   .. method:: Client.read(obj, ids, fields=None)
+               Client.read(obj, domain, fields=None)
 .. automethod:: Client.read(obj, domain, fields=None, offset=0, limit=None, order=None, context=None)
 
 .. method:: Client.create(obj, values, context=None)
@@ -186,6 +189,21 @@ Example: both ``client.model('res.company')`` and ``client.ResCompany`` return
 the same :class:`Model`.
 
 .. autoclass:: Model
+
+   .. automethod:: keys
+
+   .. automethod:: fields
+
+   .. automethod:: field
+
+   .. automethod:: access
+
+   .. method:: browse(domain, context=None)
+   .. automethod:: browse(domain, offset=0, limit=None, order=None, context=None)
+
+   .. automethod:: create
+
+..
    :members: keys, fields, field, access, create, browse
 
 .. autoclass:: RecordList

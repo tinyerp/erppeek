@@ -59,7 +59,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '0.10'
+__version__ = '0.11.dev0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service', 'read_config']
 
 CONF_FILE = 'erppeek.ini'
@@ -667,7 +667,7 @@ class Client(object):
         return dict([(mixedcase(name), self._model(name)) for name in names])
 
     def model(self, name):
-        """Return a :class:Model instance.
+        """Return a :class:`Model` instance.
 
         The argument `name` is the name of the model.
         """
@@ -800,7 +800,7 @@ class Model(object):
         except (TypeError, Fault):
             return False
 
-    def browse(self, ids, context=None):
+    def browse(self, ids, *params, **kwargs):
         """Return a :class:`Record` or a :class:`RecordList`.
 
         The argument `ids` accepts a single integer ``id``, a list of ids
@@ -808,10 +808,13 @@ class Model(object):
         If it is a single integer, the return value is a :class:`Record`.
         Otherwise, the return value is a :class:`RecordList`.
         """
+        context = kwargs.pop('context', None)
+        assert issearchdomain(ids) or not (params or kwargs)
         if isinstance(ids, int_types):
             return Record(self, ids, context=context)
         if issearchdomain(ids):
-            ids = self._execute('search', ids, context=context)
+            params = searchargs((ids,) + params, kwargs, context)
+            ids = self._execute('search', *params)
         return RecordList(self, ids, context=context)
 
     # alias
