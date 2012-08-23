@@ -12,7 +12,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   Introduction <intro>
+   intro
    API <api>
    changes
 

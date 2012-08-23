@@ -14,8 +14,8 @@ def get_version(source='erppeek.py'):
 with open('README.rst') as f:
     readme = f.read()
 
-# with open('CHANGES.rst') as f:
-#     readme += '\n\n\n' + f.read()
+with open('CHANGES.rst') as f:
+    readme += '\n\n\n' + f.read()
 
 setup(
     name='ERPpeek',

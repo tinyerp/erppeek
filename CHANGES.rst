@@ -1,8 +1,6 @@
 Changelog
 ---------
 
-.. currentmodule:: erppeek
-
 0.x (UNRELEASED)
 ~~~~~~~~~~~~~~~~
 

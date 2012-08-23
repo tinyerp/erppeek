@@ -1,1 +1,3 @@
-../CHANGES.rst
+.. currentmodule:: erppeek
+
+.. include:: ../CHANGES.rst
