@@ -7,6 +7,8 @@ Changelog
 * Enhance the ``Model.browse()`` method to accept the same
   keyword arguments as the ``Client.search()`` method.
 
+* Fix the verbose level on ``Client.connect()``.
+
 
 0.10 (2012-08-23)
 ~~~~~~~~~~~~~~~~~

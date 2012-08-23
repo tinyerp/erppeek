@@ -437,7 +437,7 @@ class Client(object):
 
         def connect(self, env=None):
             if env:
-                client = self.from_config(env, verbose=self._verbose)
+                client = self.from_config(env, verbose=self.db._verbose)
             else:
                 client = self
                 env = self._environment or self._db
@@ -1200,8 +1200,8 @@ def main():
     if args.env:
         client = Client.from_config(args.env, verbose=args.verbose)
     else:
-        client = Client(args.server, args.db, args.user,
-                        args.password, args.verbose)
+        client = Client(args.server, args.db, args.user, args.password,
+                        verbose=args.verbose)
 
     if args.model:
         if args.search:
