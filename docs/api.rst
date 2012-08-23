@@ -192,7 +192,11 @@ the same :class:`Model`.
 
    .. method:: read(fields=None, context=None)
 
-      Wrapper for the :meth:`Record.read` method.  Return a list.
+      Wrapper for the :meth:`Record.read` method.
+
+      Return a :class:`RecordList` if `fields` is the name of a single
+      ``many2one`` field, else return a :class:`list`.
+      See :meth:`Client.read` for details.
 
    .. method:: unlink(context=None)
 

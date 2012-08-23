@@ -599,9 +599,20 @@ class Client(object):
          - a list of ids ``[1, 2, 3]`` or a single id ``42``
 
         The third argument, `fields`, accepts:
-         - ``('street', 'city')``
-         - ``'street city'``
-         - ``'%(street)s %(city)s'``
+         - a single field: ``'first_name'``
+         - a tuple of fields: ``('street', 'city')``
+         - a space separated string: ``'street city'``
+         - a format spec: ``'%(street)s %(city)s'``
+
+        If `fields` is omitted, all fields are read.
+
+        If `domain` is a single id, then:
+         * return a single value if a single field is requested.
+         * return a string if a format spec is passed in the `fields` argument.
+         * else, return a dictionary.
+
+        If `domain` is not a single id, the returned value is a list of items.
+        Each item complies with the rules of the previous paragraph.
         """
         fmt = None
         if len(params) > 1 and isinstance(params[1], basestring):
@@ -815,6 +826,33 @@ class Model(object):
         new_id = self._execute('create', values, context=context)
         return Record(self, new_id, context=context)
 
+    def _browse_values(self, values, context=None):
+        """Wrap the values of a Record.
+
+        The argument `values` is a dictionary of values read from a Record.
+        When the field type is relational (many2one, one2many or many2many),
+        the value is wrapped in a Record or a RecordList.
+        Return a dictionary with the same keys as the `values` argument.
+        """
+        get_model = self.client.model
+        new_values = {}
+        for key, value in values.items():
+            if key == 'id':
+                new_values['id'] = value
+                continue
+            field = self._fields[key]
+            field_type = field['type']
+            if not value:
+                pass
+            elif field_type == 'many2one':
+                rel_model = get_model(field['relation'])
+                value = Record(rel_model, value, context=context)
+            elif field_type in ('one2many', 'many2many'):
+                rel_model = get_model(field['relation'])
+                value = RecordList(rel_model, value, context=context)
+            new_values[key] = value
+        return new_values
+
     def __getattr__(self, attr):
         if attr in ('_keys', '_fields'):
             self.__dict__[attr] = rv = getattr(self, '_get' + attr)()
@@ -836,7 +874,11 @@ class RecordList(object):
 
     def __init__(self, res_model, ids, context=None):
         self._model = res_model
-        self._ids = ids
+        self._idnames = ids
+        if ids and isinstance(ids[0], list):
+            self._ids = [id_ for (id_, name) in ids]
+        else:
+            self._ids = ids
         self._context = context
 
     def __repr__(self):
@@ -848,39 +890,57 @@ class RecordList(object):
 
     def __dir__(self):
         return ['__getitem__', 'read', 'write', 'unlink',
-                '_context', '_ids', '_model']
+                '_context', '_ids', '_idnames', '_model']
+
+    def read(self, fields=None, context=None):
+        """Wrapper for :meth:`Record.read` method."""
+        if context is None and self._context:
+            context = self._context
+
+        client = self._model.client
+        values = client.read(self._model._name, self._ids,
+                             fields, context=context)
+
+        if not values:
+            return values
+
+        if isinstance(values[0], dict):
+            browse_values = self._model._browse_values
+            return [browse_values(v) for v in values]
+
+        field = self._model._fields[fields]
+
+        if field['type'] == 'many2one':
+            rel_model = client.model(field['relation'])
+            return RecordList(rel_model, values, context=context)
+        if field['type'] in ('one2many', 'many2many'):
+            rel_model = client.model(field['relation'])
+            return [RecordList(rel_model, v) for v in values]
+        return values
 
     def __getitem__(self, key):
         if isinstance(key, slice):
             return RecordList(
-                self._model, self._ids[key], context=self._context)
-        return Record(self._model, self._ids[key], context=self._context)
+                self._model, self._idnames[key], context=self._context)
+        return Record(self._model, self._idnames[key], context=self._context)
 
     def __getattr__(self, attr):
+        context = self._context
+        if attr in self._model._keys:
+            return self.read(attr, context=context)
         if attr.startswith('__'):
             errmsg = "'RecordList' object has ""no attribute %r" % attr
             raise AttributeError(errmsg)
         model_name = self._model._name
-        context = self._context
-        if attr == 'read':
-            _read = self._model.client.read
+        execute = self._model.client.execute
 
-            def wrapper(self, *params, **kwargs):
-                """Wrapper for client.%s(%r, [...], *params, **kwargs)."""
-                if context:
-                    kwargs.setdefault('context', context)
-                return _read(model_name, self._ids, *params, **kwargs)
-            wrapper.__doc__ %= ('read', model_name)
-        else:
-            execute = self._model.client.execute
-
-            def wrapper(self, *params, **kwargs):
-                """Wrapper for client.%s(%r, %r, [...], *params, **kwargs)."""
-                if context:
-                    kwargs.setdefault('context', context)
-                return execute(model_name, attr, self._ids, *params, **kwargs)
-            wrapper.__doc__ %= ('execute', model_name, attr)
+        def wrapper(self, *params, **kwargs):
+            """Wrapper for client.execute(%r, %r, [...], *params, **kwargs)."""
+            if context:
+                kwargs.setdefault('context', context)
+            return execute(model_name, attr, self._ids, *params, **kwargs)
         wrapper.__name__ = attr
+        wrapper.__doc__ %= (model_name, attr)
         self.__dict__[attr] = mobj = wrapper.__get__(self, type(self))
         return mobj
 
@@ -899,6 +959,9 @@ class Record(object):
     :meth:`~Record.unlink` method is called.
     """
     def __init__(self, res_model, res_id, context=None):
+        if isinstance(res_id, list):
+            (res_id, res_name) = res_id
+            self.__dict__['_name'] = res_name
         # Bypass the __setattr__ method
         self.__dict__.update({
             'client': res_model.client,
@@ -935,27 +998,25 @@ class Record(object):
             if key != 'id' and key in self.__dict__:
                 delattr(self, key)
 
+    def _update(self, values):
+        new_values = self._model._browse_values(values, context=self._context)
+        self.__dict__.update(new_values)
+        return new_values
+
     def read(self, fields=None, context=None):
         """Read the `fields` of the :class:`Record`.
 
-        The argument `fields`, accepts different type of values:
-         - ``('street', 'city')``
-         - ``'street city'``
-         - ``'%(street)s %(city)s'``
-
-        If omitted, all fields are read.
-
-        Return a dictionary of values.
+        The argument `fields` accepts different kinds of values.
+        See :meth:`Client.read` for details.
         """
         if context is None and self._context:
             context = self._context
         rv = self.client.read(self._model_name, self.id,
                               fields, context=context)
         if isinstance(rv, dict):
-            self._update(rv)
+            return self._update(rv)
         else:
-            self._update({fields: rv})
-        return rv
+            return self._update({fields: rv})[fields]
 
     def write(self, values, context=None):
         """Write the `values` in the :class:`Record`."""
@@ -992,42 +1053,15 @@ class Record(object):
                 '_context', 'id', '_model', '_model_name',
                 '_name', '_keys', '_fields'] + self._model._keys
 
-    def __getitem__(self, attr):
-        try:
-            return self.__dict__[attr]
-        except KeyError:
-            if attr not in self._model._keys:
-                raise
-        value = self.client.read(self._model_name, self.id, attr)
-        rv = self._update({attr: value})
-        return rv[attr]
-
-    def _update(self, values):
-        new_values = {}
-        for key, value in values.items():
-            field = self._model._fields[key]
-            field_type = field['type']
-            if not value:
-                pass
-            elif field_type == 'many2one':
-                value = self.client.model(field['relation']).browse(
-                    value[0], context=self._context)
-            elif field_type in ('one2many', 'many2many'):
-                value = self.client.model(field['relation']).browse(
-                    value, context=self._context)
-            new_values[key] = value
-        self.__dict__.update(new_values)
-        return new_values
-
     def __getattr__(self, attr):
+        context = self._context
         if attr in self._model._keys:
-            return self[attr]
+            return self.read(attr, context=context)
         if attr == '_name':
             self.__dict__['_name'] = name = self._get_name()
             return name
         if attr.startswith('__'):
             raise AttributeError("'Record' object has no attribute %r" % attr)
-        context = self._context
 
         def wrapper(self, *params, **kwargs):
             """Wrapper for client.execute(%r, %r, %d, *params, **kwargs)."""

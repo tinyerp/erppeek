@@ -19,6 +19,12 @@ Changelog
 * Fix ``RecordList.read()`` and ``Record.read()`` methods to accept the
   same diversity of ``fields`` arguments as the ``Client.read()`` method.
 
+* ``RecordList.read()`` and ``Record.read()`` return instances of
+  ``RecordList`` and ``Record`` for relational fields.
+
+* Optimize: store the name of the ``Record`` when a relational field
+  is accessed.
+
 * Fix message wording on module install or upgrade.
 
 
