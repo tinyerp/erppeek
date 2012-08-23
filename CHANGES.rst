@@ -9,6 +9,8 @@ Changelog
 
 * Fix the verbose level on ``Client.connect()``.
 
+* Fix the ``Record.copy()`` method.
+
 
 0.10 (2012-08-23)
 ~~~~~~~~~~~~~~~~~

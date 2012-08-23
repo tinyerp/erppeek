@@ -1047,8 +1047,8 @@ class Record(object):
         """
         if context is None and self._context:
             context = self._context
-        new_id = self.client.copy(self._model_name, 'copy', self.id,
-                                  default=default, context=context)
+        new_id = self.client.execute(self._model_name, 'copy', self.id,
+                                     default, context=context)
         return Record(self._model, new_id)
 
     def __dir__(self):
