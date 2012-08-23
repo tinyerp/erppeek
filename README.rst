@@ -78,13 +78,19 @@ This is a sample session::
     {'uninstalled': ['delivery', 'sale_delivery_report']}
     demo >>> client.upgrade('base')
     1 module(s) selected
-    42 module(s) to update:
+    42 module(s) to process:
       to upgrade    account
       to upgrade    account_chart
       to upgrade    account_tax_include
       to upgrade    base
       ...
     demo >>>
+
+.. note::
+
+   Use the ``--verbose`` switch to see what happens behind the scene.
+   Lines are truncated at 79 chars.  Use ``-vv`` or ``-vvv`` to print
+   more.
 
 
 Main commands::

@@ -550,7 +550,7 @@ class Client(object):
             print('%s module(s)' % updated)
             return
         print('%s module(s) selected' % len(ids))
-        print('%s module(s) to upgrade:' % len(mods))
+        print('%s module(s) to process:' % len(mods))
         for mod in mods:
             print('  %(state)s\t%(name)s' % mod)
 
@@ -607,9 +607,9 @@ class Client(object):
         If `fields` is omitted, all fields are read.
 
         If `domain` is a single id, then:
-         * return a single value if a single field is requested.
-         * return a string if a format spec is passed in the `fields` argument.
-         * else, return a dictionary.
+         - return a single value if a single field is requested.
+         - return a string if a format spec is passed in the `fields` argument.
+         - else, return a dictionary.
 
         If `domain` is not a single id, the returned value is a list of items.
         Each item complies with the rules of the previous paragraph.
