@@ -1,8 +1,8 @@
 Changelog
 ---------
 
-0.x (UNRELEASED)
-~~~~~~~~~~~~~~~~
+0.10 (2012-08-23)
+~~~~~~~~~~~~~~~~~
 
 * Add the ``--verbose`` switch to log the XML-RPC messages.
   Lines are truncated at 79 chars.  Use ``-vv`` or ``-vvv``
