@@ -381,6 +381,7 @@ class Client(object):
         return uid
 
     # Needed for interactive use
+    connect = None
     _login = login
     _login.cache = {}
 
@@ -1222,15 +1223,10 @@ def main():
         if args.search:
             (searchquery,) = searchargs((args.search,))
             ids = client.execute(args.model, 'search', searchquery)
-        if ids is None:
-            data = None
-        elif args.fields:
-            data = client.execute(args.model, 'read', ids, args.fields)
-        else:
-            data = client.execute(args.model, 'read', ids)
+        data = ids and client.execute(args.model, 'read', ids, args.fields)
         pprint(data)
 
-    if hasattr(client, 'connect'):
+    if client.connect is not None:
         # Set the globals()
         client.connect()
         # Enter interactive mode

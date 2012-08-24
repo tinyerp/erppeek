@@ -14,6 +14,8 @@ Changelog
 * Fix the ``Record.perm_read()`` method (workaround an OpenERP bug when
   dealing with single ids).
 
+* Fix behaviour as a shell command.
+
 
 0.10 (2012-08-23)
 ~~~~~~~~~~~~~~~~~
