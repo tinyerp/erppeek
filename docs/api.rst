@@ -69,6 +69,10 @@ Objects
    If `details` is True, the ``create_uid`` and ``write_uid`` contain the
    name of the user.
 
+.. method:: Client.write(obj, ids, values, context=None)
+
+   Update the record(s) with the content of the `values` dictionary.
+
 .. method:: Client.create(obj, values, context=None)
 
    Create a new record for the model.
@@ -80,10 +84,6 @@ Objects
    Copy a record and return the new ``id``.
    The optional argument `default` is a mapping which overrides some values
    of the new record.
-
-.. method:: Client.write(obj, ids, values, context=None)
-
-   Update the record(s) with the content of the `values` dictionary.
 
 .. method:: Client.unlink(obj, ids, context=None)
 
@@ -242,16 +242,16 @@ the same :class:`Model`.
 
       Wrapper for the :meth:`Record.perm_read` method.
 
-   .. method:: unlink(context=None)
-
-      Wrapper for the :meth:`Record.unlink` method.
-
    .. method:: write(values, context=None)
 
       Wrapper for the :meth:`Record.write` method.
 
+   .. method:: unlink(context=None)
+
+      Wrapper for the :meth:`Record.unlink` method.
+
 .. autoclass:: Record
-   :members:
+   :members: read, perm_read, write, copy, unlink
    :undoc-members:
 
 
