@@ -34,8 +34,9 @@ list or install OpenERP addons.
 
 .. note::
 
-   In interactive mode, a method :attr:`Client.connect(env=None)` exists, to
-   connect to another environment, and recreate the :func:`globals()`.
+   In :ref:`interactive mode <interactive-mode>`, a method
+   :attr:`Client.connect(env=None)` exists, to connect to another environment,
+   and recreate the :func:`globals()`.
 
 
 Objects
@@ -51,6 +52,22 @@ Objects
    .. method:: Client.read(obj, ids, fields=None)
                Client.read(obj, domain, fields=None)
 .. automethod:: Client.read(obj, domain, fields=None, offset=0, limit=None, order=None, context=None)
+
+.. method:: Client.perm_read(obj, ids, context=None, details=True)
+
+   Lookup metadata about the records in the `ids` list.
+   Return a list of dictionaries with the following keys:
+
+    * ``id``: object id
+    * ``create_uid``: user who created the record
+    * ``create_date``: date when the record was created
+    * ``write_uid``: last user who changed the record
+    * ``write_date``: date of the last change to the record
+    * ``xmlid``: XML ID to use to refer to this record (if there is one), in
+      format ``module.name`` (not available with OpenERP 5)
+
+   If `details` is True, the ``create_uid`` and ``write_uid`` contain the
+   name of the user.
 
 .. method:: Client.create(obj, values, context=None)
 
@@ -202,7 +219,8 @@ the same :class:`Model`.
 
    .. automethod:: access
 
-   .. method:: browse(domain, context=None)
+   ..
+      .. method:: browse(domain, context=None)
    .. automethod:: browse(domain, offset=0, limit=None, order=None, context=None)
 
    .. automethod:: create
@@ -219,6 +237,10 @@ the same :class:`Model`.
       Return a :class:`RecordList` if `fields` is the name of a single
       ``many2one`` field, else return a :class:`list`.
       See :meth:`Client.read` for details.
+
+   .. method:: perm_read(context=None)
+
+      Wrapper for the :meth:`Record.perm_read` method.
 
    .. method:: unlink(context=None)
 

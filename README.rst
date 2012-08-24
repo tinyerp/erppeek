@@ -39,6 +39,8 @@ or::
     erppeek --help
 
 
+.. _interactive-mode:
+
 2. Interactive use
 ------------------
 

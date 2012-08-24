@@ -804,20 +804,21 @@ class Model(object):
         except (TypeError, Fault):
             return False
 
-    def browse(self, ids, *params, **kwargs):
+    def browse(self, domain, *params, **kwargs):
         """Return a :class:`Record` or a :class:`RecordList`.
 
-        The argument `ids` accepts a single integer ``id``, a list of ids
+        The argument `domain` accepts a single integer ``id``, a list of ids
         or a search domain.
         If it is a single integer, the return value is a :class:`Record`.
         Otherwise, the return value is a :class:`RecordList`.
         """
         context = kwargs.pop('context', None)
-        assert issearchdomain(ids) or not (params or kwargs)
+        assert issearchdomain(domain) or not (params or kwargs)
+        ids = domain
         if isinstance(ids, int_types):
             return Record(self, ids, context=context)
-        if issearchdomain(ids):
-            params = searchargs((ids,) + params, kwargs, context)
+        if issearchdomain(domain):
+            params = searchargs((domain,) + params, kwargs, context)
             ids = self._execute('search', *params)
         return RecordList(self, ids, context=context)
 
@@ -959,7 +960,7 @@ class Record(object):
     The fields can be accessed through attributes.  The changes are immediately
     saved in the database.
     The ``many2one``, ``one2many`` and ``many2many`` attributes are followed
-    when the record is read.  Howeverm, when writing on these special fields,
+    when the record is read.  However when writing in these relational fields,
     use the appropriate syntax described in the official OpenERP documentation.
     The attributes are evaluated lazily, and they are cached in the record.
     The cache is invalidated if the :meth:`~Record.write` or the
@@ -1024,6 +1025,16 @@ class Record(object):
             return self._update(rv)
         else:
             return self._update({fields: rv})[fields]
+
+    def perm_read(self, context=None):
+        """Read the metadata of the :class:`Record`.
+
+        Return a dictionary of values.
+        See :meth:`Client.perm_read` for details.
+        """
+        rv = self.client.perm_read(self._model_name, [self.id],
+                                   context=context)
+        return rv and rv[0] or None
 
     def write(self, values, context=None):
         """Write the `values` in the :class:`Record`."""
