@@ -735,12 +735,12 @@ class Client(object):
         return self.model(obj).access(mode=mode)
 
     def __getattr__(self, method):
-        if method.startswith('__'):
-            raise AttributeError("'Client' object has no attribute %r" % method)
         if not method.islower():
             rv = self.model(lowercase(method))
             self.__dict__[method] = rv
             return rv
+        if method.startswith('__'):
+            raise AttributeError("'Client' object has no attribute %r" % method)
 
         # miscellaneous object methods
         def wrapper(self, obj, *params, **kwargs):
@@ -929,10 +929,8 @@ class RecordList(object):
         return values
 
     def __getitem__(self, key):
-        if isinstance(key, slice):
-            return RecordList(
-                self._model, self._idnames[key], context=self._context)
-        return Record(self._model, self._idnames[key], context=self._context)
+        cls = isinstance(key, slice) and RecordList or Record
+        return cls(self._model, self._idnames[key], context=self._context)
 
     def __getattr__(self, attr):
         context = self._context
