@@ -939,7 +939,7 @@ class RecordList(object):
         if attr in self._model._keys:
             return self.read(attr, context=context)
         if attr.startswith('__'):
-            errmsg = "'RecordList' object has ""no attribute %r" % attr
+            errmsg = "'RecordList' object has no attribute %r" % attr
             raise AttributeError(errmsg)
         model_name = self._model._name
         execute = self._model.client.execute
