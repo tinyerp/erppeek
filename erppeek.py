@@ -66,7 +66,6 @@ CONF_FILE = 'erppeek.ini'
 DEFAULT_URL = 'http://localhost:8069'
 DEFAULT_DB = 'openerp'
 DEFAULT_USER = 'admin'
-DEFAULT_PASSWORD = 'admin'
 MAXCOL = [79, 179, 9999]    # Line length in verbose mode
 
 USAGE = """\
@@ -727,6 +726,12 @@ class Client(object):
 
     def access(self, obj, mode='read'):
         """Wrapper for :meth:`Model.access` method."""
+        try:
+            self._execute('ir.model.access', 'check', obj, mode)
+            return True
+        except (TypeError, Fault):
+            return False
+
         return self.model(obj).access(mode=mode)
 
     def __getattr__(self, method):
@@ -799,11 +804,7 @@ class Model(object):
         are ``read``, ``write``, ``create`` and ``unlink``. If omitted,
         the ``read`` mode is checked.  Return a boolean.
         """
-        try:
-            self.client._execute('ir.model.access', 'check', self._name, mode)
-            return True
-        except (TypeError, Fault):
-            return False
+        return self.client.access(self._name, mode)
 
     def browse(self, domain, *params, **kwargs):
         """Return a :class:`Record` or a :class:`RecordList`.
@@ -1185,7 +1186,7 @@ def main():
     parser.add_option('-d', '--db', default=DEFAULT_DB, help='database')
     parser.add_option('-u', '--user', default=DEFAULT_USER, help='username')
     parser.add_option(
-        '-p', '--password', default=DEFAULT_PASSWORD,
+        '-p', '--password', default=None,
         help='password, or it will be requested on login')
     parser.add_option(
         '-m', '--model',
@@ -1217,7 +1218,7 @@ def main():
         client = Client(args.server, args.db, args.user, args.password,
                         verbose=args.verbose)
 
-    if args.model:
+    if args.model and client.user:
         if domain:
             data = client.execute(args.model, 'read', domain, args.fields)
             pprint(data)

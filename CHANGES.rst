@@ -17,7 +17,8 @@ Changelog
 * Drop the ``--search`` argument, because the search terms can be passed as
   positional arguments after the options.  Explain it in the description.
 
-* Fix behaviour as a shell command.
+* Fix the shell command.  Request the password interactively if it's not
+  in the options and not in the configuration file.
 
 
 0.10 (2012-08-23)
