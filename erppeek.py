@@ -1196,7 +1196,7 @@ def main():
         help='restrict the output to certain fields (multiple allowed)')
     parser.add_option(
         '-i', '--interact', action='store_true',
-        help='use interactively')
+        help='use interactively; default when no model is queried')
     parser.add_option(
         '-v', '--verbose', default=0, action='count',
         help='verbose')
@@ -1218,10 +1218,9 @@ def main():
         client = Client(args.server, args.db, args.user, args.password,
                         verbose=args.verbose)
 
-    if args.model and client.user:
-        if domain:
-            data = client.execute(args.model, 'read', domain, args.fields)
-            pprint(data)
+    if args.model and domain and client.user:
+        data = client.execute(args.model, 'read', domain, args.fields)
+        pprint(data)
 
     if client.connect is not None:
         # Set the globals()
