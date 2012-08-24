@@ -209,7 +209,7 @@ directly through camel case attributes.
 Example: both ``client.model('res.company')`` and ``client.ResCompany`` return
 the same :class:`Model`.
 
-.. autoclass:: Model
+.. autoclass:: Model(client, model_name)
 
    .. automethod:: keys
 
@@ -228,7 +228,7 @@ the same :class:`Model`.
 ..
    :members: keys, fields, field, access, create, browse
 
-.. autoclass:: RecordList
+.. autoclass:: RecordList(model, ids)
 
    .. method:: read(fields=None, context=None)
 
@@ -250,7 +250,7 @@ the same :class:`Model`.
 
       Wrapper for the :meth:`Record.unlink` method.
 
-.. autoclass:: Record
+.. autoclass:: Record(model, id)
    :members: read, perm_read, write, copy, unlink
    :undoc-members:
 
