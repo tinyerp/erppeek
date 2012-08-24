@@ -429,7 +429,6 @@ class Client(object):
 
     @classmethod
     def _set_interactive(cls):
-        g = globals()
         # Don't call multiple times
         del Client._set_interactive
         global_names = ['wizard', 'exec_workflow', 'read', 'search', 'count',
@@ -441,6 +440,7 @@ class Client(object):
             else:
                 client = self
                 env = self._environment or self._db
+            g = globals()
             g['client'] = client
             # Tweak prompt
             sys.ps1 = '%s >>> ' % env
@@ -496,6 +496,10 @@ class Client(object):
             context = None
         elif method == 'search_count':
             params = searchargs(params)
+        elif method == 'perm_read':
+            # broken with a single id (verified with 5.0 and 6.1)
+            if params and isinstance(params[0], int_types):
+                params = ([params[0]],) + params[1:]
         if context:
             params = params + (context,)
         # Ignore extra keyword arguments

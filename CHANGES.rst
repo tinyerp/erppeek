@@ -11,6 +11,9 @@ Changelog
 
 * Fix the ``Record.copy()`` method.
 
+* Fix the ``Record.perm_read()`` method (workaround an OpenERP bug when
+  dealing with single ids).
+
 
 0.10 (2012-08-23)
 ~~~~~~~~~~~~~~~~~
