@@ -59,7 +59,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '0.11'
+__version__ = '0.11.dev0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service', 'read_config']
 
 CONF_FILE = 'erppeek.ini'
@@ -315,8 +315,9 @@ class Client(object):
         self._db = db
         self._environment = None
         self.user = None
-        major_version = None
         self._execute = None
+        self._models = {}
+        major_version = None
 
         def get_proxy(name):
             if major_version in ('5.0', None):
@@ -334,8 +335,9 @@ class Client(object):
         self._wizard = get_proxy('wizard')
         self._report = get_proxy('report')
         # Try to login
+        dbs = self.db.list()
+        assert db in dbs, 'database "%s" do not exist: %s' % (db, dbs)
         self._login(user, password)
-        self._models = {}
 
     @classmethod
     def from_config(cls, environment, verbose=False):
