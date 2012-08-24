@@ -59,7 +59,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '0.11.dev0'
+__version__ = '0.12.dev0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service', 'read_config']
 
 CONF_FILE = 'erppeek.ini'
