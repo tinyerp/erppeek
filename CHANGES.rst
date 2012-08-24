@@ -14,6 +14,9 @@ Changelog
 * Fix the ``Record.perm_read()`` method (workaround an OpenERP bug when
   dealing with single ids).
 
+* Drop the ``--search`` argument, because the search terms can be passed as
+  positional arguments after the options.  Explain it in the description.
+
 * Fix behaviour as a shell command.
 
 

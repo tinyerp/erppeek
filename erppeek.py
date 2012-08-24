@@ -1164,9 +1164,12 @@ def _interact(use_pprint=True, usage=USAGE):
 
 
 def main():
+    description = ('Inspect data on OpenERP objects.  Use interactively '
+                   'or query a model (-m) and pass search terms or '
+                   'ids as positional parameters after the options.')
     parser = optparse.OptionParser(
-        usage='%prog [options] [id [id ...]]', version=__version__,
-        description='Inspect data on OpenERP objects')
+        usage='%prog [options] [search_term_or_id [search_term_or_id ...]]', version=__version__,
+        description=description)
     parser.add_option(
         '-l', '--list', action='store_true', dest='list_env',
         help='list sections of the configuration')
@@ -1183,15 +1186,10 @@ def main():
     parser.add_option('-u', '--user', default=DEFAULT_USER, help='username')
     parser.add_option(
         '-p', '--password', default=DEFAULT_PASSWORD,
-        help='password (yes this will be in your shell history and '
-             'ps from other users)')
+        help='password, or it will be requested on login')
     parser.add_option(
         '-m', '--model',
         help='the type of object to find')
-    parser.add_option(
-        '-s', '--search', action='append',
-        help='search condition (multiple allowed); alternatively, pass '
-             'multiple IDs as positional parameters after the options')
     parser.add_option(
         '-f', '--fields', action='append',
         help='restrict the output to certain fields (multiple allowed)')
@@ -1202,7 +1200,7 @@ def main():
         '-v', '--verbose', default=0, action='count',
         help='verbose')
 
-    (args, ids) = parser.parse_args()
+    (args, domain) = parser.parse_args()
 
     Client._config_file = os.path.join(os.path.curdir, args.config)
     if args.list_env:
@@ -1220,11 +1218,9 @@ def main():
                         verbose=args.verbose)
 
     if args.model:
-        if args.search:
-            (searchquery,) = searchargs((args.search,))
-            ids = client.execute(args.model, 'search', searchquery)
-        data = ids and client.execute(args.model, 'read', ids, args.fields)
-        pprint(data)
+        if domain:
+            data = client.execute(args.model, 'read', domain, args.fields)
+            pprint(data)
 
     if client.connect is not None:
         # Set the globals()
