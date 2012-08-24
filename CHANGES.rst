@@ -1,8 +1,8 @@
 Changelog
 ---------
 
-0.x (UNRELEASED)
-~~~~~~~~~~~~~~~~
+0.11 (2012-08-24)
+~~~~~~~~~~~~~~~~~
 
 * Enhance the ``Model.browse()`` method to accept the same
   keyword arguments as the ``Client.search()`` method.
