@@ -226,7 +226,7 @@ the same :class:`Model`.
    .. automethod:: create
 
 ..
-   :members: keys, fields, field, access, create, browse
+   search count read ...
 
 .. autoclass:: RecordList(model, ids)
 
