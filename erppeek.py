@@ -311,9 +311,10 @@ class Client(object):
     """
     _config_file = os.path.join(os.path.curdir, CONF_FILE)
 
-    def __init__(self, server, db, user, password=None, verbose=False):
+    def __init__(self, server, db=None, user=None, password=None,
+                 verbose=False):
         self._server = server
-        self._db = db
+        self._db = ()
         self._environment = None
         self.user = None
         self._execute = None
@@ -335,10 +336,9 @@ class Client(object):
         self._object = get_proxy('object')
         self._wizard = get_proxy('wizard')
         self._report = get_proxy('report')
-        # Try to login
-        dbs = self.db.list()
-        assert db in dbs, 'database "%s" do not exist: %s' % (db, dbs)
-        self._login(user, password)
+        if db:
+            # Try to login
+            self._login(user, password=password, database=db)
 
     @classmethod
     def from_config(cls, environment, verbose=False):
@@ -356,11 +356,21 @@ class Client(object):
     def __repr__(self):
         return "<Client '%s#%s'>" % (self._server, self._db)
 
-    def login(self, user, password=None):
-        """Switch `user`.
+    def login(self, user, password=None, database=None):
+        """Switch `user` and (optionally) `database`.
 
-        If the `password` is not provided, it will be asked.
+        If the `password` is not available, it will be asked.
         """
+        if database:
+            dbs = self.db.list()
+            if database not in dbs:
+                print("Error: Database '%s' does not exist: %s" %
+                      (database, dbs))
+                return
+            self._db = database
+        elif not self._db:
+            print('Error: Not connected')
+            return
         (uid, password) = self._auth(user, password)
         if uid is False:
             print('Error: Invalid username or password')
@@ -396,6 +406,7 @@ class Client(object):
             return False
 
     def _auth(self, user, password):
+        assert self._db
         cache_key = (self._server, self._db, user)
         if password:
             # If password is explicit, call the 'login' method
@@ -439,6 +450,7 @@ class Client(object):
                         'model', 'models', 'keys', 'fields', 'field', 'access']
 
         def connect(self, env=None):
+            """Connect to another environment and replace the globals()."""
             if env:
                 client = self.from_config(env, verbose=self.db._verbose)
             else:
@@ -447,8 +459,8 @@ class Client(object):
             g = globals()
             g['client'] = client
             # Tweak prompt
-            sys.ps1 = '%s >>> ' % env
-            sys.ps2 = '%s ... ' % env
+            sys.ps1 = '%s >>> ' % (env,)
+            sys.ps2 = '%s ... ' % (env,)
             # Logged in?
             if client.user:
                 g['do'] = client.execute
@@ -459,10 +471,11 @@ class Client(object):
                 g['do'] = None
                 g.update(dict.fromkeys(global_names))
 
-        def login(self, user):
-            if self._login(user):
-                # If successful, register the new globals()
-                self.connect()
+        def login(self, user, database=None):
+            """Switch `user` and (optionally) `database`."""
+            self._login(user, database=database)
+            # Register the new globals()
+            self.connect()
 
         # Set hooks to recreate the globals()
         cls.login = login

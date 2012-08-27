@@ -8,7 +8,7 @@ Changelog
 
 * Implement ``len()`` for ``RecordList`` objects.
 
-* Do not try to connect to non-existent database.
+* Connect to the server even if the database is missing.
 
 
 0.11 (2012-08-24)
