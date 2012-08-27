@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+(unreleased)
+~~~~~~~~~~~~
+
+* Add the test suite for Python 2 and Python 3.
+
+* Implement ``len()`` for ``RecordList`` objects.
+
+* Do not try to connect to non-existent database.
+
+
 0.11 (2012-08-24)
 ~~~~~~~~~~~~~~~~~
 

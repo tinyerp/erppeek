@@ -137,7 +137,8 @@ _methods_6_1 = {
 #  - (not in 6.1) 'common': ['logout', 'ir_get', 'ir_set', 'ir_del']
 #  - (not in 6.1) 'object': ['obj_list']
 #  - 'db': ['get_progress']
-#  - 'common': ['get_available_updates', 'get_migration_scripts', 'set_loglevel']
+#  - 'common': ['get_available_updates', 'get_migration_scripts',
+#               'set_loglevel']
 
 
 def mixedcase(s, _cache={}):
@@ -404,7 +405,8 @@ class Client(object):
             uid, password = self._login.cache.get(cache_key) or (None, None)
             # Read from table 'res.users'
             if not uid and self.access('res.users', 'write'):
-                obj = self.read('res.users', [('login', '=', user)], 'id password')
+                obj = self.read('res.users',
+                                [('login', '=', user)], 'id password')
                 if obj:
                     uid = obj[0]['id']
                     password = obj[0]['password']
@@ -742,7 +744,8 @@ class Client(object):
             self.__dict__[method] = rv
             return rv
         if method.startswith('__'):
-            raise AttributeError("'Client' object has no attribute %r" % method)
+            raise AttributeError("'Client' object has no attribute %r" %
+                                 method)
 
         # miscellaneous object methods
         def wrapper(self, obj, *params, **kwargs):
@@ -824,6 +827,9 @@ class Model(object):
         if issearchdomain(domain):
             params = searchargs((domain,) + params, kwargs, context)
             ids = self._execute('search', *params)
+            # Ignore extra keyword arguments
+            for item in kwargs.items():
+                print('Ignoring: %s = %r' % item)
         return RecordList(self, ids, context=context)
 
     # alias
@@ -903,6 +909,9 @@ class RecordList(object):
     def __dir__(self):
         return ['__getitem__', 'read', 'write', 'unlink',
                 '_context', '_ids', '_idnames', '_model']
+
+    def __len__(self):
+        return len(self._ids)
 
     def read(self, fields=None, context=None):
         """Wrapper for :meth:`Record.read` method."""
@@ -1169,7 +1178,8 @@ def main():
                    'or query a model (-m) and pass search terms or '
                    'ids as positional parameters after the options.')
     parser = optparse.OptionParser(
-        usage='%prog [options] [search_term_or_id [search_term_or_id ...]]', version=__version__,
+        usage='%prog [options] [search_term_or_id [search_term_or_id ...]]',
+        version=__version__,
         description=description)
     parser.add_option(
         '-l', '--list', action='store_true', dest='list_env',
