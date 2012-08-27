@@ -367,7 +367,8 @@ class Client(object):
                 print("Error: Database '%s' does not exist: %s" %
                       (database, dbs))
                 return
-            self._db = database
+            if not self._db:
+                self._db = database
         elif not self._db:
             print('Error: Not connected')
             return
@@ -376,6 +377,10 @@ class Client(object):
             print('Error: Invalid username or password')
             return
         self.user = user
+        if database:
+            if self._db != database:
+                self._environment = None
+            self._db = database
 
         # Authenticated endpoints
         def authenticated(method):
@@ -473,9 +478,9 @@ class Client(object):
 
         def login(self, user, database=None):
             """Switch `user` and (optionally) `database`."""
-            self._login(user, database=database)
-            # Register the new globals()
-            self.connect()
+            if self._login(user, database=database):
+                # Register the new globals()
+                self.connect()
 
         # Set hooks to recreate the globals()
         cls.login = login
