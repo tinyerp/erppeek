@@ -21,6 +21,13 @@ class TestInteract(XmlRpcTestCase):
         'db.list',
     )
 
+    def setUp(self):
+        super(TestInteract, self).setUp()
+        # Preserve this special attributes
+        mock.patch('erppeek._interact', wraps=erppeek._interact).start()
+        mock.patch('erppeek.Client._set_interactive', wraps=erppeek.Client._set_interactive).start()
+        self.infunc = mock.patch('code.InteractiveConsole.raw_input').start()
+
     def test_main(self):
         env_tuple = ('http://127.0.0.1:8069', 'database', 'usr', None)
         mock.patch('sys.argv', new=['erppeek', '--env', 'demo']).start()
@@ -31,7 +38,6 @@ class TestInteract(XmlRpcTestCase):
         self.service.db.list.return_value = ['database']
         self.service.common.login.return_value = 17
         self.service.object.execute.side_effect = TypeError
-        self.infunc = mock.patch('code.InteractiveConsole.raw_input').start()
         self.infunc.side_effect = [
             "client\n",
             "read\n",
