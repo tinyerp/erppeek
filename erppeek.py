@@ -934,13 +934,18 @@ class RecordList(object):
     """A sequence of OpenERP :class:`Record`."""
 
     def __init__(self, res_model, ids, context=None):
-        self._model = res_model
-        self._idnames = ids
         if ids and isinstance(ids[0], list):
-            self._ids = [id_ for (id_, name) in ids]
+            _ids = [id_ for (id_, name) in ids]
         else:
-            self._ids = ids
-        self._context = context
+            _ids = ids
+        # Bypass the __setattr__ method
+        self.__dict__.update({
+            # 'client': res_model.client,
+            '_model': res_model,
+            '_idnames': ids,
+            '_ids': _ids,
+            '_context': context,
+        })
 
     def __repr__(self):
         if len(self._ids) > 16:
@@ -1005,6 +1010,13 @@ class RecordList(object):
         wrapper.__doc__ %= (model_name, attr)
         self.__dict__[attr] = mobj = wrapper.__get__(self, type(self))
         return mobj
+
+    def __setattr__(self, attr, value):
+        if attr in self._model._keys:
+            msg = "attribute %r is read-only"
+        else:
+            msg = "has no attribute %r"
+        raise AttributeError("'RecordList' object %s" % msg % attr)
 
 
 class Record(object):
@@ -1147,13 +1159,13 @@ class Record(object):
         return mobj
 
     def __setattr__(self, attr, value):
-        if attr in self._model._keys:
-            assert attr != 'id'
-            self.write({attr: value})
-            if attr in self.__dict__:
-                delattr(self, attr)
-        else:
-            object.__setattr__(self, attr, value)
+        if attr not in self._model._keys:
+            raise AttributeError("'Record' object has no attribute %r" % attr)
+        if attr == 'id':
+            raise AttributeError("'Record' object attribute 'id' is read-only")
+        self.write({attr: value})
+        if attr in self.__dict__:
+            delattr(self, attr)
 
 
 def _interact(use_pprint=True, usage=USAGE):

@@ -20,6 +20,9 @@ Changelog
 
 * Enable auto-completion using ``rlcompleter`` standard module.
 
+* Raise an ``AttributeError`` when assigning to a missing or
+  read-only attribute.
+
 
 0.11 (2012-08-24)
 ~~~~~~~~~~~~~~~~~
