@@ -10,6 +10,6 @@ install:
   - pip freeze
 script:
   - python setup.py test
-# matrix:
-#   allow_failures:
-#     - python: pypy
+matrix:
+  allow_failures:
+    - python: pypy
