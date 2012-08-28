@@ -15,6 +15,12 @@ Changelog
 * New method ``Client.create_database`` which wraps together
   ``Client.db.create``  and ``Client.db.get_progress``.
 
+* Save the readline history in ``~/.erppeek_history``, only
+  if the file already exists.
+
+* Enable auto-completion using ``rlcompleter`` standard module.
+
+
 0.11 (2012-08-24)
 ~~~~~~~~~~~~~~~~~
 
