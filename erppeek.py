@@ -496,20 +496,19 @@ class Client(object):
         Wait for the thread to finish and login if successful.
         """
         thread_id = self.db.create(passwd, database, demo, lang, user_password)
-        progress = [0, []]
+        progress = 0
         try:
-            while True:
+            while progress < 1:
                 time.sleep(3)
                 progress, users = self.db.get_progress(passwd, thread_id)
-                # [1.0, [{'login': 'admin', 'password': 'admin',
-                #         'name': 'Administrator'}]]
-                if progress == 1:
-                    self._login(users[0]['login'], users[0]['password'],
-                                database=database)
-                    if self.connect is not None:
-                        self.connect()
+            # [1.0, [{'login': 'admin', 'password': 'admin',
+            #         'name': 'Administrator'}]]
+            self._login(users[0]['login'], users[0]['password'],
+                        database=database)
+            if self.connect is not None:
+                self.connect()
         except KeyboardInterrupt:
-            print({'id': thread_id, 'progress': progress[0]})
+            print({'id': thread_id, 'progress': progress})
 
     def execute(self, obj, method, *params, **kwargs):
         """Wrapper around ``object.execute`` RPC method.
