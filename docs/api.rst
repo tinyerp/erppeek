@@ -30,6 +30,8 @@ list or install OpenERP addons.
 
 .. automethod:: Client.from_config
 
+.. automethod:: Client.create_database
+
 .. automethod:: Client.login
 
 .. note::

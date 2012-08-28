@@ -10,6 +10,10 @@ Changelog
 
 * Connect to the server even if the database is missing.
 
+* Expose the method ``Client.db.get_progress``.
+
+* New method ``Client.create_database`` which wraps together
+  ``Client.db.create``  and ``Client.db.get_progress``.
 
 0.11 (2012-08-24)
 ~~~~~~~~~~~~~~~~~

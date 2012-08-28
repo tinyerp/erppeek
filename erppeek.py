@@ -13,6 +13,7 @@ import os.path
 from pprint import pprint
 import re
 import sys
+import time
 import warnings
 try:                    # Python 3
     import configparser
@@ -117,7 +118,8 @@ _fields_re = re.compile(r'(?:[^%]|^)%\(([^)]+)\)')
 
 # Published object methods
 _methods = {
-    'db': ['create', 'drop', 'dump', 'restore', 'rename', 'list', 'list_lang',
+    'db': ['create', 'drop', 'dump', 'restore', 'rename',
+           'get_progress', 'list', 'list_lang',
            'change_admin_password', 'server_version', 'migrate_databases'],
     'common': ['about', 'login', 'timezone_get', 'get_server_environment',
                'login_message', 'check_connectivity'],
@@ -136,7 +138,6 @@ _methods_6_1 = {
 # Hidden methods:
 #  - (not in 6.1) 'common': ['logout', 'ir_get', 'ir_set', 'ir_del']
 #  - (not in 6.1) 'object': ['obj_list']
-#  - 'db': ['get_progress']
 #  - 'common': ['get_available_updates', 'get_migration_scripts',
 #               'set_loglevel']
 
@@ -485,6 +486,30 @@ class Client(object):
         # Set hooks to recreate the globals()
         cls.login = login
         cls.connect = connect
+
+    def create_database(self, passwd, database, demo=False, lang='en_US',
+                        user_password='admin'):
+        """Create a new database.
+
+        The superadmin `passwd` and the `database` name are mandatory.
+        By default, `demo` data are not loaded and `lang` is ``en_US``.
+        Wait for the thread to finish and login if successful.
+        """
+        thread_id = self.db.create(passwd, database, demo, lang, user_password)
+        progress = [0, []]
+        try:
+            while True:
+                time.sleep(3)
+                progress, users = self.db.get_progress(passwd, thread_id)
+                # [1.0, [{'login': 'admin', 'password': 'admin',
+                #         'name': 'Administrator'}]]
+                if progress == 1:
+                    self._login(users[0]['login'], users[0]['password'],
+                                database=database)
+                    if self.connect is not None:
+                        self.connect()
+        except KeyboardInterrupt:
+            print({'id': thread_id, 'progress': progress[0]})
 
     def execute(self, obj, method, *params, **kwargs):
         """Wrapper around ``object.execute`` RPC method.
