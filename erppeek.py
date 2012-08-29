@@ -60,7 +60,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '0.12.dev0'
+__version__ = '1.0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service', 'read_config']
 
 CONF_FILE = 'erppeek.ini'
@@ -1110,6 +1110,9 @@ class Record(object):
                                  values, context=context)
         self._clear_cache()
         return rv
+
+    # alias
+    update = write
 
     def unlink(self, context=None):
         """Delete the current :class:`Record` from the database."""

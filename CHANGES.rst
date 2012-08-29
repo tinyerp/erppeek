@@ -1,8 +1,8 @@
 Changelog
 ---------
 
-(unreleased)
-~~~~~~~~~~~~
+1.0 (2012-08-29)
+~~~~~~~~~~~~~~~~
 
 * Add the test suite for Python 2 and Python 3.
 
