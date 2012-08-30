@@ -380,7 +380,8 @@ class Client(object):
             if database and previous_db != database:
                 self._environment = None
         else:
-            self._db = previous_db
+            if previous_db:
+                self._db = previous_db
             print('Error: Invalid username or password')
 
         # Authenticated endpoints
