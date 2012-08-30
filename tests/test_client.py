@@ -111,7 +111,7 @@ class TestCreateClient(XmlRpcTestCase):
         self.assertIsInstance(client, erppeek.Client)
         self.assertCalls(*expected_calls)
         self.assertEqual(getpass.call_count, 1)
-        self.assertOutput('')
+        self.assertOutput('Error: Invalid username or password\n')
 
     def test_create_with_cache(self):
         self.service.db.list.return_value = ['database']
@@ -142,7 +142,7 @@ class TestCreateClient(XmlRpcTestCase):
         self.assertCalls(*expected_calls)
         self.assertEqual(read_config.call_count, 1)
         self.assertEqual(getpass.call_count, 1)
-        self.assertOutput('')
+        self.assertOutput('Error: Invalid username or password\n')
 
 
 class TestSampleSession(XmlRpcTestCase):
@@ -252,6 +252,33 @@ class TestClientApi(XmlRpcTestCase):
                     return 'v_' + key
             return [IdentDict(), IdentDict()]
         return sentinel.OTHER
+
+    def test_create_database(self):
+        create_database = self.client.create_database
+        mock.patch('time.sleep').start()
+        # mock.patch.dict('erppeek.Client._login.cache').start()
+        self.client._login.cache.clear()
+        getpass = mock.patch('getpass.getpass',
+                             return_value='password').start()
+        self.client.db.create.return_value = sentinel.ID
+        self.client.db.get_progress.return_value = \
+            [1, [{'login': 'LL', 'password': 'PP'}]]
+        self.client.db.list.side_effect = [['db1'], ['db2']]
+
+        create_database('abc', 'db1')
+        create_database('xyz', 'db2', user_password='secret', lang='fr_FR')
+
+        self.assertCalls(
+            call.db.create('abc', 'db1', False, 'en_US', 'admin'),
+            call.db.get_progress('abc', sentinel.ID),
+            call.db.list(),
+            call.common.login('db1', 'LL', 'PP'),
+            call.db.create('xyz', 'db2', False, 'fr_FR', 'secret'),
+            call.db.get_progress('xyz', sentinel.ID),
+            call.db.list(),
+            call.common.login('db2', 'LL', 'PP'),
+        )
+        self.assertOutput("")
 
     def test_search(self):
         search = self.client.search

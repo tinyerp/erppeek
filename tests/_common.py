@@ -69,8 +69,6 @@ class XmlRpcTestCase(unittest2.TestCase):
                 if expected[:4] == 'call':
                     expected = expected[4:].lstrip('.')
                 assert expected[-2:] != '()'
-                if expected[-2:] == '()':
-                    expected = expected[:-2]
                 expected = type_call((expected,))
             elif not (expected is mock.ANY or isinstance(expected, type_call)):
                 rpcmethod = expected[0]

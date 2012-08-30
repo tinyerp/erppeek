@@ -23,9 +23,13 @@ class TestInteract(XmlRpcTestCase):
 
     def setUp(self):
         super(TestInteract, self).setUp()
-        # Preserve this special attributes
-        mock.patch('erppeek._interact', wraps=erppeek._interact).start()
+        # Hide readline module
+        mock.patch.dict('sys.modules', {'readline': None}).start()
+        # Preserve these special attributes
+        mock.patch('erppeek.Client.connect', wraps=erppeek.Client.connect).start()
+        mock.patch('erppeek.Client.login', wraps=erppeek.Client.login).start()
         mock.patch('erppeek.Client._set_interactive', wraps=erppeek.Client._set_interactive).start()
+        self.interact = mock.patch('erppeek._interact', wraps=erppeek._interact).start()
         self.infunc = mock.patch('code.InteractiveConsole.raw_input').start()
 
     def test_main(self):
@@ -59,6 +63,7 @@ class TestInteract(XmlRpcTestCase):
         self.assertCalls(*expected_calls)
         self.assertEqual(getpass.call_count, 2)
         self.assertEqual(read_config.call_count, 1)
+        self.assertEqual(self.interact.call_count, 1)
         outlines = self.stdout.popvalue().splitlines()
         self.assertSequenceEqual(outlines[-5:], [
             "Logged in as 'usr'",
@@ -69,3 +74,29 @@ class TestInteract(XmlRpcTestCase):
             "42",
         ])
         self.assertOutput(stderr='\x1b[A\n\n')
+
+    def test_no_database(self):
+        env_tuple = ('http://127.0.0.1:8069', 'missingdb', 'usr', None)
+        mock.patch('sys.argv', new=['erppeek', '--env', 'demo']).start()
+        read_config = mock.patch('erppeek.read_config',
+                                 return_value=env_tuple).start()
+        self.service.db.list.return_value = ['database']
+        self.infunc.side_effect = [
+            "client\n",
+            "read\n",
+            "client.login('gaspard')\n",
+            EOFError('Finished')]
+
+        # Launch interactive
+        erppeek.main()
+
+        expected_calls = self.startup_calls
+        self.assertCalls(*expected_calls)
+        self.assertEqual(read_config.call_count, 1)
+        outlines = self.stdout.popvalue().splitlines()
+        self.assertSequenceEqual(outlines[-3:], [
+            "Error: Database 'missingdb' does not exist: ['database']",
+            "<Client 'http://127.0.0.1:8069#()'>",
+            "Error: Not connected",
+        ])
+        self.assertOutput(stderr=ANY)

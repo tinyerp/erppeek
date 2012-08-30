@@ -383,29 +383,23 @@ class TestRecord(TestCase):
         )
         self.assertOutput('')
 
-    def test_method(self, method_name='method', single_id=True):
+    def test_method(self, method_name='method'):
         records = self.model('foo.bar').browse([13, 17])
         rec = self.model('foo.bar').browse(42)
         records_method = getattr(records, method_name)
         rec_method = getattr(rec, method_name)
-
-        single_id = single_id and 42 or [42]
 
         records_method()
         rec_method()
         self.assertCalls(
             OBJ('foo.bar', 'fields_get_keys'),
             OBJ('foo.bar', method_name, [13, 17]),
-            OBJ('foo.bar', method_name, single_id),
+            OBJ('foo.bar', method_name, [42]),
         )
         self.assertOutput('')
 
     def test_standard_methods(self):
-        for method in 'create browse'.split():
-            self.test_method(method)
-            del self.model('foo.bar')._keys
-
         # write copy
-        self.test_method('unlink', single_id=False)
+        self.test_method('unlink')
         del self.model('foo.bar')._keys
-        self.test_method('perm_read', single_id=False)
+        self.test_method('perm_read')
