@@ -60,7 +60,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '1.0'
+__version__ = '1.0.post0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service', 'read_config']
 
 CONF_FILE = 'erppeek.ini'
@@ -363,26 +363,25 @@ class Client(object):
 
         If the `password` is not available, it will be asked.
         """
+        previous_db = self._db
         if database:
             dbs = self.db.list()
             if database not in dbs:
                 print("Error: Database '%s' does not exist: %s" %
                       (database, dbs))
                 return
-            if not self._db:
-                self._db = database
-        elif not self._db:
+            self._db = database
+        elif not previous_db:
             print('Error: Not connected')
             return
         (uid, password) = self._auth(user, password)
-        if uid is False:
-            print('Error: Invalid username or password')
-            return
-        self.user = user
-        if database:
-            if self._db != database:
+        if uid:
+            self.user = user
+            if database and previous_db != database:
                 self._environment = None
-            self._db = database
+        else:
+            self._db = previous_db
+            print('Error: Invalid username or password')
 
         # Authenticated endpoints
         def authenticated(method):
@@ -1154,8 +1153,13 @@ class Record(object):
             """Wrapper for client.execute(%r, %r, %d, *params, **kwargs)."""
             if context:
                 kwargs.setdefault('context', context)
-            return self.client.execute(
-                self._model_name, attr, self.id, *params, **kwargs)
+            res = self.client.execute(
+                self._model_name, attr, [self.id], *params, **kwargs)
+            try:
+                (res,) = res
+            except Exception:
+                pass
+            return res
         wrapper.__name__ = attr
         wrapper.__doc__ %= (self._model_name, attr, self.id)
         self.__dict__[attr] = mobj = wrapper.__get__(self, type(self))

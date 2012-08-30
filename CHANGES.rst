@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+1.x (unreleased)
+~~~~~~~~~~~~~~~~
+
+* When using arbitrary methods on ``Record``, wrap the ``id`` in
+  a list ``[id]``.  It fixes a recurring issue with poorly tested
+  methods.
+
+* Fix the wrong calls when switching to a different database.
+
+
 1.0 (2012-08-29)
 ~~~~~~~~~~~~~~~~
 
