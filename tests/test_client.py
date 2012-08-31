@@ -256,10 +256,6 @@ class TestClientApi(XmlRpcTestCase):
     def test_create_database(self):
         create_database = self.client.create_database
         mock.patch('time.sleep').start()
-        # mock.patch.dict('erppeek.Client._login.cache').start()
-        self.client._login.cache.clear()
-        getpass = mock.patch('getpass.getpass',
-                             return_value='password').start()
         self.client.db.create.return_value = sentinel.ID
         self.client.db.get_progress.return_value = \
             [1, [{'login': 'LL', 'password': 'PP'}]]
