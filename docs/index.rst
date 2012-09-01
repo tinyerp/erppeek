@@ -25,7 +25,7 @@ Contents:
 
    intro
    API <api>
-   changes
+   developer
 
 * Online documentation: `<http://erppeek.readthedocs.org/>`_
 * Source code and issue tracker: `<https://github.com/florentx/erppeek>`_
