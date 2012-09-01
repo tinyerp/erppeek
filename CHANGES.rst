@@ -8,6 +8,8 @@ Changelog
   a list ``[id]``.  It fixes a recurring issue with poorly tested
   methods.
 
+* Do not read all records if the ``RecordList`` is empty.
+
 * Fix the wrong calls when switching to a different database.
 
 

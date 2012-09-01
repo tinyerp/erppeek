@@ -403,3 +403,24 @@ class TestRecord(TestCase):
         self.test_method('unlink')
         del self.model('foo.bar')._keys
         self.test_method('perm_read')
+
+    def test_empty_recordlist(self):
+        records = self.model('foo.bar').browse([13, 17])
+        empty = records[42:]
+
+        self.assertIsInstance(records, erppeek.RecordList)
+        self.assertTrue(records)
+        self.assertEqual(len(records), 2)
+        self.assertEqual(records.name, ['v_name'] * 2)
+
+        self.assertIsInstance(empty, erppeek.RecordList)
+        self.assertFalse(empty)
+        self.assertEqual(len(empty), 0)
+        self.assertEqual(empty.name, [])
+
+        self.assertCalls(
+            OBJ('foo.bar', 'fields_get_keys'),
+            OBJ('foo.bar', 'read', [13, 17], ['name']),
+            OBJ('foo.bar', 'fields_get'),
+        )
+        self.assertOutput('')

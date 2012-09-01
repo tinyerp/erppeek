@@ -274,7 +274,7 @@ class TestClientApi(XmlRpcTestCase):
             call.db.list(),
             call.common.login('db2', 'LL', 'PP'),
         )
-        self.assertOutput("")
+        self.assertOutput('')
 
     def test_search(self):
         search = self.client.search

@@ -967,8 +967,8 @@ class RecordList(object):
             context = self._context
 
         client = self._model.client
-        values = client.read(self._model._name, self._ids,
-                             fields, context=context)
+        values = self._ids and client.read(self._model._name, self._ids,
+                                           fields, context=context)
 
         if not values:
             return values
