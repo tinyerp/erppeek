@@ -437,23 +437,8 @@ class TestRecord(TestCase):
         self.assertEqual(records.message, ['v_message', 'v_message'])
 
         # if the attribute is not a field, it could be a specific RPC method
-        self.assertTrue(callable(rec.missingattr))
-        self.assertTrue(callable(records.missingattr))
         self.assertEqual(rec.missingattr(), sentinel.OTHER)
         self.assertEqual(records.missingattr(), [sentinel.OTHER])
-        # method can be forgotten (any use case?)
-        del rec.missingattr, records.missingattr
-
-        # `setattr` not allowed (except for existing fields on Record object)
-        self.assertRaises(AttributeError, setattr, rec, 'missingattr', 42)
-        self.assertRaises(AttributeError, setattr, records, 'message', 'one')
-        self.assertRaises(AttributeError, setattr, records, 'missingattr', 42)
-
-        # `del` not allowed for attributes or missing attr
-        self.assertRaises(AttributeError, delattr, rec, 'message')
-        self.assertRaises(AttributeError, delattr, records, 'message')
-        self.assertRaises(AttributeError, delattr, rec, 'missingattr2')
-        self.assertRaises(AttributeError, delattr, records, 'missingattr2')
 
         self.assertCalls(
             OBJ('foo.bar', 'fields_get_keys'),
@@ -465,4 +450,20 @@ class TestRecord(TestCase):
             OBJ('foo.bar', 'missingattr', [42]),
             OBJ('foo.bar', 'missingattr', [13, 17]),
         )
+
+        # `setattr` not allowed (except for existing fields on Record object)
+        self.assertRaises(AttributeError, setattr, rec, 'missingattr', 42)
+        self.assertRaises(AttributeError, setattr, records, 'message', 'one')
+        self.assertRaises(AttributeError, setattr, records, 'missingattr', 42)
+
+        # method can be forgotten (any use case?)
+        del rec.missingattr, records.missingattr
+
+        # `del` not allowed for attributes or missing attr
+        self.assertRaises(AttributeError, delattr, rec, 'message')
+        self.assertRaises(AttributeError, delattr, records, 'message')
+        self.assertRaises(AttributeError, delattr, rec, 'missingattr2')
+        self.assertRaises(AttributeError, delattr, records, 'missingattr2')
+
+        self.assertCalls()
         self.assertOutput('')
