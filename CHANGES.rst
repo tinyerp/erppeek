@@ -12,8 +12,6 @@ Changelog
 
 * Fix the bad behaviour when switching to a different database.
 
-* Keep connected the current user if the login attempt is unsuccessful.
-
 
 1.0 (2012-08-29)
 ~~~~~~~~~~~~~~~~
