@@ -3,7 +3,7 @@ import mock
 from mock import sentinel, ANY
 
 import erppeek
-from ._common import XmlRpcTestCase, OBJ
+from ._common import XmlRpcTestCase, OBJ, callable
 
 
 class TestCase(XmlRpcTestCase):
@@ -422,5 +422,47 @@ class TestRecord(TestCase):
             OBJ('foo.bar', 'fields_get_keys'),
             OBJ('foo.bar', 'read', [13, 17], ['name']),
             OBJ('foo.bar', 'fields_get'),
+        )
+        self.assertOutput('')
+
+    def test_attr(self):
+        records = self.model('foo.bar').browse([13, 17])
+        rec = self.model('foo.bar').browse(42)
+
+        # existing fields can be read as attributes
+        # attribute is writable on the Record object only
+        self.assertFalse(callable(rec.message))
+        rec.message = 'one giant leap for mankind'
+        self.assertFalse(callable(rec.message))
+        self.assertEqual(records.message, ['v_message', 'v_message'])
+
+        # if the attribute is not a field, it could be a specific RPC method
+        self.assertTrue(callable(rec.missingattr))
+        self.assertTrue(callable(records.missingattr))
+        self.assertEqual(rec.missingattr(), sentinel.OTHER)
+        self.assertEqual(records.missingattr(), [sentinel.OTHER])
+        # method can be forgotten (any use case?)
+        del rec.missingattr, records.missingattr
+
+        # `setattr` not allowed (except for existing fields on Record object)
+        self.assertRaises(AttributeError, setattr, rec, 'missingattr', 42)
+        self.assertRaises(AttributeError, setattr, records, 'message', 'one')
+        self.assertRaises(AttributeError, setattr, records, 'missingattr', 42)
+
+        # `del` not allowed for attributes or missing attr
+        self.assertRaises(AttributeError, delattr, rec, 'message')
+        self.assertRaises(AttributeError, delattr, records, 'message')
+        self.assertRaises(AttributeError, delattr, rec, 'missingattr2')
+        self.assertRaises(AttributeError, delattr, records, 'missingattr2')
+
+        self.assertCalls(
+            OBJ('foo.bar', 'fields_get_keys'),
+            OBJ('foo.bar', 'read', 42, ['message']),
+            OBJ('foo.bar', 'write', [42], {'message': 'one giant leap for mankind'}),
+            OBJ('foo.bar', 'read', 42, ['message']),
+            OBJ('foo.bar', 'read', [13, 17], ['message']),
+            OBJ('foo.bar', 'fields_get'),
+            OBJ('foo.bar', 'missingattr', [42]),
+            OBJ('foo.bar', 'missingattr', [13, 17]),
         )
         self.assertOutput('')

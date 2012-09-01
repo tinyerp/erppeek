@@ -14,6 +14,10 @@ except NameError:
     basestring = str
 
 
+def callable(f):
+    return hasattr(f, '__call__')
+
+
 class PseudoFile(list):
     write = list.append
 
@@ -33,6 +37,7 @@ class XmlRpcTestCase(unittest2.TestCase):
     database = user = password = uid = None
 
     def setUp(self):
+        self.maxDiff = 4096     # instead of 640
         self.addCleanup(mock.patch.stopall)
         self.stdout = mock.patch('sys.stdout', new=PseudoFile()).start()
         self.stderr = mock.patch('sys.stderr', new=PseudoFile()).start()
