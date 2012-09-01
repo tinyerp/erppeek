@@ -383,6 +383,7 @@ class Client(object):
             if previous_db:
                 self._db = previous_db
             print('Error: Invalid username or password')
+            return
 
         # Authenticated endpoints
         def authenticated(method):

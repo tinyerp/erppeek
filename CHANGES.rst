@@ -10,7 +10,9 @@ Changelog
 
 * Do not read all records if the ``RecordList`` is empty.
 
-* Fix the wrong calls when switching to a different database.
+* Fix the bad behaviour when switching to a different database.
+
+* Keep connected the current user if the login attempt is unsuccessful.
 
 
 1.0 (2012-08-29)
