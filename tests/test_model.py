@@ -28,7 +28,7 @@ class TestCase(XmlRpcTestCase):
                     self._id = id_
 
                 def __getitem__(self, key):
-                    if key is 'id':
+                    if key == 'id':
                         return self._id
                     return 'v_' + key
             if isinstance(args[5], int):
