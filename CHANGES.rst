@@ -12,6 +12,11 @@ Changelog
 
 * Fix the bad behaviour when switching to a different database.
 
+* Order the results when using ``read`` method with ``order=`` argument.
+
+* Accept the ``%(...)s`` formatting for the fields parameter of the
+  ``Record.read`` and the ``RecordList.read`` methods too.
+
 * Add a tutorial to the documentation.
 
 

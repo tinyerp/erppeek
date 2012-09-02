@@ -522,13 +522,16 @@ class Client(object):
         """
         assert isinstance(obj, basestring) and isinstance(method, basestring)
         context = kwargs.pop('context', None)
+        ordered = None
         if method in ('read', 'name_get'):
             assert params
             if issearchdomain(params[0]):
                 # Combine search+read
                 search_params = searchargs(params[:1], kwargs, context)
+                ordered = len(search_params) > 3 and search_params[3]
                 ids = self._execute(obj, 'search', *search_params)
             else:
+                ordered = kwargs.pop('order', False)
                 ids = params[0]
             if not ids:
                 return []
@@ -553,7 +556,14 @@ class Client(object):
         # Ignore extra keyword arguments
         for item in kwargs.items():
             print('Ignoring: %s = %r' % item)
-        return self._execute(obj, method, *params)
+        res = self._execute(obj, method, *params)
+        if res and ordered:
+            # The results are not in the same order as the ids
+            # when received from the server
+            assert len(res) == len(ids)
+            resdic = dict([(val['id'], val) for val in res])
+            res = [resdic[id_] for id_ in ids]
+        return res
 
     def exec_workflow(self, obj, signal, obj_id):
         """Wrapper around ``object.exec_workflow`` RPC method.
@@ -665,6 +675,11 @@ class Client(object):
 
         If `domain` is not a single id, the returned value is a list of items.
         Each item complies with the rules of the previous paragraph.
+
+        The optional keyword arguments `offset`, `limit` and `order` are
+        used to restrict the search.  The `order` is also used to order the
+        results returned.  Note: the low-level RPC method ``read`` itself does
+        not preserve the order of the results.
         """
         fmt = None
         if len(params) > 1 and isinstance(params[1], basestring):
@@ -967,25 +982,27 @@ class RecordList(object):
         if context is None and self._context:
             context = self._context
 
+        if not self._ids:
+            return []
+
         client = self._model.client
-        values = self._ids and client.read(self._model._name, self._ids,
-                                           fields, context=context)
+        values = client.read(self._model._name, self._ids,
+                             fields, order=True, context=context)
 
-        if not values:
-            return values
+        if values:
+            if isinstance(values[0], dict):
+                browse_values = self._model._browse_values
+                return [browse_values(v) for v in values]
 
-        if isinstance(values[0], dict):
-            browse_values = self._model._browse_values
-            return [browse_values(v) for v in values]
+            if '%(' not in fields:
+                field = self._model._fields[fields]
 
-        field = self._model._fields[fields]
-
-        if field['type'] == 'many2one':
-            rel_model = client.model(field['relation'])
-            return RecordList(rel_model, values, context=context)
-        if field['type'] in ('one2many', 'many2many'):
-            rel_model = client.model(field['relation'])
-            return [RecordList(rel_model, v) for v in values]
+                if field['type'] == 'many2one':
+                    rel_model = client.model(field['relation'])
+                    return RecordList(rel_model, values, context=context)
+                if field['type'] in ('one2many', 'many2many'):
+                    rel_model = client.model(field['relation'])
+                    return [RecordList(rel_model, v) for v in values]
         return values
 
     def __getitem__(self, key):
@@ -1090,6 +1107,8 @@ class Record(object):
                               fields, context=context)
         if isinstance(rv, dict):
             return self._update(rv)
+        elif '%(' in fields:
+            return rv
         else:
             return self._update({fields: rv})[fields]
 
@@ -1263,10 +1282,10 @@ def main():
         help='read connection settings from the given section')
     parser.add_option(
         '-c', '--config', default=CONF_FILE,
-        help='specify alternate config file (default %r)' % CONF_FILE)
+        help='specify alternate config file (default: %r)' % CONF_FILE)
     parser.add_option(
         '--server', default=DEFAULT_URL,
-        help='full URL to the XML-RPC server (default %s)' % DEFAULT_URL)
+        help='full URL to the XML-RPC server (default: %s)' % DEFAULT_URL)
     parser.add_option('-d', '--db', default=DEFAULT_DB, help='database')
     parser.add_option('-u', '--user', default=DEFAULT_USER, help='username')
     parser.add_option(
