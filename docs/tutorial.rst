@@ -323,7 +323,7 @@ Browse the records
 
 First, a trick to populate the global namespace with the models you need::
 
-    >>> globals().update(models('res'))
+    >>> globals().update(models('res.'))
     >>> ResLang
     <Model 'res.lang'>
     >>> ResPartner
@@ -343,12 +343,18 @@ Query the ``ResCountry`` model::
      'Dominican Republic',
      'Kyrgyz Republic (Kyrgyzstan)',
      'Macedonia, the former Yugoslav Republic of']
+    >>> ResCountry.browse(['code > Y'], order='code ASC').read('code name')
+    [{'code': 'YE', 'id': 247, 'name': 'Yemen'},
+     {'code': 'YT', 'id': 248, 'name': 'Mayotte'},
+     {'code': 'YU', 'id': 249, 'name': 'Yugoslavia'},
+     {'code': 'ZA', 'id': 250, 'name': 'South Africa'},
+     {'code': 'ZM', 'id': 251, 'name': 'Zambia'},
+     {'code': 'ZR', 'id': 252, 'name': 'Zaire'},
+     {'code': 'ZW', 'id': 253, 'name': 'Zimbabwe'}]
     >>> #
 
 ..
-    ResCountry.search(['code > Y'], order='code DESC')
-    ResCountry.read(['code > Y'], 'code name', order='code DESC')
-    ResCountry.browse(['code > Y'], order='code ASC').read('code name')
+    ResCountry.browse(['code > Y'], order='code ASC').read('%(code)s %(name)s')
 
 ...
 
