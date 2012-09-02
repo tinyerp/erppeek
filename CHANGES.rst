@@ -12,6 +12,8 @@ Changelog
 
 * Fix the bad behaviour when switching to a different database.
 
+* Add a tutorial to the documentation.
+
 
 1.0 (2012-08-29)
 ~~~~~~~~~~~~~~~~

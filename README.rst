@@ -29,20 +29,69 @@ Key features:
 - supports Python 3 and Python 2 (>= 2.5)
 
 
-1. Command line arguments
--------------------------
+.. highlight:: sh
 
-See the `introduction on this page
-<http://www.theopensourcerer.com/2011/12/13/erppeek-a-tool-for-browsing-openerp-data-from-the-command-line/>`__
-or::
+.. _command-line:
 
-    erppeek --help
+Command line arguments
+----------------------
 
+There are few arguments to query OpenERP models from the command line.
+Although it is quite limited::
+
+    $ erppeek --help
+    Usage: erppeek [options] [search_term_or_id [search_term_or_id ...]]
+
+    Inspect data on OpenERP objects.  Use interactively or query a model (-m)
+    and pass search terms or ids as positional parameters after the options.
+
+    Options:
+      --version             show program\'s version number and exit
+      -h, --help            show this help message and exit
+      -l, --list            list sections of the configuration
+      --env=ENV             read connection settings from the given section
+      -c CONFIG, --config=CONFIG
+                            specify alternate config file (default: 'erppeek.ini')
+      --server=SERVER       full URL to the XML-RPC server (default: http://localhost:8069)
+      -d DB, --db=DB        database
+      -u USER, --user=USER  username
+      -p PASSWORD, --password=PASSWORD
+                            password, or it will be requested on login
+      -m MODEL, --model=MODEL
+                            the type of object to find
+      -f FIELDS, --fields=FIELDS
+                            restrict the output to certain fields (multiple allowed)
+      -i, --interact        use interactively; default when no model is queried
+      -v, --verbose         verbose
+    $ #
+
+
+Example::
+
+    $ erppeek -d demo -m res.partner -f name -f lang 1
+    [{'id': 1, 'lang': 'en_US', 'name': 'Your Company'}]
+
+::
+
+    $ erppeek -d demo -m res.groups -f full_name 'id > 0'
+    [{'full_name': 'Administration / Access Rights', 'id': 1},
+     {'full_name': 'Administration / Configuration', 'id': 2},
+     {'full_name': 'Human Resources / Employee', 'id': 3},
+     {'full_name': 'Usability / Multi Companies', 'id': 4},
+     {'full_name': 'Usability / Extended View', 'id': 5},
+     {'full_name': 'Usability / Technical Features', 'id': 6},
+     {'full_name': 'Sales Management / User', 'id': 7},
+     {'full_name': 'Sales Management / Manager', 'id': 8},
+     {'full_name': 'Partner Manager', 'id': 9}]
+
+
+
+.. highlight:: pycon
 
 .. _interactive-mode:
 
-2. Interactive use
-------------------
+Interactive use
+---------------
 
 Edit ``erppeek.ini`` and declare the environment(s)::
 
@@ -65,20 +114,20 @@ Connect to the OpenERP server::
 
 This is a sample session::
 
-    demo >>> model('res.users')
+    >>> model('res.users')
     <Model 'res.users'>
-    demo >>> client.ResUsers is model('res.users')
+    >>> client.ResUsers is model('res.users')
     True
-    demo >>> client.ResUsers.count()
+    >>> client.ResUsers.count()
     4
-    demo >>> read('ir.cron', ['active = False'], 'active function')
+    >>> read('ir.cron', ['active = False'], 'active function')
     [{'active': False, 'function': 'run_mail_scheduler', 'id': 1},
      {'active': False, 'function': 'run_bdr_scheduler', 'id': 2},
      {'active': False, 'function': 'scheduled_fetch_new_scans', 'id': 9}]
-    demo >>>
-    demo >>> client.modules('delivery')
+    >>> #
+    >>> client.modules('delivery')
     {'uninstalled': ['delivery', 'sale_delivery_report']}
-    demo >>> client.upgrade('base')
+    >>> client.upgrade('base')
     1 module(s) selected
     42 module(s) to process:
       to upgrade    account
@@ -86,43 +135,10 @@ This is a sample session::
       to upgrade    account_tax_include
       to upgrade    base
       ...
-    demo >>>
+    >>> #
 
 .. note::
 
    Use the ``--verbose`` switch to see what happens behind the scene.
    Lines are truncated at 79 chars.  Use ``-vv`` or ``-vvv`` to print
    more.
-
-
-Main commands::
-
-    search(obj, domain)
-    search(obj, domain, offset=0, limit=None, order=None)
-                                    # Return a list of IDs
-    count(obj, domain)              # Count the matching objects
-
-    read(obj, ids, fields=None)
-    read(obj, domain, fields=None)
-    read(obj, domain, fields=None, offset=0, limit=None, order=None)
-                                    # Return values for the fields
-
-    models(name)                    # List models matching pattern
-    model(name)                     # Return a Model instance
-    keys(obj)                       # List field names of the model
-    fields(obj, names=None)         # Return details for the fields
-    field(obj, name)                # Return details for the field
-    access(obj, mode='read')        # Check access on the model
-
-    do(obj, method, *params)        # Generic 'object.execute'
-    wizard(name)                    # Return the 'id' of a new wizard
-    wizard(name_or_id, datas=None, action='init')
-                                    # Generic 'wizard.execute'
-    exec_workflow(obj, signal, id)  # Trigger workflow signal
-
-    client                          # Client object, connected
-    client.login(user)              # Login with another user
-    client.connect(env)             # Connect to another env.
-    client.modules(name)            # List modules matching pattern
-    client.upgrade(module1, module2, ...)
-                                    # Upgrade the modules
