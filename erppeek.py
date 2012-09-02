@@ -479,9 +479,9 @@ class Client(object):
                 g['do'] = None
                 g.update(dict.fromkeys(global_names))
 
-        def login(self, user, database=None):
+        def login(self, user, password=None, database=None):
             """Switch `user` and (optionally) `database`."""
-            if self._login(user, database=database):
+            if self._login(user, password=password, database=database):
                 # Register the new globals()
                 self.connect()
 
@@ -505,10 +505,8 @@ class Client(object):
                 progress, users = self.db.get_progress(passwd, thread_id)
             # [1.0, [{'login': 'admin', 'password': 'admin',
             #         'name': 'Administrator'}]]
-            self._login(users[0]['login'], users[0]['password'],
-                        database=database)
-            if self.connect is not None:
-                self.connect()
+            self.login(users[0]['login'], users[0]['password'],
+                       database=database)
         except KeyboardInterrupt:
             print({'id': thread_id, 'progress': progress})
 

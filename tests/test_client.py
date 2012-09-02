@@ -31,8 +31,7 @@ class TestService(XmlRpcTestCase):
     """Test the Service class."""
 
     def _patch_service(self):
-        return mock.patch(
-            'erppeek.ServerProxy._ServerProxy__request').start()
+        return mock.patch('erppeek.ServerProxy._ServerProxy__request').start()
 
     def test_service(self):
         server = 'http://127.0.0.1:8069'
