@@ -8,6 +8,23 @@ import erppeek
 from ._common import XmlRpcTestCase, OBJ
 
 AUTH = sentinel.AUTH
+ID1, ID2 = sentinel.ID1, sentinel.ID2
+
+
+class IdentDict(object):
+    def __init__(self, _id):
+        self._id = _id
+
+    def __repr__(self):
+        return 'IdentDict(%s)' % (self._id,)
+
+    def __getitem__(self, key):
+        return (key == 'id') and self._id or ('v_' + key)
+
+    def __eq__(self, other):
+        return self._id == other._id
+DIC1 = IdentDict(ID1)
+DIC2 = IdentDict(ID2)
 
 
 class TestService(XmlRpcTestCase):
@@ -245,18 +262,15 @@ class TestClientApi(XmlRpcTestCase):
 
     def obj_exec(self, *args):
         if args[4] == 'search':
-            return sentinel.IDS
+            return [ID2, ID1]
         if args[4] == 'read':
-            class IdentDict(object):
-                def __getitem__(self, key):
-                    return 'v_' + key
-            return [IdentDict(), IdentDict()]
+            return [DIC1, DIC2]
         return sentinel.OTHER
 
     def test_create_database(self):
         create_database = self.client.create_database
         mock.patch('time.sleep').start()
-        self.client.db.create.return_value = sentinel.ID
+        self.client.db.create.return_value = ID1
         self.client.db.get_progress.return_value = \
             [1, [{'login': 'LL', 'password': 'PP'}]]
         self.client.db.list.side_effect = [['db1'], ['db2']]
@@ -266,11 +280,11 @@ class TestClientApi(XmlRpcTestCase):
 
         self.assertCalls(
             call.db.create('abc', 'db1', False, 'en_US', 'admin'),
-            call.db.get_progress('abc', sentinel.ID),
+            call.db.get_progress('abc', ID1),
             call.db.list(),
             call.common.login('db1', 'LL', 'PP'),
             call.db.create('xyz', 'db2', False, 'fr_FR', 'secret'),
-            call.db.get_progress('xyz', sentinel.ID),
+            call.db.get_progress('xyz', ID1),
             call.db.list(),
             call.common.login('db2', 'LL', 'PP'),
         )
@@ -278,11 +292,15 @@ class TestClientApi(XmlRpcTestCase):
 
     def test_search(self):
         search = self.client.search
+        self.service.object.execute.side_effect = self.obj_exec
 
-        search('foo.bar', ['name like Morice'])
-        search('foo.bar', ['name like Morice'], limit=2)
-        search('foo.bar', ['name like Morice'], offset=80, limit=99)
-        search('foo.bar', ['name like Morice'], order='name ASC')
+        searchterm = 'name like Morice'
+        self.assertEqual(search('foo.bar', [searchterm]), [ID2, ID1])
+        self.assertEqual(search('foo.bar', [searchterm], limit=2), [ID2, ID1])
+        self.assertEqual(search('foo.bar', [searchterm], offset=80, limit=99),
+                         [ID2, ID1])
+        self.assertEqual(search('foo.bar', [searchterm], order='name ASC'),
+                         [ID2, ID1])
         search('foo.bar', ['name = mushroom', 'state != draft'])
         search('foo.bar', [('name', 'like', 'Morice')])
         self.client.execute('foo.bar', 'search', [('name like Morice')])
@@ -369,7 +387,7 @@ class TestClientApi(XmlRpcTestCase):
         self.service.object.execute.side_effect = self.obj_exec
 
         def call_read(fields=None):
-            return OBJ('foo.bar', 'read', sentinel.IDS, fields)
+            return OBJ('foo.bar', 'read', [ID2, ID1], fields)
 
         read('foo.bar', 42)
         read('foo.bar', [42])
@@ -384,10 +402,12 @@ class TestClientApi(XmlRpcTestCase):
         self.assertOutput('')
 
         searchterm = 'name like Morice'
-        read('foo.bar', [searchterm])
-        read('foo.bar', [searchterm], limit=2)
-        read('foo.bar', [searchterm], offset=80, limit=99)
-        read('foo.bar', [searchterm], order='name ASC')
+        self.assertEqual(read('foo.bar', [searchterm]), [DIC1, DIC2])
+        self.assertEqual(read('foo.bar', [searchterm], limit=2), [DIC1, DIC2])
+        self.assertEqual(read('foo.bar', [searchterm], offset=80, limit=99),
+                         [DIC1, DIC2])
+        self.assertEqual(read('foo.bar', [searchterm], order='name ASC'),
+                         [DIC2, DIC1])
         read('foo.bar', [searchterm], 'birthdate city')
         read('foo.bar', [searchterm], 'birthdate city', limit=2)
         read('foo.bar', [searchterm], limit=2, fields=['birthdate', 'city'])
@@ -477,14 +497,14 @@ class TestClientApi(XmlRpcTestCase):
         self.assertTrue(self.client.models('foo.bar'))
         self.assertCalls(
             OBJ('ir.model', 'search', [('model', 'like', 'foo.bar')]),
-            OBJ('ir.model', 'read', sentinel.IDS, ('model',)),
+            OBJ('ir.model', 'read', [ID2, ID1], ('model',)),
         )
         self.assertOutput('')
 
         self.assertIsNone(self.client.model('foo.bar'))
         self.assertCalls(
             OBJ('ir.model', 'search', [('model', 'like', 'foo.bar')]),
-            OBJ('ir.model', 'read', sentinel.IDS, ('model',)),
+            OBJ('ir.model', 'read', [ID2, ID1], ('model',)),
         )
         self.assertIn('Model not found', self.stdout.popvalue())
         self.assertOutput('')
@@ -575,7 +595,7 @@ class TestClientApi(XmlRpcTestCase):
 
     def test_wizard(self):
         wizard = self.client.wizard
-        self.service.wizard.create.return_value = sentinel.ID
+        self.service.wizard.create.return_value = ID1
 
         self.assertTrue(wizard('foo.bar'))
         self.assertTrue(wizard('billy', action='shake'))
@@ -586,7 +606,7 @@ class TestClientApi(XmlRpcTestCase):
         self.assertCalls(
             ('wizard.create', AUTH, 'foo.bar'),
             ('wizard.create', AUTH, 'billy'),
-            ('wizard.execute', AUTH, sentinel.ID, {}, 'shake', None),
+            ('wizard.execute', AUTH, ID1, {}, 'shake', None),
             ('wizard.execute', AUTH, 42, {}, 'kick', None),
         )
         self.assertOutput('')
@@ -606,9 +626,9 @@ class TestClientApi(XmlRpcTestCase):
         self.assertOutput('')
 
     def test_report_get(self):
-        self.assertTrue(self.client.report_get(sentinel.ID))
+        self.assertTrue(self.client.report_get(ID1))
         self.assertCalls(
-            ('report.report_get', AUTH, sentinel.ID),
+            ('report.report_get', AUTH, ID1),
         )
         self.assertOutput('')
 
