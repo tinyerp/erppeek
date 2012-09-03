@@ -518,7 +518,8 @@ class Client(object):
         Method `params` are allowed.  If needed, keyword
         arguments are collected in `kwargs`.
         """
-        assert isinstance(obj, basestring) and isinstance(method, basestring)
+        assert isinstance(obj, basestring)
+        assert isinstance(method, basestring) and method != 'browse'
         context = kwargs.pop('context', None)
         ordered = None
         if method in ('read', 'name_get'):
