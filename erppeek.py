@@ -559,7 +559,7 @@ class Client(object):
         if res and ordered:
             # The results are not in the same order as the ids
             # when received from the server
-            assert len(res) == len(ids)
+            assert len(res) == len(set(ids))
             resdic = dict([(val['id'], val) for val in res])
             res = [resdic[id_] for id_ in ids]
         return res
