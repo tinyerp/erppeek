@@ -5,21 +5,35 @@ Tutorial
 ========
 
 This tutorial demonstrates some features of ERPpeek in the interactive shell.
+
 It assumes a server OpenERP 6.1 is installed.
 The shell is a true Python shell.  We have access to all the features and
 modules of the Python interpreter.
+
+.. contents:: Steps:
+   :local:
+   :backlinks: top
 
 
 First connection
 ----------------
 
-It assumes that the server is running locally (``localhost``), on default port
-``8069``.  If our configuration is different, then we use something like
-``erppeek --server http://192.168.0.42:8079`` instead.
-
 The server is freshly installed and does not have an OpenERP database yet.
 The tutorial creates its own database ``demo`` to play with.
 
+Open the ERPpeek shell::
+
+    $ erppeek
+
+It assumes that the server is running locally, and listens on default
+port ``8069``.
+
+If our configuration is different, then we use arguments, like::
+
+    $ erppeek --server http://192.168.0.42:8069
+
+
+On login, it prints few lines about the commands available.
 
 .. sourcecode:: pycon
 
@@ -55,7 +69,17 @@ The tutorial creates its own database ``demo`` to play with.
         client.upgrade(module1, module2, ...)
                                         # Upgrade the modules
 
+As we'll see later, the most interesting method here is probably
+:meth:`~Client.model` which returns a :class:`Model` object with nice
+wrappers.
+
+And it confirms that the default database is not available::
+
+    ...
     Error: Database 'openerp' does not exist: []
+
+Though, we have a connected client, ready to use::
+
     >>> client
     <Client 'http://localhost:8069#()'>
     >>> client.server_version
@@ -356,5 +380,8 @@ Query the ``ResCountry`` model::
 ..
     ResCountry.browse(['code > Y'], order='code ASC').read('%(code)s %(name)s')
 
-...
+... the tutorial is done.
+
+Jump to the :doc:`api` for further details.
+
 
