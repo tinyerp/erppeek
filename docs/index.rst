@@ -9,8 +9,8 @@ ERPpeek's documentation
 
 *A versatile tool for browsing OpenERP data*
 
-The ERPpeek library communicates with any `OpenERP server
-<http://doc.openerp.com/>`_ (>= 5.0) using the standard XML-RPC interface.
+The ERPpeek library communicates with any `OpenERP server`_ (>= 5.0) using
+`the standard XML-RPC interface`_.
 
 It provides both a :ref:`fully featured low-level API <client-and-services>`,
 and an encapsulation of the methods on :ref:`Active Record objects
@@ -34,8 +34,11 @@ Contents:
    tutorial
    developer
 
-* Online documentation: `<http://erppeek.readthedocs.org/>`_
-* Source code and issue tracker: `<https://github.com/florentx/erppeek>`_
+* Online documentation: http://erppeek.readthedocs.org/
+* Source code and issue tracker: https://github.com/florentx/erppeek
+
+.. _OpenERP server: http://doc.openerp.com/
+.. _the standard XML-RPC interface: http://doc.openerp.com/v6.1/developer/12_api.html#api
 
 
 Indices and tables

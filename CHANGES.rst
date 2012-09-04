@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-1.x (unreleased)
+1.1 (2012-09-04)
 ~~~~~~~~~~~~~~~~
 
 * When using arbitrary methods on ``Record``, wrap the ``id`` in
@@ -13,6 +13,10 @@ Changelog
 * Fix the bad behaviour when switching to a different database.
 
 * Order the results when using ``read`` method with ``order=`` argument.
+
+* Reading attributes of the sequence ``<RecordList 'sea.fish,[2, 1, 2]'>`` will
+  return an ordered sequence of three items.  Previously it used to return an
+  unordered sequence of two items.
 
 * Accept the ``%(...)s`` formatting for the fields parameter of the
   ``Record.read`` and the ``RecordList.read`` methods too.

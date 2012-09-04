@@ -2,11 +2,15 @@
 ERPpeek, a versatile tool for browsing OpenERP data
 ===================================================
 
-Download the `latest release <http://pypi.python.org/pypi/ERPpeek>`__ from PyPI::
+Download and install the latest release::
 
     pip install -U erppeek
 
 .. contents::
+   :local:
+   :backlinks: top
+
+Documentation and tutorial: http://erppeek.readthedocs.org
 
 
 Overview
@@ -29,7 +33,6 @@ Key features:
 - supports Python 3 and Python 2 (>= 2.5)
 
 
-.. highlight:: sh
 
 .. _command-line:
 
@@ -85,8 +88,6 @@ Example::
      {'full_name': 'Partner Manager', 'id': 9}]
 
 
-
-.. highlight:: pycon
 
 .. _interactive-mode:
 
