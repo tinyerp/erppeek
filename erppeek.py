@@ -60,7 +60,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '1.1'
+__version__ = '1.1.post0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service', 'read_config']
 
 CONF_FILE = 'erppeek.ini'
@@ -112,8 +112,8 @@ DOMAIN_OPERATORS = frozenset('!|&')
 #  - redundant operators: '<>', '=like', '=ilike'
 #  - future operator(s) (6.1): '=?'
 _term_re = re.compile(
-    '(\S+)\s*'
-    '(=|!=|>|>=|<|<=|like|ilike|in|not like|not ilike|not in|child_of)'
+    '([\w._]+)\s*'
+    '(=|!=|>|>=|<|<=|(?<= )(?:like|ilike|in|not like|not ilike|not in|child_of))'
     '\s*(.*)')
 _fields_re = re.compile(r'(?:[^%]|^)%\(([^)]+)\)')
 
