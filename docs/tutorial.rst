@@ -6,7 +6,7 @@ Tutorial
 
 This tutorial demonstrates some features of ERPpeek in the interactive shell.
 
-It assumes a server OpenERP 6.1 is installed.
+It assumes an OpenERP server is installed.
 The shell is a true Python shell.  We have access to all the features and
 modules of the Python interpreter.
 
