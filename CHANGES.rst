@@ -6,6 +6,8 @@ Changelog
 
 * Catch some malformed search domains before sending the RPC request.
 
+* Preserve dictionary response when calling non standard ``Record`` methods.
+
 
 1.1 (2012-09-04)
 ~~~~~~~~~~~~~~~~

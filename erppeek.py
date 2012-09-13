@@ -1175,10 +1175,11 @@ class Record(object):
                 kwargs.setdefault('context', context)
             res = self.client.execute(
                 self._model_name, attr, [self.id], *params, **kwargs)
-            try:
-                (res,) = res
-            except Exception:
-                pass
+            if isinstance(res, list):
+                try:
+                    (res,) = res
+                except Exception:
+                    pass
             return res
         wrapper.__name__ = attr
         wrapper.__doc__ %= (self._model_name, attr, self.id)
