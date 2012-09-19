@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-1.x (unreleased)
+1.2 (2012-09-19)
 ~~~~~~~~~~~~~~~~
 
 * Catch some malformed search domains before sending the RPC request.
