@@ -625,7 +625,10 @@ class Client(object):
         mods = self.read('ir.module.module',
                          [('state', 'not in', STABLE_STATES)], 'name state')
         if not mods:
-            print('%s module(s)' % updated)
+            if modules:
+                print('Module(s) not found: %s' % ', '.join(modules))
+            else:
+                print('%s module(s) updated' % updated)
             return
         print('%s module(s) selected' % len(ids))
         print('%s module(s) to process:' % len(mods))

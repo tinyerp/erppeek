@@ -8,10 +8,14 @@ Changelog
 
 * Preserve dictionary response when calling non standard ``Record`` methods.
 
-* Expose the helper ``format_exception`` which formats the XML-RPC errors.
+* Expose the helper ``format_exception`` which formats the errors
+  received through XML-RPC.
 
 * Support XML-RPC through HTTPS with ``scheme = https`` in the
   ``erppeek.ini`` configuration file.
+
+* Print an error message when ``client.upgrade(...)`` does not find any
+  module to upgrade.
 
 
 1.1 (2012-09-04)
