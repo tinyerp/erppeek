@@ -96,15 +96,15 @@ Interactive use
 
 Edit ``erppeek.ini`` and declare the environment(s)::
 
-   [DEFAULT]
-   host = localhost
-   port = 8069
-   database = openerp
-   username = admin
+    [DEFAULT]
+    host = localhost
+    port = 8069
+    database = openerp
+    username = admin
 
-   [demo]
-   username = demo
-   password = demo
+    [demo]
+    username = demo
+    password = demo
 
 
 Connect to the OpenERP server::
