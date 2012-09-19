@@ -8,6 +8,8 @@ Changelog
 
 * Preserve dictionary response when calling non standard ``Record`` methods.
 
+* Expose the helper ``format_exception`` which formats the XML-RPC errors.
+
 
 1.1 (2012-09-04)
 ~~~~~~~~~~~~~~~~

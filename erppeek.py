@@ -14,6 +14,7 @@ from pprint import pprint
 import re
 import sys
 import time
+import traceback
 import warnings
 try:                    # Python 3
     import configparser
@@ -61,7 +62,8 @@ except ImportError:
 
 
 __version__ = '1.1.post0'
-__all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service', 'read_config']
+__all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
+           'format_exception', 'read_config']
 
 CONF_FILE = 'erppeek.ini'
 HIST_FILE = os.path.expanduser('~/.erppeek_history')
@@ -168,6 +170,25 @@ def lowercase(s, _sub=re.compile('[A-Z]').sub,
     except KeyError:
         _cache[s] = s = _sub(_repl, s).lstrip('.')
         return s
+
+
+def format_exception(exc_type, exc, tb, limit=None, chain=True,
+                     _format_exception=traceback.format_exception):
+    """Format a stack trace and the exception information.
+
+    This wrapper is a replacement of ``traceback.format_exception``
+    which formats the error and traceback received by XML-RPC.
+    """
+    # Format readable 'Fault' errors
+    if ((issubclass(exc_type, Fault) and
+         isinstance(exc.faultCode, basestring))):
+        etype, _, msg = exc.faultCode.partition('--')
+        if etype.strip() != 'warning':
+            msg = exc.faultCode
+            if not msg.startswith('FATAL:'):
+                msg += '\n' + exc.faultString
+        return ['%s: %s\n' % (exc_type.__name__, msg.strip())]
+    return _format_exception(exc_type, exc, tb, limit=limit)
 
 
 def read_config(section=None):
@@ -1205,19 +1226,6 @@ def _interact(use_pprint=True, usage=USAGE):
     # Do not run twice
     del globals()['_interact']
 
-    def excepthook(exc_type, exc, tb, _original_hook=sys.excepthook):
-        # Print readable 'Fault' errors
-        if ((issubclass(exc_type, Fault) and
-             isinstance(exc.faultCode, basestring))):
-            etype, _, msg = exc.faultCode.partition('--')
-            if etype.strip() != 'warning':
-                msg = exc.faultCode
-                if not msg.startswith('FATAL:'):
-                    msg += '\n' + exc.faultString
-            print('%s: %s' % (exc_type.__name__, msg.strip()))
-        else:
-            _original_hook(exc_type, exc, tb)
-
     if use_pprint:
         def displayhook(value, _printer=pprint, _builtins=builtins):
             # Pretty-format the output
@@ -1255,8 +1263,10 @@ def _interact(use_pprint=True, usage=USAGE):
             except SystemExit:
                 raise
             except:
+                # Print readable 'Fault' errors
                 # Work around http://bugs.python.org/issue12643
-                excepthook(*sys.exc_info())
+                msg = ''.join(format_exception(*sys.exc_info()))
+                print(msg.strip())
 
     warnings.simplefilter('always', UserWarning)
     # Key UP to avoid an empty line
