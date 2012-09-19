@@ -97,6 +97,7 @@ Interactive use
 Edit ``erppeek.ini`` and declare the environment(s)::
 
     [DEFAULT]
+    scheme = http
     host = localhost
     port = 8069
     database = openerp

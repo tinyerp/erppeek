@@ -10,6 +10,9 @@ Changelog
 
 * Expose the helper ``format_exception`` which formats the XML-RPC errors.
 
+* Support XML-RPC through HTTPS with ``scheme = https`` in the
+  ``erppeek.ini`` configuration file.
+
 
 1.1 (2012-09-04)
 ~~~~~~~~~~~~~~~~

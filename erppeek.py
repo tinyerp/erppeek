@@ -207,14 +207,10 @@ def read_config(section=None):
         p.readfp(f)
     if section is None:
         return p.sections()
-    server = 'http://%s:%s' % (p.get(section, 'host'), p.get(section, 'port'))
-    db = p.get(section, 'database')
-    user = p.get(section, 'username')
-    if p.has_option(section, 'password'):
-        password = p.get(section, 'password')
-    else:
-        password = None
-    return (server, db, user, password)
+    env = dict(p.items(section))
+    scheme = env.get('scheme', 'http')
+    server = '%s://%s:%s' % (scheme, env['host'], env['port'])
+    return (server, env['database'], env['username'], env.get('password'))
 
 
 def issearchdomain(arg):
