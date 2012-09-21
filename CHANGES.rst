@@ -4,7 +4,9 @@ Changelog
 1.x (unreleased)
 ~~~~~~~~~~~~~~~~
 
-* Fix the ``RecordList.id`` attribute.  (issue #9)
+* Fix the ``RecordList.id`` attribute, and deprecate ``RecordList._ids``.
+
+* Deprecate the ``Record.client`` attribute: use ``Record._model.client``.
 
 
 1.2 (2012-09-19)

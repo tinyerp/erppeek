@@ -977,6 +977,7 @@ class RecordList(object):
         self.__dict__.update({
             # 'client': res_model.client,
             'id': _ids,
+            '_model_name': res_model._name,
             '_model': res_model,
             '_idnames': ids,
             '_context': context,
@@ -989,11 +990,11 @@ class RecordList(object):
             ids = 'length=%d' % len(self.id)
         else:
             ids = self.id
-        return "<RecordList '%s,%s'>" % (self._model._name, ids)
+        return "<RecordList '%s,%s'>" % (self._model_name, ids)
 
     def __dir__(self):
         return ['__getitem__', 'read', 'write', 'unlink',
-                'id', '_context', '_idnames', '_model']
+                'id', '_context', '_idnames', '_model', '_model_name']
 
     def __len__(self):
         return len(self.id)
@@ -1007,7 +1008,7 @@ class RecordList(object):
             return []
 
         client = self._model.client
-        values = client.read(self._model._name, self.id,
+        values = client.read(self._model_name, self.id,
                              fields, order=True, context=context)
 
         if values:
@@ -1037,14 +1038,14 @@ class RecordList(object):
         if attr.startswith('__'):
             errmsg = "'RecordList' object has no attribute %r" % attr
             raise AttributeError(errmsg)
-        model_name = self._model._name
-        execute = self._model.client.execute
+        model_name = self._model_name
+        execute = self._model._execute
 
         def wrapper(self, *params, **kwargs):
             """Wrapper for client.execute(%r, %r, [...], *params, **kwargs)."""
             if context:
                 kwargs.setdefault('context', context)
-            return execute(model_name, attr, self.id, *params, **kwargs)
+            return execute(attr, self.id, *params, **kwargs)
         wrapper.__name__ = attr
         wrapper.__doc__ %= (model_name, attr)
         self.__dict__[attr] = mobj = wrapper.__get__(self, type(self))
@@ -1077,11 +1078,12 @@ class Record(object):
             self.__dict__['_name'] = res_name
         # Bypass the __setattr__ method
         self.__dict__.update({
-            'client': res_model.client,
             'id': res_id,
             '_model_name': res_model._name,
             '_model': res_model,
             '_context': context,
+            # XXX deprecated since 1.2.1
+            'client': res_model.client,
         })
 
     def __repr__(self):
@@ -1124,8 +1126,7 @@ class Record(object):
         """
         if context is None and self._context:
             context = self._context
-        rv = self.client.read(self._model_name, self.id,
-                              fields, context=context)
+        rv = self._model.read(self.id, fields, context=context)
         if isinstance(rv, dict):
             return self._update(rv)
         elif '%(' in fields:
@@ -1139,16 +1140,14 @@ class Record(object):
         Return a dictionary of values.
         See :meth:`Client.perm_read` for details.
         """
-        rv = self.client.perm_read(self._model_name, [self.id],
-                                   context=context)
+        rv = self._model._execute('perm_read', [self.id], context=context)
         return rv and rv[0] or None
 
     def write(self, values, context=None):
         """Write the `values` in the :class:`Record`."""
         if context is None and self._context:
             context = self._context
-        rv = self.client.execute(self._model_name, 'write', [self.id],
-                                 values, context=context)
+        rv = self._model._execute('write', [self.id], values, context=context)
         self._clear_cache()
         return rv
 
@@ -1159,8 +1158,7 @@ class Record(object):
         """Delete the current :class:`Record` from the database."""
         if context is None and self._context:
             context = self._context
-        rv = self.client.execute(self._model_name, 'unlink', [self.id],
-                                 context=context)
+        rv = self._model._execute('unlink', [self.id], context=context)
         self._clear_cache()
         return rv
 
@@ -1172,13 +1170,12 @@ class Record(object):
         """
         if context is None and self._context:
             context = self._context
-        new_id = self.client.execute(self._model_name, 'copy', self.id,
-                                     default, context=context)
+        new_id = self._model._execute('copy', self.id, default, context=context)
         return Record(self._model, new_id)
 
     def __dir__(self):
-        return ['client', 'read', 'write', 'copy', 'unlink',
-                '_context', 'id', '_model', '_model_name',
+        return ['read', 'write', 'copy', 'unlink',
+                'id', '_context', '_model', '_model_name',
                 '_name', '_keys', '_fields'] + self._model._keys
 
     def __getattr__(self, attr):
@@ -1195,8 +1192,7 @@ class Record(object):
             """Wrapper for client.execute(%r, %r, %d, *params, **kwargs)."""
             if context:
                 kwargs.setdefault('context', context)
-            res = self.client.execute(
-                self._model_name, attr, [self.id], *params, **kwargs)
+            res = self._model._execute(attr, [self.id], *params, **kwargs)
             if isinstance(res, list) and len(res) == 1:
                 return res[0]
             return res
