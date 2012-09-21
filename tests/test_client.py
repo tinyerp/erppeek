@@ -485,7 +485,7 @@ class TestClientApi(XmlRpcTestCase):
         self.assertOutput('')
 
     def test_standard_methods(self):
-        for method in 'write create copy unlink'.split():
+        for method in 'write', 'create', 'copy', 'unlink':
             self.test_method(method)
 
         self.test_method('perm_read', single_id=False)

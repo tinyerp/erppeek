@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+1.x (unreleased)
+~~~~~~~~~~~~~~~~
+
+* Accept ``Record`` and ``RecordList`` attribute values when writing or
+  creating records.
+
+
 1.2.1 (2012-09-21)
 ~~~~~~~~~~~~~~~~~~
 

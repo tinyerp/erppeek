@@ -61,7 +61,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '1.2.1'
+__version__ = '1.2.2.dev0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config']
 
@@ -915,6 +915,7 @@ class Model(object):
         The argument `values` is a dictionary of values which are used to
         create the record.  The newly created :class:`Record` is returned.
         """
+        values = self._unbrowse_values(values)
         new_id = self._execute('create', values, context=context)
         return Record(self, new_id, context=context)
 
@@ -943,6 +944,14 @@ class Model(object):
                 rel_model = get_model(field['relation'])
                 value = RecordList(rel_model, value, context=context)
             new_values[key] = value
+        return new_values
+
+    def _unbrowse_values(self, values):
+        """Unwrap the id of Record and RecordList."""
+        new_values = values.copy()
+        for key, value in values.items():
+            if isinstance(value, (Record, RecordList)):
+                new_values[key] = value.id
         return new_values
 
     def __getattr__(self, attr):
@@ -1019,6 +1028,14 @@ class RecordList(object):
                     rel_model = client.model(field['relation'])
                     return [RecordList(rel_model, v) for v in values]
         return values
+
+    def write(self, values, context=None):
+        """Write the `values` in the :class:`RecordList`."""
+        if context is None and self._context:
+            context = self._context
+        values = self._model._unbrowse_values(values)
+        rv = self._model._execute('write', self.id, values, context=context)
+        return rv
 
     def __getitem__(self, key):
         cls = isinstance(key, slice) and RecordList or Record
@@ -1142,6 +1159,7 @@ class Record(object):
         """Write the `values` in the :class:`Record`."""
         if context is None and self._context:
             context = self._context
+        values = self._model._unbrowse_values(values)
         rv = self._model._execute('write', [self.id], values, context=context)
         self._clear_cache()
         return rv
@@ -1165,6 +1183,8 @@ class Record(object):
         """
         if context is None and self._context:
             context = self._context
+        if default:
+            default = self._model._unbrowse_values(default)
         new_id = self._model._execute('copy', self.id, default, context=context)
         return Record(self._model, new_id)
 
