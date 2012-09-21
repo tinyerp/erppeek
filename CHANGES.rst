@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+1.x (unreleased)
+~~~~~~~~~~~~~~~~
+
+* Fix the ``RecordList.id`` attribute.  (issue #9)
+
+
 1.2 (2012-09-19)
 ~~~~~~~~~~~~~~~~
 

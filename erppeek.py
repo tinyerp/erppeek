@@ -61,7 +61,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '1.2'
+__version__ = '1.2.post0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config']
 
@@ -976,36 +976,38 @@ class RecordList(object):
         # Bypass the __setattr__ method
         self.__dict__.update({
             # 'client': res_model.client,
+            'id': _ids,
             '_model': res_model,
             '_idnames': ids,
-            '_ids': _ids,
             '_context': context,
+            # XXX deprecated since 1.2.1
+            '_ids': _ids,
         })
 
     def __repr__(self):
-        if len(self._ids) > 16:
-            ids = 'length=%d' % len(self._ids)
+        if len(self.id) > 16:
+            ids = 'length=%d' % len(self.id)
         else:
-            ids = self._ids
+            ids = self.id
         return "<RecordList '%s,%s'>" % (self._model._name, ids)
 
     def __dir__(self):
         return ['__getitem__', 'read', 'write', 'unlink',
-                '_context', '_ids', '_idnames', '_model']
+                'id', '_context', '_idnames', '_model']
 
     def __len__(self):
-        return len(self._ids)
+        return len(self.id)
 
     def read(self, fields=None, context=None):
         """Wrapper for :meth:`Record.read` method."""
         if context is None and self._context:
             context = self._context
 
-        if not self._ids:
+        if not self.id:
             return []
 
         client = self._model.client
-        values = client.read(self._model._name, self._ids,
+        values = client.read(self._model._name, self.id,
                              fields, order=True, context=context)
 
         if values:
@@ -1042,14 +1044,14 @@ class RecordList(object):
             """Wrapper for client.execute(%r, %r, [...], *params, **kwargs)."""
             if context:
                 kwargs.setdefault('context', context)
-            return execute(model_name, attr, self._ids, *params, **kwargs)
+            return execute(model_name, attr, self.id, *params, **kwargs)
         wrapper.__name__ = attr
         wrapper.__doc__ %= (model_name, attr)
         self.__dict__[attr] = mobj = wrapper.__get__(self, type(self))
         return mobj
 
     def __setattr__(self, attr, value):
-        if attr in self._model._keys:
+        if attr in self._model._keys or attr == 'id':
             msg = "attribute %r is read-only"
         else:
             msg = "has no attribute %r"
@@ -1076,10 +1078,10 @@ class Record(object):
         # Bypass the __setattr__ method
         self.__dict__.update({
             'client': res_model.client,
+            'id': res_id,
             '_model_name': res_model._name,
             '_model': res_model,
             '_context': context,
-            'id': res_id,
         })
 
     def __repr__(self):
