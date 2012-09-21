@@ -8,6 +8,11 @@ Changelog
 
 * Deprecate the ``Record.client`` attribute: use ``Record._model.client``.
 
+* Accessing an empty ``many2one`` attribute on a ``RecordList`` now returns
+  a ``RecordList``.
+
+* Fix ``TypeError`` when browsing non-existent records.
+
 
 1.2 (2012-09-19)
 ~~~~~~~~~~~~~~~~

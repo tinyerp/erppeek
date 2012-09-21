@@ -1004,21 +1004,20 @@ class RecordList(object):
         if context is None and self._context:
             context = self._context
 
-        if not self.id:
-            return []
-
         client = self._model.client
-        values = client.read(self._model_name, self.id,
-                             fields, order=True, context=context)
-
-        if values:
-            if isinstance(values[0], dict):
+        if self.id:
+            values = client.read(self._model_name, self.id,
+                                 fields, order=True, context=context)
+            if values and isinstance(values[0], dict):
                 browse_values = self._model._browse_values
                 return [browse_values(v) for v in values]
+        else:
+            values = []
 
-            if '%(' not in fields:
-                field = self._model._fields[fields]
+        if isinstance(fields, basestring):
+            field = self._model._fields.get(fields)
 
+            if field:
                 if field['type'] == 'many2one':
                     rel_model = client.model(field['relation'])
                     return RecordList(rel_model, values, context=context)
@@ -1129,10 +1128,9 @@ class Record(object):
         rv = self._model.read(self.id, fields, context=context)
         if isinstance(rv, dict):
             return self._update(rv)
-        elif '%(' in fields:
-            return rv
-        else:
+        elif isinstance(fields, basestring) and '%(' not in fields:
             return self._update({fields: rv})[fields]
+        return rv
 
     def perm_read(self, context=None):
         """Read the metadata of the :class:`Record`.
