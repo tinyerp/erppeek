@@ -61,7 +61,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '1.2.post0'
+__version__ = '1.2.1'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config']
 
@@ -977,8 +977,6 @@ class RecordList(object):
             '_model': res_model,
             '_idnames': ids,
             '_context': context,
-            # XXX deprecated since 1.2.1
-            '_ids': _ids,
         })
 
     def __repr__(self):
@@ -1033,6 +1031,11 @@ class RecordList(object):
         if attr.startswith('__'):
             errmsg = "'RecordList' object has no attribute %r" % attr
             raise AttributeError(errmsg)
+        if attr == '_ids':
+            # deprecated since 1.2.1
+            warnings.warn("Attribute 'RecordList._ids' is deprecated, "
+                          "use 'RecordList.id' instead.")
+            return self.id
         model_name = self._model_name
         execute = self._model._execute
 
@@ -1077,8 +1080,6 @@ class Record(object):
             '_model_name': res_model._name,
             '_model': res_model,
             '_context': context,
-            # XXX deprecated since 1.2.1
-            'client': res_model.client,
         })
 
     def __repr__(self):
@@ -1181,6 +1182,11 @@ class Record(object):
             return name
         if attr.startswith('__'):
             raise AttributeError("'Record' object has no attribute %r" % attr)
+        if attr == 'client':
+            # deprecated since 1.2.1
+            warnings.warn("Attribute 'Record.client' is deprecated, "
+                          "use 'Record._model.client' instead.")
+            return self._model.client
 
         def wrapper(self, *params, **kwargs):
             """Wrapper for client.execute(%r, %r, %d, *params, **kwargs)."""

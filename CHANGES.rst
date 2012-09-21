@@ -1,8 +1,8 @@
 Changelog
 ---------
 
-1.x (unreleased)
-~~~~~~~~~~~~~~~~
+1.2.1 (2012-09-21)
+~~~~~~~~~~~~~~~~~~
 
 * Add the special operators ``=ilike``, ``=ilike``, ``=?`` and fix
   parsing of inequality operators ``>=`` and ``<=``.
