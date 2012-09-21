@@ -1053,7 +1053,7 @@ class RecordList(object):
 
     def __setattr__(self, attr, value):
         if attr in self._model._keys or attr == 'id':
-            msg = "attribute %r is read-only"
+            msg = "attribute %r is read-only; use 'RecordList.write' instead."
         else:
             msg = "has no attribute %r"
         raise AttributeError("'RecordList' object %s" % msg % attr)
