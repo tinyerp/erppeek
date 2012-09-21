@@ -4,6 +4,9 @@ Changelog
 1.x (unreleased)
 ~~~~~~~~~~~~~~~~
 
+* Add the special operators ``=ilike``, ``=ilike``, ``=?`` and fix
+  parsing of inequality operators ``>=`` and ``<=``.
+
 * Fix the ``RecordList.id`` attribute, and deprecate ``RecordList._ids``.
 
 * Deprecate the ``Record.client`` attribute: use ``Record._model.client``.

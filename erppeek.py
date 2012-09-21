@@ -107,16 +107,12 @@ Usage (main commands):
 
 STABLE_STATES = ('uninstallable', 'uninstalled', 'installed')
 DOMAIN_OPERATORS = frozenset('!|&')
-# Supported operators are
-#   =, !=, >, >=, <, <=, like, ilike, in,
-#   not like, not ilike, not in, child_of
-# Not supported operators are
-#  - redundant operators: '<>', '=like', '=ilike'
-#  - future operator(s) (6.1): '=?'
+# Supported operators are:
+#   =, !=, >, >=, <, <=, like, ilike, in, not like, not ilike, not in, child_of
+#   =like, =ilike (6.0), =? (6.0)
 _term_re = re.compile(
-    '([\w._]+)\s*'
-    '(=|!=|>|>=|<|<=|(?<= )(?:like|ilike|in|not like|not ilike|not in|child_of))'
-    '\s*(.*)')
+    '([\w._]+)\s*'  '(=(?:like|ilike|\?)|[<>!]=|[<>=]'
+    '|(?<= )(?:like|ilike|in|not like|not ilike|not in|child_of))'  '\s*(.*)')
 _fields_re = re.compile(r'(?:[^%]|^)%\(([^)]+)\)')
 
 # Published object methods
