@@ -904,8 +904,7 @@ class Model(object):
         else:
             assert not params and not kwargs
         return RecordList(self, domain, context=context)
-
-    # alias
+    # undocumented alias
     get = browse
 
     def create(self, values, context=None):
@@ -1162,9 +1161,6 @@ class Record(object):
         rv = self._model._execute('write', [self.id], values, context=context)
         self._clear_cache()
         return rv
-
-    # alias
-    update = write
 
     def unlink(self, context=None):
         """Delete the current :class:`Record` from the database."""

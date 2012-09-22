@@ -7,6 +7,8 @@ Changelog
 * Accept ``Record`` and ``RecordList`` attribute values when writing or
   creating records.
 
+* Remove undocumented alias ``Record.update``.
+
 
 1.2.1 (2012-09-21)
 ~~~~~~~~~~~~~~~~~~
