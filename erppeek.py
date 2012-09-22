@@ -892,17 +892,18 @@ class Model(object):
         Otherwise, the return value is a :class:`RecordList`.
         """
         context = kwargs.pop('context', None)
-        assert issearchdomain(domain) or not (params or kwargs)
-        ids = domain
-        if isinstance(ids, int_types):
-            return Record(self, ids, context=context)
+        if isinstance(domain, int_types):
+            assert not params and not kwargs
+            return Record(self, domain, context=context)
         if issearchdomain(domain):
             params = searchargs((domain,) + params, kwargs, context)
-            ids = self._execute('search', *params)
+            domain = self._execute('search', *params)
             # Ignore extra keyword arguments
             for item in kwargs.items():
                 print('Ignoring: %s = %r' % item)
-        return RecordList(self, ids, context=context)
+        else:
+            assert not params and not kwargs
+        return RecordList(self, domain, context=context)
 
     # alias
     get = browse
