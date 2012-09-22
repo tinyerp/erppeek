@@ -810,8 +810,6 @@ class Client(object):
         except (TypeError, Fault):
             return False
 
-        return self.model(obj).access(mode=mode)
-
     def __getattr__(self, method):
         if not method.islower():
             rv = self.model(lowercase(method))
