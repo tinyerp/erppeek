@@ -1,10 +1,24 @@
 # -*- coding: utf-8 -*-
 import unittest2
 
-from erppeek import searchargs
+from erppeek import issearchdomain, searchargs
 
 
 class TestUtils(unittest2.TestCase):
+
+    def test_issearchdomain(self):
+        self.assertFalse(issearchdomain(None))
+        self.assertFalse(issearchdomain(42))
+        self.assertFalse(issearchdomain('42'))
+        self.assertFalse(issearchdomain([1, 42]))
+        self.assertFalse(issearchdomain(['1', '42']))
+
+        self.assertTrue(issearchdomain([('name', '=', 'mushroom'),
+                                        ('state', '!=', 'draft')]))
+        self.assertTrue(issearchdomain(['name = mushroom', 'state != draft']))
+        self.assertTrue(issearchdomain([]))
+        self.assertTrue(issearchdomain('state != draft'))
+        self.assertTrue(issearchdomain(('state', '!=', 'draft')))
 
     def test_searchargs(self):
         domain = [('name', '=', 'mushroom'), ('state', '!=', 'draft')]

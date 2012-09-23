@@ -328,6 +328,26 @@ class TestModel(TestCase):
         self.assertCalls()
         self.assertOutput('')
 
+    def test_create(self):
+        FooBar = self.model('foo.bar')
+
+        record42 = FooBar.browse(42)
+        recordlist42 = FooBar.browse([4, 2])
+
+        FooBar.create({'bcd': 42})
+        FooBar.create({'bcd': record42})
+        FooBar.create({'bcd': recordlist42})
+        FooBar._execute('create', {'bcd': 42})
+        FooBar.create({})
+        self.assertCalls(
+            OBJ('foo.bar', 'create', {'bcd': 42}),
+            OBJ('foo.bar', 'create', {'bcd': 42}),
+            OBJ('foo.bar', 'create', {'bcd': [4, 2]}),
+            OBJ('foo.bar', 'create', {'bcd': 42}),
+            OBJ('foo.bar', 'create', {}),
+        )
+        self.assertOutput('')
+
     def test_method(self, method_name='method', single_id=True):
         FooBar = self.model('foo.bar')
         FooBar_method = getattr(FooBar, method_name)
@@ -383,6 +403,52 @@ class TestRecord(TestCase):
         )
         self.assertOutput('')
 
+    def test_write(self):
+        records = self.model('foo.bar').browse([13, 17])
+        rec = self.model('foo.bar').browse(42)
+
+        rec.write({})
+        rec.write({'bcd': 42})
+        rec.write({'bcd': rec})
+        rec.write({'bcd': records})
+        records.write({})
+        records.write({'bcd': 42})
+        records.write({'bcd': rec})
+        records.write({'bcd': records})
+        self.assertCalls(
+            OBJ('foo.bar', 'write', [42], {}),
+            OBJ('foo.bar', 'fields_get_keys'),
+            OBJ('foo.bar', 'write', [42], {'bcd': 42}),
+            OBJ('foo.bar', 'write', [42], {'bcd': 42}),
+            OBJ('foo.bar', 'write', [42], {'bcd': [13, 17]}),
+            OBJ('foo.bar', 'write', [13, 17], {}),
+            OBJ('foo.bar', 'write', [13, 17], {'bcd': 42}),
+            OBJ('foo.bar', 'write', [13, 17], {'bcd': 42}),
+            OBJ('foo.bar', 'write', [13, 17], {'bcd': [13, 17]}),
+        )
+        self.assertOutput('')
+
+    def test_copy(self):
+        rec = self.model('foo.bar').browse(42)
+        records = self.model('foo.bar').browse([13, 17])
+
+        recopy = rec.copy()
+        self.assertIsInstance(recopy, erppeek.Record)
+        self.assertEqual(recopy.id, sentinel.OTHER)
+
+        rec.copy({'bcd': 42})
+        rec.copy({'bcd': rec})
+        rec.copy({'bcd': records})
+        rec.copy({})
+        self.assertCalls(
+            OBJ('foo.bar', 'copy', 42, None),
+            OBJ('foo.bar', 'copy', 42, {'bcd': 42}),
+            OBJ('foo.bar', 'copy', 42, {'bcd': 42}),
+            OBJ('foo.bar', 'copy', 42, {'bcd': [13, 17]}),
+            OBJ('foo.bar', 'copy', 42, {}),
+        )
+        self.assertOutput('')
+
     def test_method(self, method_name='method'):
         records = self.model('foo.bar').browse([13, 17])
         rec = self.model('foo.bar').browse(42)
@@ -429,6 +495,10 @@ class TestRecord(TestCase):
         records = self.model('foo.bar').browse([13, 17])
         rec = self.model('foo.bar').browse(42)
 
+        # attribute "id" is always present
+        self.assertEqual(rec.id, 42)
+        self.assertEqual(records.id, [13, 17])
+
         # existing fields can be read as attributes
         # attribute is writable on the Record object only
         self.assertFalse(callable(rec.message))
@@ -450,6 +520,10 @@ class TestRecord(TestCase):
             OBJ('foo.bar', 'missingattr', [42]),
             OBJ('foo.bar', 'missingattr', [13, 17]),
         )
+
+        # attribute "id" is never writable
+        self.assertRaises(AttributeError, setattr, rec, 'id', 42)
+        self.assertRaises(AttributeError, setattr, records, 'id', 42)
 
         # `setattr` not allowed (except for existing fields on Record object)
         self.assertRaises(AttributeError, setattr, rec, 'missingattr', 42)
