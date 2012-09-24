@@ -334,16 +334,17 @@ class TestModel(TestCase):
         record42 = FooBar.browse(42)
         recordlist42 = FooBar.browse([4, 2])
 
-        FooBar.create({'bcd': 42})
-        FooBar.create({'bcd': record42})
-        FooBar.create({'bcd': recordlist42})
-        FooBar._execute('create', {'bcd': 42})
+        FooBar.create({'spam': 42})
+        FooBar.create({'spam': record42})
+        FooBar.create({'spam': recordlist42})
+        FooBar._execute('create', {'spam': 42})
         FooBar.create({})
         self.assertCalls(
-            OBJ('foo.bar', 'create', {'bcd': 42}),
-            OBJ('foo.bar', 'create', {'bcd': 42}),
-            OBJ('foo.bar', 'create', {'bcd': [4, 2]}),
-            OBJ('foo.bar', 'create', {'bcd': 42}),
+            OBJ('foo.bar', 'fields_get'),
+            OBJ('foo.bar', 'create', {'spam': 42}),
+            OBJ('foo.bar', 'create', {'spam': 42}),
+            OBJ('foo.bar', 'create', {'spam': [4, 2]}),
+            OBJ('foo.bar', 'create', {'spam': 42}),
             OBJ('foo.bar', 'create', {}),
         )
         self.assertOutput('')
@@ -408,23 +409,24 @@ class TestRecord(TestCase):
         rec = self.model('foo.bar').browse(42)
 
         rec.write({})
-        rec.write({'bcd': 42})
-        rec.write({'bcd': rec})
-        rec.write({'bcd': records})
+        rec.write({'spam': 42})
+        rec.write({'spam': rec})
+        rec.write({'spam': records})
         records.write({})
-        records.write({'bcd': 42})
-        records.write({'bcd': rec})
-        records.write({'bcd': records})
+        records.write({'spam': 42})
+        records.write({'spam': rec})
+        records.write({'spam': records})
         self.assertCalls(
             OBJ('foo.bar', 'write', [42], {}),
             OBJ('foo.bar', 'fields_get_keys'),
-            OBJ('foo.bar', 'write', [42], {'bcd': 42}),
-            OBJ('foo.bar', 'write', [42], {'bcd': 42}),
-            OBJ('foo.bar', 'write', [42], {'bcd': [13, 17]}),
+            OBJ('foo.bar', 'fields_get'),
+            OBJ('foo.bar', 'write', [42], {'spam': 42}),
+            OBJ('foo.bar', 'write', [42], {'spam': 42}),
+            OBJ('foo.bar', 'write', [42], {'spam': [13, 17]}),
             OBJ('foo.bar', 'write', [13, 17], {}),
-            OBJ('foo.bar', 'write', [13, 17], {'bcd': 42}),
-            OBJ('foo.bar', 'write', [13, 17], {'bcd': 42}),
-            OBJ('foo.bar', 'write', [13, 17], {'bcd': [13, 17]}),
+            OBJ('foo.bar', 'write', [13, 17], {'spam': 42}),
+            OBJ('foo.bar', 'write', [13, 17], {'spam': 42}),
+            OBJ('foo.bar', 'write', [13, 17], {'spam': [13, 17]}),
         )
         self.assertOutput('')
 
@@ -436,15 +438,16 @@ class TestRecord(TestCase):
         self.assertIsInstance(recopy, erppeek.Record)
         self.assertEqual(recopy.id, sentinel.OTHER)
 
-        rec.copy({'bcd': 42})
-        rec.copy({'bcd': rec})
-        rec.copy({'bcd': records})
+        rec.copy({'spam': 42})
+        rec.copy({'spam': rec})
+        rec.copy({'spam': records})
         rec.copy({})
         self.assertCalls(
             OBJ('foo.bar', 'copy', 42, None),
-            OBJ('foo.bar', 'copy', 42, {'bcd': 42}),
-            OBJ('foo.bar', 'copy', 42, {'bcd': 42}),
-            OBJ('foo.bar', 'copy', 42, {'bcd': [13, 17]}),
+            OBJ('foo.bar', 'fields_get'),
+            OBJ('foo.bar', 'copy', 42, {'spam': 42}),
+            OBJ('foo.bar', 'copy', 42, {'spam': 42}),
+            OBJ('foo.bar', 'copy', 42, {'spam': [13, 17]}),
             OBJ('foo.bar', 'copy', 42, {}),
         )
         self.assertOutput('')
@@ -513,10 +516,10 @@ class TestRecord(TestCase):
         self.assertCalls(
             OBJ('foo.bar', 'fields_get_keys'),
             OBJ('foo.bar', 'read', 42, ['message']),
+            OBJ('foo.bar', 'fields_get'),
             OBJ('foo.bar', 'write', [42], {'message': 'one giant leap for mankind'}),
             OBJ('foo.bar', 'read', 42, ['message']),
             OBJ('foo.bar', 'read', [13, 17], ['message']),
-            OBJ('foo.bar', 'fields_get'),
             OBJ('foo.bar', 'missingattr', [42]),
             OBJ('foo.bar', 'missingattr', [13, 17]),
         )

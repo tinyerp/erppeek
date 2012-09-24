@@ -7,6 +7,12 @@ Changelog
 * Accept ``Record`` and ``RecordList`` attribute values when writing or
   creating records.
 
+* Improve the methods ``write`` and ``create`` of ``Record`` and ``RecordList``
+  objects to manage ``one2many`` and ``many2many`` fields.
+
+* Return a ``Record`` when reading a ``reference`` field.  Implement the
+  ``create`` and ``write`` methods for these fields.
+
 * Remove undocumented alias ``Record.update``.
 
 

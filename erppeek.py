@@ -941,6 +941,9 @@ class Model(object):
             elif field_type in ('one2many', 'many2many'):
                 rel_model = get_model(field['relation'])
                 value = RecordList(rel_model, value, context=context)
+            elif field_type == 'reference':
+                res_model, res_id = value.split(',')
+                value = Record(get_model(res_model), int(res_id))
             new_values[key] = value
         return new_values
 
@@ -948,8 +951,17 @@ class Model(object):
         """Unwrap the id of Record and RecordList."""
         new_values = values.copy()
         for key, value in values.items():
+            field_type = self._fields[key]['type']
             if isinstance(value, (Record, RecordList)):
-                new_values[key] = value.id
+                if field_type == 'reference':
+                    new_values[key] = '%s,%s' % (value._model_name, value.id)
+                else:
+                    new_values[key] = value = value.id
+            if field_type in ('one2many', 'many2many'):
+                if not value:
+                    new_values[key] = [(6, 0, [])]
+                elif isinstance(value[0], (int, long)):
+                    new_values[key] = [(6, 0, value)]
         return new_values
 
     def __getattr__(self, attr):
