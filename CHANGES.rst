@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+1.x (unreleased)
+~~~~~~~~~~~~~~~~
+
+* Implement exception chaining in ``format_exception`` to print the
+  original traceback.
+
+
 1.2.2 (2012-09-24)
 ~~~~~~~~~~~~~~~~~~
 

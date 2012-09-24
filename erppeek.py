@@ -61,7 +61,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '1.2.2'
+__version__ = '1.2.2.post0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config']
 
@@ -139,6 +139,8 @@ _methods_6_1 = {
 #  - (not in 6.1) 'object': ['obj_list']
 #  - 'common': ['get_available_updates', 'get_migration_scripts',
 #               'set_loglevel']
+_cause_message = ("\nThe above exception was the direct cause "
+                  "of the following exception:\n\n")
 
 
 def mixedcase(s, _cache={}):
@@ -174,17 +176,25 @@ def format_exception(exc_type, exc, tb, limit=None, chain=True,
 
     This wrapper is a replacement of ``traceback.format_exception``
     which formats the error and traceback received by XML-RPC.
+    If `chain` is True, then the original exception is printed too.
     """
-    # Format readable 'Fault' errors
+    values = _format_exception(exc_type, exc, tb, limit=limit)
     if ((issubclass(exc_type, Fault) and
          isinstance(exc.faultCode, basestring))):
+        # Format readable 'Fault' errors
         etype, _, msg = exc.faultCode.partition('--')
+        server_tb = None
         if etype.strip() != 'warning':
             msg = exc.faultCode
             if not msg.startswith('FATAL:'):
-                msg += '\n' + exc.faultString
-        return ['%s: %s\n' % (exc_type.__name__, msg.strip())]
-    return _format_exception(exc_type, exc, tb, limit=limit)
+                server_tb = exc.faultString
+        fault = '%s: %s\n' % (exc_type.__name__, msg.strip())
+        if chain:
+            values = [server_tb or fault, _cause_message] + values
+            values[-1] = fault
+        else:
+            values = [server_tb or fault]
+    return values
 
 
 def read_config(section=None):
@@ -1289,7 +1299,8 @@ def _interact(use_pprint=True, usage=USAGE):
             except:
                 # Print readable 'Fault' errors
                 # Work around http://bugs.python.org/issue12643
-                msg = ''.join(format_exception(*sys.exc_info()))
+                exc_type, exc, tb = sys.exc_info()
+                msg = ''.join(format_exception(exc_type, exc, tb, chain=False))
                 print(msg.strip())
 
     warnings.simplefilter('always', UserWarning)

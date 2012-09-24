@@ -271,6 +271,6 @@ Utilities
 
 .. autofunction:: searchargs
 
-.. autofunction:: format_exception(type, value, tb, limit=None)
+.. autofunction:: format_exception(type, value, tb, limit=None, chain=True)
 
 .. autofunction:: read_config
