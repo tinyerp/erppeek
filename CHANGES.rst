@@ -7,6 +7,9 @@ Changelog
 * Implement exception chaining in ``format_exception`` to print the
   original traceback.
 
+* Return a list of ``Record`` objects when reading the ``reference`` field
+  of a ``RecordList`` object.
+
 
 1.2.2 (2012-09-24)
 ~~~~~~~~~~~~~~~~~~

@@ -935,27 +935,21 @@ class Model(object):
         the value is wrapped in a Record or a RecordList.
         Return a dictionary with the same keys as the `values` argument.
         """
-        get_model = self.client.model
-        new_values = {}
         for key, value in values.items():
-            if key == 'id':
-                new_values['id'] = value
+            if not value or key == 'id':
                 continue
             field = self._fields[key]
             field_type = field['type']
-            if not value:
-                pass
-            elif field_type == 'many2one':
-                rel_model = get_model(field['relation'])
-                value = Record(rel_model, value, context=context)
+            if field_type == 'many2one':
+                rel_model = self.client.model(field['relation'])
+                values[key] = Record(rel_model, value, context=context)
             elif field_type in ('one2many', 'many2many'):
-                rel_model = get_model(field['relation'])
-                value = RecordList(rel_model, value, context=context)
+                rel_model = self.client.model(field['relation'])
+                values[key] = RecordList(rel_model, value, context=context)
             elif field_type == 'reference':
                 res_model, res_id = value.split(',')
-                value = Record(get_model(res_model), int(res_id))
-            new_values[key] = value
-        return new_values
+                values[key] = Record(self.client.model(res_model), int(res_id))
+        return values
 
     def _unbrowse_values(self, values):
         """Unwrap the id of Record and RecordList."""
@@ -1039,7 +1033,6 @@ class RecordList(object):
 
         if isinstance(fields, basestring):
             field = self._model._fields.get(fields)
-
             if field:
                 if field['type'] == 'many2one':
                     rel_model = client.model(field['relation'])
@@ -1047,6 +1040,15 @@ class RecordList(object):
                 if field['type'] in ('one2many', 'many2many'):
                     rel_model = client.model(field['relation'])
                     return [RecordList(rel_model, v) for v in values]
+                if field['type'] == 'reference':
+                    records = []
+                    for value in values:
+                        if value:
+                            res_model, res_id = value.split(',')
+                            rel_model = client.model(res_model)
+                            value = Record(rel_model, int(res_id))
+                        records.append(value)
+                    return records
         return values
 
     def write(self, values, context=None):
