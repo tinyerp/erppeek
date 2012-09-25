@@ -26,6 +26,7 @@ class TestCase(XmlRpcTestCase):
             class IdentDict(dict):
                 def __init__(self, id_):
                     self._id = id_
+                    self['id'] = id_
 
                 def __getitem__(self, key):
                     if key == 'id':
@@ -397,8 +398,8 @@ class TestRecord(TestCase):
             OBJ('foo.bar', 'read', 42, None),
             OBJ('foo.bar', 'read', [13, 17], None),
             OBJ('foo.bar', 'read', 42, ['message']),
-            OBJ('foo.bar', 'read', [13, 17], ['message']),
             OBJ('foo.bar', 'fields_get'),
+            OBJ('foo.bar', 'read', [13, 17], ['message']),
             OBJ('foo.bar', 'read', 42, ['name', 'message']),
             OBJ('foo.bar', 'read', [13, 17], ['birthdate', 'city']),
         )
@@ -535,11 +536,12 @@ class TestRecord(TestCase):
 
         # method can be forgotten (any use case?)
         del rec.missingattr, records.missingattr
+        # Single attribute can be deleted from cache
+        del rec.message
 
         # `del` not allowed for attributes or missing attr
-        self.assertRaises(AttributeError, delattr, rec, 'message')
-        self.assertRaises(AttributeError, delattr, records, 'message')
         self.assertRaises(AttributeError, delattr, rec, 'missingattr2')
+        self.assertRaises(AttributeError, delattr, records, 'message')
         self.assertRaises(AttributeError, delattr, records, 'missingattr2')
 
         self.assertCalls()

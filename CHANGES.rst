@@ -10,6 +10,8 @@ Changelog
 * Return a list of ``Record`` objects when reading the ``reference`` field
   of a ``RecordList`` object.
 
+* Fix reading attributes on ``RecordList`` with holes or gaps.
+
 
 1.2.2 (2012-09-24)
 ~~~~~~~~~~~~~~~~~~

@@ -552,8 +552,14 @@ class Client(object):
                 search_params = searchargs(params[:1], kwargs, context)
                 ordered = len(search_params) > 3 and search_params[3]
                 ids = self._execute(obj, 'search', *search_params)
+            elif isinstance(params[0], list):
+                ordered = kwargs.pop('order', False) and params[0]
+                ids = set(params[0])
+                ids.discard(False)
+                if not ids:
+                    return [False] * len(ordered)
+                ids = sorted(ids)
             else:
-                ordered = kwargs.pop('order', False)
                 ids = params[0]
             if not ids:
                 return []
@@ -584,7 +590,10 @@ class Client(object):
             # when received from the server
             assert len(res) == len(set(ids))
             resdic = dict([(val['id'], val) for val in res])
-            res = [resdic[id_] for id_ in ids]
+            if isinstance(ordered, list):
+                res = [id_ and resdic[id_] for id_ in ordered]
+            else:
+                res = [resdic[id_] for id_ in ids]
         return res
 
     def exec_workflow(self, obj, signal, obj_id):
@@ -722,11 +731,11 @@ class Client(object):
             return res
         if fmt:
             if isinstance(res, list):
-                return [fmt % d for d in res]
+                return [(d and fmt % d) for d in res]
             return fmt % res
         if fmt == ():
             if isinstance(res, list):
-                return [d[fields[0]] for d in res]
+                return [(d and d[fields[0]]) for d in res]
             return res[fields[0]]
         return res
 
@@ -988,10 +997,12 @@ class RecordList(object):
     """A sequence of OpenERP :class:`Record`."""
 
     def __init__(self, res_model, ids, context=None):
-        if ids and isinstance(ids[0], list):
-            _ids = [id_ for (id_, name) in ids]
-        else:
-            _ids = ids
+        _ids = []
+        for id_ in ids:
+            if isinstance(id_, list):
+                _ids.append(id_[0])
+            else:
+                _ids.append(id_)
         # Bypass the __setattr__ method
         self.__dict__.update({
             # 'client': res_model.client,
@@ -1060,8 +1071,11 @@ class RecordList(object):
         return rv
 
     def __getitem__(self, key):
+        idname = self._idnames[key]
+        if idname is False:
+            return False
         cls = isinstance(key, slice) and RecordList or Record
-        return cls(self._model, self._idnames[key], context=self._context)
+        return cls(self._model, idname, context=self._context)
 
     def __getattr__(self, attr):
         context = self._context
