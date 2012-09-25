@@ -945,19 +945,21 @@ class Model(object):
         Return a dictionary with the same keys as the `values` argument.
         """
         for key, value in values.items():
-            if not value or key == 'id':
+            if key == 'id':
                 continue
             field = self._fields[key]
             field_type = field['type']
             if field_type == 'many2one':
-                rel_model = self.client.model(field['relation'])
-                values[key] = Record(rel_model, value, context=context)
+                if value:
+                    rel_model = self.client.model(field['relation'])
+                    values[key] = Record(rel_model, value, context=context)
             elif field_type in ('one2many', 'many2many'):
                 rel_model = self.client.model(field['relation'])
                 values[key] = RecordList(rel_model, value, context=context)
             elif field_type == 'reference':
-                res_model, res_id = value.split(',')
-                values[key] = Record(self.client.model(res_model), int(res_id))
+                if value:
+                    res_model, res_id = value.split(',')
+                    values[key] = Record(self.client.model(res_model), int(res_id))
         return values
 
     def _unbrowse_values(self, values):

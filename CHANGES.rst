@@ -12,6 +12,9 @@ Changelog
 
 * Fix reading attributes on ``RecordList`` with holes or gaps.
 
+* Accessing an empty ``one2many`` or ``many2many`` attribute on a ``Record``
+  returns a ``RecordList``.
+
 
 1.2.2 (2012-09-24)
 ~~~~~~~~~~~~~~~~~~
