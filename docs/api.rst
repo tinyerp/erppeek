@@ -228,6 +228,8 @@ the same :class:`Model`.
       .. method:: browse(domain, context=None)
    .. automethod:: browse(domain, offset=0, limit=None, order=None, context=None)
 
+   .. automethod:: get(domain, context=None)
+
    .. automethod:: create
 
 ..

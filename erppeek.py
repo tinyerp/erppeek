@@ -923,8 +923,22 @@ class Model(object):
         else:
             assert not params and not kwargs
         return RecordList(self, domain, context=context)
-    # undocumented alias
-    get = browse
+
+    def get(self, domain, context=None):
+        """Return a single :class:`Record`.
+
+        The argument `domain` accepts a single integer ``id`` or a
+        search domain.  The return value is a :class:`Record` or None.
+        If multiple records are found, a ``ValueError`` is raised.
+        """
+        if isinstance(domain, int_types):
+            return Record(self, domain, context=context)
+        assert issearchdomain(domain)
+        params = searchargs((domain,), context=context)
+        ids = self._execute('search', *params)
+        if len(ids) > 1:
+            raise ValueError('domain matches too many records (%d)' % len(ids))
+        return ids and Record(self, ids[0], context=context) or None
 
     def create(self, values, context=None):
         """Create a :class:`Record`.

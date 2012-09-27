@@ -15,6 +15,9 @@ Changelog
 * Accessing an empty ``one2many`` or ``many2many`` attribute on a ``Record``
   returns a ``RecordList``.
 
+* New method ``Model.get`` to retrieve a single ``Record``.  It raises a
+  ``ValueError`` if multiple records are found.
+
 * New method ``Record._send`` to send a workflow signal.
 
 
