@@ -61,7 +61,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '1.2.2.post0'
+__version__ = '1.3'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config']
 
@@ -226,9 +226,10 @@ def issearchdomain(arg):
       - ``[('name', '=', 'mushroom'), ('state', '!=', 'draft')]``
       - ``['name = mushroom', 'state != draft']``
       - ``[]``
-      - ``'state != draft'``
-      - ``('state', '!=', 'draft')``
     """
+    # These ones are supported but discouraged:
+    # - 'state != draft'
+    # - ('state', '!=', 'draft')
     return isinstance(arg, (list, tuple, basestring)) and not (arg and (
         # Not a list of ids: [1, 2, 3]
         isinstance(arg[0], int_types) or

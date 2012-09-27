@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-1.x (unreleased)
+1.3 (2012-09-27)
 ~~~~~~~~~~~~~~~~
 
 * Implement exception chaining in ``format_exception`` to print the
