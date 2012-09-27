@@ -1223,6 +1223,10 @@ class Record(object):
         new_id = self._model._execute('copy', self.id, default, context=context)
         return Record(self._model, new_id)
 
+    def _send(self, signal):
+        """Trigger workflow `signal` for this :class:`Record`."""
+        return self._model.exec_workflow(signal, self.id)
+
     def __dir__(self):
         return ['read', 'write', 'copy', 'unlink',
                 'id', '_context', '_model', '_model_name',

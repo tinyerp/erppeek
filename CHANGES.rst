@@ -15,6 +15,8 @@ Changelog
 * Accessing an empty ``one2many`` or ``many2many`` attribute on a ``Record``
   returns a ``RecordList``.
 
+* New method ``Record._send`` to send a workflow signal.
+
 
 1.2.2 (2012-09-24)
 ~~~~~~~~~~~~~~~~~~

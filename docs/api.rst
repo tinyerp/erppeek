@@ -256,7 +256,7 @@ the same :class:`Model`.
       Wrapper for the :meth:`Record.unlink` method.
 
 .. autoclass:: Record(model, id)
-   :members: read, perm_read, write, copy, unlink
+   :members: read, perm_read, write, copy, unlink, _send
    :undoc-members:
 
 
