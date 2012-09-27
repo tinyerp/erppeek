@@ -1242,7 +1242,7 @@ class Record(object):
         return self._model.exec_workflow(signal, self.id)
 
     def __dir__(self):
-        return ['read', 'write', 'copy', 'unlink',
+        return ['read', 'write', 'copy', 'unlink', '_send',
                 'id', '_context', '_model', '_model_name',
                 '_name', '_keys', '_fields'] + self._model._keys
 
