@@ -61,7 +61,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '1.3.1'
+__version__ = '1.3.1.post0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config']
 
@@ -1011,7 +1011,15 @@ class Model(object):
 
 
 class RecordList(object):
-    """A sequence of OpenERP :class:`Record`."""
+    """A sequence of OpenERP :class:`Record`.
+
+    It has a similar API as the :class:`Record` class, but for a list of
+    records.  The attributes of the ``RecordList`` are read-only, and they
+    return list of attribute values in the same order.  The ``many2one``,
+    ``one2many`` and ``many2many`` attributes are wrapped in ``RecordList``
+    and list of ``RecordList`` objects.  Use the method ``RecordList.write``
+    to assign a single value to all the selected records.
+    """
 
     def __init__(self, res_model, ids, context=None):
         _ids = []
@@ -1132,13 +1140,12 @@ class Record(object):
 
     It maps any OpenERP object.
     The fields can be accessed through attributes.  The changes are immediately
-    saved in the database.
-    The ``many2one``, ``one2many`` and ``many2many`` attributes are followed
-    when the record is read.  However when writing in these relational fields,
-    use the appropriate syntax described in the official OpenERP documentation.
+    sent to the server.
+    The ``many2one``, ``one2many`` and ``many2many`` attributes are wrapped in
+    ``Record`` and ``RecordList`` objects.  These attributes support writing
+    too.
     The attributes are evaluated lazily, and they are cached in the record.
-    The cache is invalidated if the :meth:`~Record.write` or the
-    :meth:`~Record.unlink` method is called.
+    The Record's cache is invalidated if any attribute is changed.
     """
     def __init__(self, res_model, res_id, context=None):
         if isinstance(res_id, list):
@@ -1282,8 +1289,6 @@ class Record(object):
         if attr == 'id':
             raise AttributeError("'Record' object attribute 'id' is read-only")
         self.write({attr: value})
-        if attr in self.__dict__:
-            delattr(self, attr)
 
 
 def _interact(use_pprint=True, usage=USAGE):
