@@ -61,7 +61,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '1.3'
+__version__ = '1.3.1'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config']
 
@@ -1240,7 +1240,8 @@ class Record(object):
 
     def _send(self, signal):
         """Trigger workflow `signal` for this :class:`Record`."""
-        return self._model.exec_workflow(signal, self.id)
+        exec_workflow = self._model.client.exec_workflow
+        return exec_workflow(self._model_name, signal, self.id)
 
     def __dir__(self):
         return ['read', 'write', 'copy', 'unlink', '_send',
