@@ -102,10 +102,14 @@ Edit ``erppeek.ini`` and declare the environment(s)::
     port = 8069
     database = openerp
     username = admin
+    options = -c /path/to/openerp-server.conf --without-demo all
 
     [demo]
     username = demo
     password = demo
+
+    [local]
+    scheme = local
 
 
 Connect to the OpenERP server::
