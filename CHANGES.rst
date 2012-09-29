@@ -4,6 +4,10 @@ Changelog
 1.x (unreleased)
 ~~~~~~~~~~~~~~~~
 
+* New: direct connection to a local server using the ``openerp`` library.
+  Use ``scheme = local`` and ``options = -c /path/to/openerp-server.conf``
+  in the configuration.
+
 
 1.3.1 (2012-09-28)
 ~~~~~~~~~~~~~~~~~~

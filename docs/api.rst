@@ -276,3 +276,5 @@ Utilities
 .. autofunction:: format_exception(type, value, tb, limit=None, chain=True)
 
 .. autofunction:: read_config
+
+.. autofunction:: start_openerp_services

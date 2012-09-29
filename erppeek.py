@@ -9,7 +9,7 @@ from __future__ import with_statement
 
 import functools
 import optparse
-import os.path
+import os
 from pprint import pprint
 import re
 import sys
@@ -61,9 +61,9 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '1.3.1.post0'
+__version__ = '1.4.dev0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
-           'format_exception', 'read_config']
+           'format_exception', 'read_config', 'start_openerp_services']
 
 CONF_FILE = 'erppeek.ini'
 HIST_FILE = os.path.expanduser('~/.erppeek_history')
@@ -215,8 +215,28 @@ def read_config(section=None):
         return p.sections()
     env = dict(p.items(section))
     scheme = env.get('scheme', 'http')
-    server = '%s://%s:%s' % (scheme, env['host'], env['port'])
+    if scheme == 'local':
+        server = (scheme, env.get('options', ''))
+    else:
+        server = '%s://%s:%s' % (scheme, env['host'], env['port'])
     return (server, env['database'], env['username'], env.get('password'))
+
+
+def start_openerp_services(options=None):
+    """Initialize the OpenERP services.
+
+    Import the ``openerp`` package and load the OpenERP services.
+    The argument `options` receives the command line arguments for ``openerp``.
+    Example: ``-c /path/to/openerp-server.conf --without-demo all``.
+    """
+    import openerp
+    if not openerp.osv.osv.service:
+        os.environ['TZ'] = 'UTC'
+        options = options and options.split() or []
+        openerp.tools.config.parse_config(options)
+        openerp.netsvc.init_logger()
+        openerp.osv.osv.start_object_proxy()
+        openerp.service.web_services.start_web_services()
 
 
 def issearchdomain(arg):
@@ -270,26 +290,33 @@ def searchargs(params, kwargs=None, context=None):
     return params
 
 
-class Service(ServerProxy):
+class Service(object):
     """A wrapper around XML-RPC endpoints.
 
     The connected endpoints are exposed on the Client instance.
     The `server` argument is the URL of the server (scheme+host+port).
-    The `endpoint` argument is the last part of the URL
+    If `server` is ``None``, it imports ``openerp`` and connects to the
+    local server.  The `endpoint` argument is the last part of the URL
     (examples: ``"object"``, ``"db"``).  The `methods` is the list of methods
     which should be exposed on this endpoint.  Use ``dir(...)`` on the
     instance to list them.
     """
     def __init__(self, server, endpoint, methods, verbose=False):
-        uri = server + '/xmlrpc/' + endpoint
-        ServerProxy.__init__(self, uri, allow_none=True)
+        if server:
+            self._rpcpath = rpcpath = server + '/xmlrpc/'
+            proxy = ServerProxy(rpcpath + endpoint, allow_none=True)
+            self._dispatch = proxy._ServerProxy__request
+        else:
+            import openerp
+            self._rpcpath = ''
+            proxy = openerp.netsvc.ExportService.getService(endpoint)
+            self._dispatch = proxy.dispatch
         self._endpoint = endpoint
         self._methods = sorted(methods)
         self._verbose = verbose
 
     def __repr__(self):
-        rname = '%s%s' % (self._ServerProxy__host, self._ServerProxy__handler)
-        return '<Service %s>' % rname
+        return '<Service %r>' % (self._rpcpath + self._endpoint)
     __str__ = __repr__
 
     def __dir__(self):
@@ -313,7 +340,7 @@ class Service(ServerProxy):
                     suffix = '... L=%s' % len(snt)
                     snt = snt[:maxcol - len(suffix)] + suffix
                 print('--> ' + snt)
-                res = self._ServerProxy__request(name, args)
+                res = self._dispatch(name, args)
                 rcv = str(res)
                 if len(rcv) > maxcol:
                     suffix = '... L=%s' % len(rcv)
@@ -321,7 +348,7 @@ class Service(ServerProxy):
                 print('<-- ' + rcv)
                 return res
         else:
-            wrapper = lambda s, *args: s._ServerProxy__request(name, args)
+            wrapper = lambda s, *args: s._dispatch(name, args)
         wrapper.__name__ = name
         return wrapper.__get__(self, type(self))
 
@@ -331,6 +358,9 @@ class Client(object):
 
     This is the top level object.
     The `server` is the URL of the instance, like ``http://localhost:8069``.
+    If `server` is ``None``, it tries to import the ``openerp`` package to
+    connect to the local server (6.1 only).
+
     The `db` is the name of the database and the `user` should exist in the
     table ``res.users``.  If the `password` is not provided, it will be
     asked on login.
@@ -339,7 +369,7 @@ class Client(object):
 
     def __init__(self, server, db=None, user=None, password=None,
                  verbose=False):
-        self._server = server
+        self._server = server or None
         self._db = ()
         self._environment = None
         self.user = None
@@ -375,12 +405,15 @@ class Client(object):
         See :func:`read_config` for details of the configuration file format.
         """
         server, db, user, password = read_config(environment)
+        if server[0] == 'local':
+            start_openerp_services(server[1])
+            server = None
         client = cls(server, db, user, password, verbose=verbose)
         client._environment = environment
         return client
 
     def __repr__(self):
-        return "<Client '%s#%s'>" % (self._server, self._db)
+        return "<Client '%s#%s'>" % (self._server or '', self._db)
 
     def login(self, user, password=None, database=None):
         """Switch `user` and (optionally) `database`.
