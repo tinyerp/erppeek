@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest2
+import mock
 
 from erppeek import issearchdomain, searchargs
 
@@ -27,11 +28,17 @@ class TestUtils(unittest2.TestCase):
         self.assertEqual(searchargs((domain,)), (domain,))
         self.assertEqual(searchargs((['name = mushroom', 'state != draft'],)),
                          (domain,))
-        # XXX catch warnings
-        # self.assertEqual(searchargs(('state != draft',)),
-        #                  ([('state', '!=', 'draft')],))
-        # self.assertEqual(searchargs((('state', '!=', 'draft'),)),
-        #                  ([('state', '!=', 'draft')],))
+
+        with mock.patch('warnings.warn') as mock_warn:
+            self.assertEqual(searchargs(('state != draft',)),
+                             ([('state', '!=', 'draft')],))
+            mock_warn.assert_called_once_with(
+                "Domain should be a list: ['state != draft']")
+            mock_warn.reset_mock()
+            self.assertEqual(searchargs((('state', '!=', 'draft'),)),
+                             ([('state', '!=', 'draft')],))
+            mock_warn.assert_called_once_with(
+                "Domain should be a list: [('state', '!=', 'draft')]")
 
         self.assertEqual(searchargs((['status=Running'],)),
                          ([('status', '=', 'Running')],))
