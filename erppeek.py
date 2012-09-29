@@ -228,6 +228,7 @@ def start_openerp_services(options=None):
     Import the ``openerp`` package and load the OpenERP services.
     The argument `options` receives the command line arguments for ``openerp``.
     Example: ``-c /path/to/openerp-server.conf --without-demo all``.
+    Return the openerp module.
     """
     import openerp
     if not openerp.osv.osv.service:
@@ -237,6 +238,7 @@ def start_openerp_services(options=None):
         openerp.netsvc.init_logger()
         openerp.osv.osv.start_object_proxy()
         openerp.service.web_services.start_web_services()
+    return openerp
 
 
 def issearchdomain(arg):
@@ -295,21 +297,20 @@ class Service(object):
 
     The connected endpoints are exposed on the Client instance.
     The `server` argument is the URL of the server (scheme+host+port).
-    If `server` is ``None``, it imports ``openerp`` and connects to the
-    local server.  The `endpoint` argument is the last part of the URL
+    If `server` is an ``openerp`` module, it is used to connect to the
+    local server.  The `endpoint` argument is the name of the service
     (examples: ``"object"``, ``"db"``).  The `methods` is the list of methods
     which should be exposed on this endpoint.  Use ``dir(...)`` on the
     instance to list them.
     """
     def __init__(self, server, endpoint, methods, verbose=False):
-        if server:
+        if isinstance(server, basestring):
             self._rpcpath = rpcpath = server + '/xmlrpc/'
             proxy = ServerProxy(rpcpath + endpoint, allow_none=True)
             self._dispatch = proxy._ServerProxy__request
         else:
-            import openerp
             self._rpcpath = ''
-            proxy = openerp.netsvc.ExportService.getService(endpoint)
+            proxy = server.netsvc.ExportService.getService(endpoint)
             self._dispatch = proxy.dispatch
         self._endpoint = endpoint
         self._methods = sorted(methods)
@@ -358,8 +359,8 @@ class Client(object):
 
     This is the top level object.
     The `server` is the URL of the instance, like ``http://localhost:8069``.
-    If `server` is ``None``, it tries to import the ``openerp`` package to
-    connect to the local server (6.1 only).
+    If `server` is an ``openerp`` module, it is used to connect to the local
+    server (6.1 only).
 
     The `db` is the name of the database and the `user` should exist in the
     table ``res.users``.  If the `password` is not provided, it will be
@@ -369,7 +370,7 @@ class Client(object):
 
     def __init__(self, server, db=None, user=None, password=None,
                  verbose=False):
-        self._server = server or None
+        self._server = server
         self._db = ()
         self._environment = None
         self.user = None
@@ -406,8 +407,7 @@ class Client(object):
         """
         server, db, user, password = read_config(environment)
         if server[0] == 'local':
-            start_openerp_services(server[1])
-            server = None
+            server = start_openerp_services(server[1])
         client = cls(server, db, user, password, verbose=verbose)
         client._environment = environment
         return client
@@ -1181,7 +1181,7 @@ class Record(object):
     The Record's cache is invalidated if any attribute is changed.
     """
     def __init__(self, res_model, res_id, context=None):
-        if isinstance(res_id, list):
+        if isinstance(res_id, (list, tuple)):
             (res_id, res_name) = res_id
             self.__dict__['_name'] = res_name
         # Bypass the __setattr__ method
