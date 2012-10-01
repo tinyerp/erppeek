@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-1.x (unreleased)
+1.4 (2012-10-01)
 ~~~~~~~~~~~~~~~~
 
 * New: direct connection to a local server using the ``openerp`` library.
