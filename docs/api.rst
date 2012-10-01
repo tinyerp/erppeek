@@ -198,6 +198,13 @@ Python script or interactively in a Python session.
 
 .. automethod:: Client.uninstall
 
+.. note::
+
+   It is not recommended to install or upgrade modules in offline mode when
+   any web server is still running: the operation will not be signaled to
+   other processes.  This restriction does not apply when connected through
+   XMl-RPC.
+
 
 .. _model-and-records:
 
