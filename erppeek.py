@@ -61,7 +61,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '1.4'
+__version__ = '1.4.1.dev0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_openerp_services']
 
@@ -1057,7 +1057,7 @@ class RecordList(object):
     def __init__(self, res_model, ids, context=None):
         _ids = []
         for id_ in ids:
-            if isinstance(id_, list):
+            if isinstance(id_, (list, tuple)):
                 _ids.append(id_[0])
             else:
                 _ids.append(id_)

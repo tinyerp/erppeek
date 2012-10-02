@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+
+1.x (unreleased)
+~~~~~~~~~~~~~~~~
+
+* Fix reading ``many2one`` attribute on ``RecordList`` object in local mode.
+
+
 1.4 (2012-10-01)
 ~~~~~~~~~~~~~~~~
 
