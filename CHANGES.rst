@@ -7,6 +7,8 @@ Changelog
 
 * Fix reading ``many2one`` attribute on ``RecordList`` object in local mode.
 
+* Fix occasional issue on login when switching database on the same server.
+
 
 1.4 (2012-10-01)
 ~~~~~~~~~~~~~~~~

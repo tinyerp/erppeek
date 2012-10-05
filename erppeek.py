@@ -420,27 +420,27 @@ class Client(object):
 
         If the `password` is not available, it will be asked.
         """
-        previous_db = self._db
         if database:
             dbs = self.db.list()
             if database not in dbs:
                 print("Error: Database '%s' does not exist: %s" %
                       (database, dbs))
                 return
-            self._db = database
-        elif not previous_db:
+        elif self._db:
+            database = self._db
+        else:
             print('Error: Not connected')
             return
-        (uid, password) = self._auth(user, password)
-        if uid:
-            self.user = user
-            if database and previous_db != database:
-                self._environment = None
-        else:
-            if previous_db:
-                self._db = previous_db
+        (uid, password) = self._auth(database, user, password)
+        if not uid:
+            if not self._db:
+                self._db = database
             print('Error: Invalid username or password')
             return
+        if database and self._db != database:
+            self._environment = None
+        self._db = database
+        self.user = user
 
         # Authenticated endpoints
         def authenticated(method):
@@ -462,17 +462,17 @@ class Client(object):
     _login = login
     _login.cache = {}
 
-    def _check_valid(self, uid, password):
+    def _check_valid(self, database, uid, password):
         execute = self._object.execute
         try:
-            execute(self._db, uid, password, 'res.users', 'fields_get_keys')
+            execute(database, uid, password, 'res.users', 'fields_get_keys')
             return True
         except Fault:
             return False
 
-    def _auth(self, user, password):
-        assert self._db
-        cache_key = (self._server, self._db, user)
+    def _auth(self, database, user, password):
+        assert database
+        cache_key = (self._server, database, user)
         if password:
             # If password is explicit, call the 'login' method
             uid = None
@@ -480,7 +480,8 @@ class Client(object):
             # Read from cache
             uid, password = self._login.cache.get(cache_key) or (None, None)
             # Read from table 'res.users'
-            if not uid and self.access('res.users', 'write'):
+            if ((not uid and self._db == database and
+                 self.access('res.users', 'write'))):
                 obj = self.read('res.users',
                                 [('login', '=', user)], 'id password')
                 if obj:
@@ -495,13 +496,13 @@ class Client(object):
                 password = getpass('Password for %r: ' % user)
         if uid:
             # Check if password changed
-            if not self._check_valid(uid, password):
+            if not self._check_valid(database, uid, password):
                 if cache_key in self._login.cache:
                     del self._login.cache[cache_key]
                 uid = False
         elif uid is None:
             # Do a standard 'login'
-            uid = self.common.login(self._db, user, password)
+            uid = self.common.login(database, user, password)
         if uid:
             # Update the cache
             self._login.cache[cache_key] = (uid, password)
