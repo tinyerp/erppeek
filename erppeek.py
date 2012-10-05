@@ -1123,10 +1123,21 @@ class RecordList(object):
 
     def write(self, values, context=None):
         """Write the `values` in the :class:`RecordList`."""
+        if not self.id:
+            return True
         if context is None and self._context:
             context = self._context
         values = self._model._unbrowse_values(values)
         rv = self._model._execute('write', self.id, values, context=context)
+        return rv
+
+    def unlink(self, context=None):
+        """Wrapper for :meth:`Record.unlink` method."""
+        if not self.id:
+            return True
+        if context is None and self._context:
+            context = self._context
+        rv = self._model._execute('unlink', self.id, context=context)
         return rv
 
     def __getitem__(self, key):
@@ -1191,6 +1202,7 @@ class Record(object):
             '_model_name': res_model._name,
             '_model': res_model,
             '_context': context,
+            '_cached_keys': set(),
         })
 
     def __repr__(self):
@@ -1216,13 +1228,15 @@ class Record(object):
         return self._model._fields
 
     def _clear_cache(self):
-        for key in self._model._keys:
-            if key != 'id' and key in self.__dict__:
-                delattr(self, key)
+        self._cached_keys.discard('id')
+        for key in self._cached_keys:
+            delattr(self, key)
+        self._cached_keys.clear()
 
     def _update(self, values):
         new_values = self._model._browse_values(values, context=self._context)
         self.__dict__.update(new_values)
+        self._cached_keys.update(new_values)
         return new_values
 
     def read(self, fields=None, context=None):

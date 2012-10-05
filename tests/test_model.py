@@ -419,7 +419,6 @@ class TestRecord(TestCase):
         records.write({'spam': records})
         self.assertCalls(
             OBJ('foo.bar', 'write', [42], {}),
-            OBJ('foo.bar', 'fields_get_keys'),
             OBJ('foo.bar', 'fields_get'),
             OBJ('foo.bar', 'write', [42], {'spam': 42}),
             OBJ('foo.bar', 'write', [42], {'spam': 42}),
@@ -453,26 +452,30 @@ class TestRecord(TestCase):
         )
         self.assertOutput('')
 
-    def test_method(self, method_name='method'):
+    def test_unlink(self):
         records = self.model('foo.bar').browse([13, 17])
         rec = self.model('foo.bar').browse(42)
-        records_method = getattr(records, method_name)
-        rec_method = getattr(rec, method_name)
 
-        records_method()
-        rec_method()
+        records.unlink()
+        rec.unlink()
         self.assertCalls(
-            OBJ('foo.bar', 'fields_get_keys'),
-            OBJ('foo.bar', method_name, [13, 17]),
-            OBJ('foo.bar', method_name, [42]),
+            OBJ('foo.bar', 'unlink', [13, 17]),
+            OBJ('foo.bar', 'unlink', [42]),
         )
         self.assertOutput('')
 
-    def test_standard_methods(self):
-        # write copy
-        self.test_method('unlink')
-        del self.model('foo.bar')._keys
-        self.test_method('perm_read')
+    def test_perm_read(self):
+        records = self.model('foo.bar').browse([13, 17])
+        rec = self.model('foo.bar').browse(42)
+
+        records.perm_read()
+        rec.perm_read()
+        self.assertCalls(
+            OBJ('foo.bar', 'fields_get_keys'),
+            OBJ('foo.bar', 'perm_read', [13, 17]),
+            OBJ('foo.bar', 'perm_read', [42]),
+        )
+        self.assertOutput('')
 
     def test_empty_recordlist(self):
         records = self.model('foo.bar').browse([13, 17])
@@ -492,6 +495,17 @@ class TestRecord(TestCase):
             OBJ('foo.bar', 'fields_get_keys'),
             OBJ('foo.bar', 'read', [13, 17], ['name']),
             OBJ('foo.bar', 'fields_get'),
+        )
+
+        # Calling methods on empty RecordList
+        self.assertEqual(empty.read(), [])
+        self.assertIs(empty.write({'spam': 'ham'}), True)
+        self.assertIs(empty.unlink(), True)
+        self.assertCalls()
+
+        self.assertEqual(empty.method(), [sentinel.OTHER])
+        self.assertCalls(
+            OBJ('foo.bar', 'method', []),
         )
         self.assertOutput('')
 

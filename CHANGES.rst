@@ -9,6 +9,9 @@ Changelog
 
 * Fix occasional issue on login when switching database on the same server.
 
+* Optimization: do not propagate the call to ``RecordList.write`` or
+  ``RecordList.unlink`` if the list is empty.
+
 
 1.4 (2012-10-01)
 ~~~~~~~~~~~~~~~~
