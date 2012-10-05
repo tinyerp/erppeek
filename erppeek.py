@@ -1297,7 +1297,9 @@ class Record(object):
     def _send(self, signal):
         """Trigger workflow `signal` for this :class:`Record`."""
         exec_workflow = self._model.client.exec_workflow
-        return exec_workflow(self._model_name, signal, self.id)
+        rv = exec_workflow(self._model_name, signal, self.id)
+        self.refresh()
+        return rv
 
     def __dir__(self):
         return ['read', 'write', 'copy', 'unlink', '_send', 'refresh',

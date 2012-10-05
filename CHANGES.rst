@@ -12,6 +12,8 @@ Changelog
 * Optimization: do not propagate the call to ``RecordList.write`` or
   ``RecordList.unlink`` if the list is empty.
 
+* Clear the ``Record`` cache on ``Record._send``.
+
 * Expose the method ``Record.refresh`` to clear the local cache.
 
 
