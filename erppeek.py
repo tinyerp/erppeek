@@ -1227,7 +1227,8 @@ class Record(object):
     def _fields(self):
         return self._model._fields
 
-    def _clear_cache(self):
+    def refresh(self):
+        """Force refreshing the record's data."""
         self._cached_keys.discard('id')
         for key in self._cached_keys:
             delattr(self, key)
@@ -1269,7 +1270,7 @@ class Record(object):
             context = self._context
         values = self._model._unbrowse_values(values)
         rv = self._model._execute('write', [self.id], values, context=context)
-        self._clear_cache()
+        self.refresh()
         return rv
 
     def unlink(self, context=None):
@@ -1277,7 +1278,7 @@ class Record(object):
         if context is None and self._context:
             context = self._context
         rv = self._model._execute('unlink', [self.id], context=context)
-        self._clear_cache()
+        self.refresh()
         return rv
 
     def copy(self, default=None, context=None):
@@ -1299,7 +1300,7 @@ class Record(object):
         return exec_workflow(self._model_name, signal, self.id)
 
     def __dir__(self):
-        return ['read', 'write', 'copy', 'unlink', '_send',
+        return ['read', 'write', 'copy', 'unlink', '_send', 'refresh',
                 'id', '_context', '_model', '_model_name',
                 '_name', '_keys', '_fields'] + self._model._keys
 

@@ -12,6 +12,8 @@ Changelog
 * Optimization: do not propagate the call to ``RecordList.write`` or
   ``RecordList.unlink`` if the list is empty.
 
+* Expose the method ``Record.refresh`` to clear the local cache.
+
 
 1.4 (2012-10-01)
 ~~~~~~~~~~~~~~~~
