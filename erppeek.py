@@ -382,6 +382,8 @@ class Client(object):
 
     def __init__(self, server, db=None, user=None, password=None,
                  verbose=False):
+        if isinstance(server, basestring) and server[-1:] == '/':
+            server = server.rstrip('/')
         self._server = server
         self._db = ()
         self._environment = None

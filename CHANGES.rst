@@ -7,6 +7,8 @@ Changelog
 
 * Add the ``get_pool`` helper when connected using the ``openerp`` library.
 
+* Remove the leading slash on the ``server`` option, if present.
+
 
 1.4.1 (2012-10-05)
 ~~~~~~~~~~~~~~~~~~
