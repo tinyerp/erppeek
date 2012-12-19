@@ -61,7 +61,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '1.4.1'
+__version__ = '1.4.2.dev0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_openerp_services']
 
@@ -231,6 +231,8 @@ def start_openerp_services(options=None):
     Return the openerp module.
     """
     import openerp
+    from threading import currentThread
+    global get_pool
     if not openerp.osv.osv.service:
         os.environ['TZ'] = 'UTC'
         options = options and options.split() or []
@@ -238,6 +240,16 @@ def start_openerp_services(options=None):
         openerp.netsvc.init_logger()
         openerp.osv.osv.start_object_proxy()
         openerp.service.web_services.start_web_services()
+
+    # Helper; use get_pool(db_name).db.cursor() to grab a cursor
+    def get_pool(db_name=None):
+        """Return a model registry."""
+        if not db_name:
+            db_name = client._db
+        pool = openerp.modules.registry.RegistryManager.get(db_name)
+        # Used for logging, copied from openerp.sql_db.db_connect
+        currentThread().dbname = db_name
+        return pool
     return openerp
 
 

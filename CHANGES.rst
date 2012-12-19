@@ -2,6 +2,12 @@ Changelog
 ---------
 
 
+1.x (unreleased)
+~~~~~~~~~~~~~~~~
+
+* Add the ``get_pool`` helper when connected using the ``openerp`` library.
+
+
 1.4.1 (2012-10-05)
 ~~~~~~~~~~~~~~~~~~
 

@@ -41,6 +41,14 @@ list or install OpenERP addons.
    and recreate the :func:`globals()`.
 
 
+.. note::
+
+   In :ref:`interactive mode <interactive-mode>`, when connected to the local
+   OpenERP, the `get_pool(db_name=None)` function helps to grab a model
+   registry for the current database.  The cursor factory is available on the
+   registry as ``get_pool().db.cursor()``.
+
+
 Objects
 ~~~~~~~
 
