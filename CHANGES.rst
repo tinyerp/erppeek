@@ -2,6 +2,13 @@ Changelog
 ---------
 
 
+1.x (unreleased)
+~~~~~~~~~~~~~~~~
+
+* Set the database name as thread attribute to print it in the log file
+  (local mode only).
+
+
 1.4.2 (2012-12-19)
 ~~~~~~~~~~~~~~~~~~
 

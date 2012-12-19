@@ -18,11 +18,13 @@ import traceback
 import warnings
 try:                    # Python 3
     import configparser
+    from threading import current_thread
     from xmlrpc.client import Fault, ServerProxy
     basestring = str
     int_types = int
 except ImportError:     # Python 2
     import ConfigParser as configparser
+    from threading import currentThread as current_thread
     from xmlrpclib import Fault, ServerProxy
     int_types = int, long
 
@@ -61,7 +63,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '1.4.2'
+__version__ = '1.4.3.dev0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_openerp_services']
 
@@ -231,7 +233,6 @@ def start_openerp_services(options=None):
     Return the openerp module.
     """
     import openerp
-    from threading import currentThread
     global get_pool
     if not openerp.osv.osv.service:
         os.environ['TZ'] = 'UTC'
@@ -247,8 +248,6 @@ def start_openerp_services(options=None):
         if not db_name:
             db_name = client._db
         pool = openerp.modules.registry.RegistryManager.get(db_name)
-        # Used for logging, copied from openerp.sql_db.db_connect
-        currentThread().dbname = db_name
         return pool
     return openerp
 
@@ -445,15 +444,17 @@ class Client(object):
         else:
             print('Error: Not connected')
             return
+        # Used for logging, copied from openerp.sql_db.db_connect
+        current_thread().dbname = database
         (uid, password) = self._auth(database, user, password)
         if not uid:
             if not self._db:
                 self._db = database
             print('Error: Invalid username or password')
             return
-        if database and self._db != database:
+        if self._db != database:
+            self._db = database
             self._environment = None
-        self._db = database
         self.user = user
 
         # Authenticated endpoints
