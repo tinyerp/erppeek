@@ -9,6 +9,9 @@ Changelog
 
 * Remove the leading slash on the ``server`` option, if present.
 
+* Do not try to access private methods through RPC when reading attributes
+  of the ``model(...)``.
+
 
 1.4.1 (2012-10-05)
 ~~~~~~~~~~~~~~~~~~

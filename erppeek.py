@@ -1046,7 +1046,7 @@ class Model(object):
         if attr in ('_keys', '_fields'):
             self.__dict__[attr] = rv = getattr(self, '_get' + attr)()
             return rv
-        if attr.startswith('__'):
+        if attr.startswith('_'):
             raise AttributeError("'Model' object has no attribute %r" % attr)
 
         def wrapper(self, *params, **kwargs):
