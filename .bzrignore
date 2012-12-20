@@ -1,5 +1,6 @@
+./*.egg
+./*.egg-info
 ./build
 ./dist
 ./docs/_build
-./*.egg-info
 __pycache__
