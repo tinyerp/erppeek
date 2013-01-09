@@ -8,6 +8,9 @@ Changelog
 * Set the database name as thread attribute to print it in the log file
   (local mode only).
 
+* Do not try to access private methods through RPC when resolving
+  attributes of the ``Client`` or any ``Record`` or ``RecordList``.
+
 
 1.4.2 (2012-12-19)
 ~~~~~~~~~~~~~~~~~~

@@ -884,7 +884,7 @@ class Client(object):
             rv = self.model(lowercase(method))
             self.__dict__[method] = rv
             return rv
-        if method.startswith('__'):
+        if method.startswith('_'):
             raise AttributeError("'Client' object has no attribute %r" %
                                  method)
 
@@ -1166,7 +1166,7 @@ class RecordList(object):
         context = self._context
         if attr in self._model._keys:
             return self.read(attr, context=context)
-        if attr.startswith('__'):
+        if attr.startswith('_'):
             errmsg = "'RecordList' object has no attribute %r" % attr
             raise AttributeError(errmsg)
         if attr == '_ids':
@@ -1328,7 +1328,7 @@ class Record(object):
         if attr == '_name':
             self.__dict__['_name'] = name = self._get_name()
             return name
-        if attr.startswith('__'):
+        if attr.startswith('_'):
             raise AttributeError("'Record' object has no attribute %r" % attr)
         if attr == 'client':
             # deprecated since 1.2.1
