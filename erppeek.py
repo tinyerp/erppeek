@@ -1020,10 +1020,9 @@ class Model(object):
             elif field_type in ('one2many', 'many2many'):
                 rel_model = self.client.model(field['relation'])
                 values[key] = RecordList(rel_model, value, context=context)
-            elif field_type == 'reference':
-                if value:
-                    res_model, res_id = value.split(',')
-                    values[key] = Record(self.client.model(res_model), int(res_id))
+            elif value and field_type == 'reference':
+                res_model, res_id = value.split(',')
+                values[key] = Record(self.client.model(res_model), int(res_id))
         return values
 
     def _unbrowse_values(self, values):
@@ -1085,6 +1084,7 @@ class RecordList(object):
             '_model': res_model,
             '_idnames': ids,
             '_context': context,
+            '_execute': res_model._execute,
         })
 
     def __repr__(self):
@@ -1143,7 +1143,7 @@ class RecordList(object):
         if context is None and self._context:
             context = self._context
         values = self._model._unbrowse_values(values)
-        rv = self._model._execute('write', self.id, values, context=context)
+        rv = self._execute('write', self.id, values, context=context)
         return rv
 
     def unlink(self, context=None):
@@ -1152,7 +1152,7 @@ class RecordList(object):
             return True
         if context is None and self._context:
             context = self._context
-        rv = self._model._execute('unlink', self.id, context=context)
+        rv = self._execute('unlink', self.id, context=context)
         return rv
 
     def __getitem__(self, key):
@@ -1174,16 +1174,14 @@ class RecordList(object):
             warnings.warn("Attribute 'RecordList._ids' is deprecated, "
                           "use 'RecordList.id' instead.")
             return self.id
-        model_name = self._model_name
-        execute = self._model._execute
 
         def wrapper(self, *params, **kwargs):
             """Wrapper for client.execute(%r, %r, [...], *params, **kwargs)."""
             if context:
                 kwargs.setdefault('context', context)
-            return execute(attr, self.id, *params, **kwargs)
+            return self._execute(attr, self.id, *params, **kwargs)
         wrapper.__name__ = attr
-        wrapper.__doc__ %= (model_name, attr)
+        wrapper.__doc__ %= (self._model_name, attr)
         self.__dict__[attr] = mobj = wrapper.__get__(self, type(self))
         return mobj
 
@@ -1218,6 +1216,7 @@ class Record(object):
             '_model': res_model,
             '_context': context,
             '_cached_keys': set(),
+            '_execute': res_model._execute,
         })
 
     def __repr__(self):
@@ -1228,7 +1227,7 @@ class Record(object):
 
     def _get_name(self):
         try:
-            (id_name,) = self._model._execute('name_get', [self.id])
+            (id_name,) = self._execute('name_get', [self.id])
             name = '[%d] %s' % (self.id, id_name[1])
         except Exception:
             name = '[%d] -' % (self.id,)
@@ -1276,7 +1275,7 @@ class Record(object):
         Return a dictionary of values.
         See :meth:`Client.perm_read` for details.
         """
-        rv = self._model._execute('perm_read', [self.id], context=context)
+        rv = self._execute('perm_read', [self.id], context=context)
         return rv and rv[0] or None
 
     def write(self, values, context=None):
@@ -1284,7 +1283,7 @@ class Record(object):
         if context is None and self._context:
             context = self._context
         values = self._model._unbrowse_values(values)
-        rv = self._model._execute('write', [self.id], values, context=context)
+        rv = self._execute('write', [self.id], values, context=context)
         self.refresh()
         return rv
 
@@ -1292,7 +1291,7 @@ class Record(object):
         """Delete the current :class:`Record` from the database."""
         if context is None and self._context:
             context = self._context
-        rv = self._model._execute('unlink', [self.id], context=context)
+        rv = self._execute('unlink', [self.id], context=context)
         self.refresh()
         return rv
 
@@ -1306,7 +1305,7 @@ class Record(object):
             context = self._context
         if default:
             default = self._model._unbrowse_values(default)
-        new_id = self._model._execute('copy', self.id, default, context=context)
+        new_id = self._execute('copy', self.id, default, context=context)
         return Record(self._model, new_id)
 
     def _send(self, signal):
@@ -1340,7 +1339,7 @@ class Record(object):
             """Wrapper for client.execute(%r, %r, %d, *params, **kwargs)."""
             if context:
                 kwargs.setdefault('context', context)
-            res = self._model._execute(attr, [self.id], *params, **kwargs)
+            res = self._execute(attr, [self.id], *params, **kwargs)
             if isinstance(res, list) and len(res) == 1:
                 return res[0]
             return res
