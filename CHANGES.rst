@@ -2,8 +2,8 @@ Changelog
 ---------
 
 
-1.x (unreleased)
-~~~~~~~~~~~~~~~~
+1.4.3 (2013-01-10)
+~~~~~~~~~~~~~~~~~~
 
 * Compatible with OpenERP 7.
 
