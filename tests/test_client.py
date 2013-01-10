@@ -68,8 +68,11 @@ class TestService(XmlRpcTestCase):
         self.assertIsInstance(client.db, erppeek.Service)
         self.assertIsInstance(client.common, erppeek.Service)
         self.assertIsInstance(client._object, erppeek.Service)
-        self.assertIsInstance(client._wizard, erppeek.Service)
         self.assertIsInstance(client._report, erppeek.Service)
+        if server_version == '7.0':
+            self.assertNotIsInstance(client._wizard, erppeek.Service)
+        else:
+            self.assertIsInstance(client._wizard, erppeek.Service)
 
         self.assertIn('/xmlrpc/db', str(client.db.create))
         if server_version == '5.0':
@@ -87,6 +90,9 @@ class TestService(XmlRpcTestCase):
     def test_service_openerp_50(self):
         self.test_service_openerp_client(server_version='5.0')
 
+    def test_service_openerp_70(self):
+        self.test_service_openerp_client(server_version='7.0')
+
 
 class TestCreateClient(XmlRpcTestCase):
     """Test the Client class."""
@@ -97,8 +103,8 @@ class TestCreateClient(XmlRpcTestCase):
         call(ANY, 'db', ANY, verbose=ANY),
         call(ANY, 'common', ANY, verbose=ANY),
         call(ANY, 'object', ANY, verbose=ANY),
-        call(ANY, 'wizard', ANY, verbose=ANY),
         call(ANY, 'report', ANY, verbose=ANY),
+        call(ANY, 'wizard', ANY, verbose=ANY),
         'db.list',
     )
 

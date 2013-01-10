@@ -16,8 +16,8 @@ class TestInteract(XmlRpcTestCase):
         call(ANY, 'db', ANY, verbose=ANY),
         call(ANY, 'common', ANY, verbose=ANY),
         call(ANY, 'object', ANY, verbose=ANY),
-        call(ANY, 'wizard', ANY, verbose=ANY),
         call(ANY, 'report', ANY, verbose=ANY),
+        call(ANY, 'wizard', ANY, verbose=ANY),
         'db.list',
     )
 
