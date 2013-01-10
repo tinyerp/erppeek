@@ -40,18 +40,17 @@ except ImportError:
     def _convert(node):
         if isinstance(node, _ast.Str):
             return node.s
-        elif isinstance(node, _ast.Num):
+        if isinstance(node, _ast.Num):
             return node.n
-        elif isinstance(node, _ast.Tuple):
+        if isinstance(node, _ast.Tuple):
             return tuple(map(_convert, node.elts))
-        elif isinstance(node, _ast.List):
+        if isinstance(node, _ast.List):
             return list(map(_convert, node.elts))
-        elif isinstance(node, _ast.Dict):
-            return dict((_convert(k), _convert(v)) for k, v
-                        in zip(node.keys, node.values))
-        elif isinstance(node, _ast.Name):
-            if node.id in SAFE_CONSTANTS:
-                return SAFE_CONSTANTS[node.id]
+        if isinstance(node, _ast.Dict):
+            return dict((_convert(k), _convert(v))
+                        for (k, v) in zip(node.keys, node.values))
+        if isinstance(node, _ast.Name) and node.id in SAFE_CONSTANTS:
+            return SAFE_CONSTANTS[node.id]
         raise ValueError('malformed or disallowed expression')
 
     def literal_eval(node_or_string):
@@ -229,7 +228,7 @@ def start_openerp_services(options=None):
 
     Import the ``openerp`` package and load the OpenERP services.
     The argument `options` receives the command line arguments for ``openerp``.
-    Example: ``-c /path/to/openerp-server.conf --without-demo all``.
+    Example: ``"-c /path/to/openerp-server.conf --without-demo all"``.
     Return the openerp module.
     """
     import openerp
