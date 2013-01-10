@@ -62,7 +62,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '1.4.3'
+__version__ = '1.4.4.dev0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_openerp_services']
 

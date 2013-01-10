@@ -57,9 +57,6 @@ On login, it prints few lines about the commands available.
         access(obj, mode='read')        # Check access on the model
 
         do(obj, method, *params)        # Generic 'object.execute'
-        wizard(name)                    # Return the 'id' of a new wizard
-        wizard(name_or_id, datas=None, action='init')
-                                        # Generic 'wizard.execute'
         exec_workflow(obj, signal, id)  # Trigger workflow signal
 
         client                          # Client object, connected
