@@ -62,7 +62,7 @@ except ImportError:
         return _convert(node_or_string)
 
 
-__version__ = '1.4.3.dev0'
+__version__ = '1.4.3.dev1'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_openerp_services']
 
@@ -93,9 +93,6 @@ Usage (main commands):
     access(obj, mode='read')        # Check access on the model
 
     do(obj, method, *params)        # Generic 'object.execute'
-    wizard(name)                    # Return the 'id' of a new wizard
-    wizard(name_or_id, datas=None, action='init')
-                                    # Generic 'wizard.execute'
     exec_workflow(obj, signal, id)  # Trigger workflow signal
 
     client                          # Client object, connected
@@ -124,16 +121,16 @@ _methods = {
     'common': ['about', 'login', 'timezone_get', 'get_server_environment',
                'login_message', 'check_connectivity'],
     'object': ['execute', 'exec_workflow'],
-    'wizard': ['execute', 'create'],
     'report': ['report', 'report_get'],
+    'wizard': ['execute', 'create'],
 }
 _methods_6_1 = {
     'db': ['create_database', 'db_exist'],
     'common': ['get_stats', 'list_http_services', 'version',
                'authenticate', 'get_os_time', 'get_sqlcount'],
     'object': ['execute_kw'],
-    'wizard': [],
     'report': ['render_report'],
+    'wizard': [],
 }
 # Hidden methods:
 #  - (not in 6.1) 'common': ['logout', 'ir_get', 'ir_set', 'ir_del']
@@ -237,9 +234,12 @@ def start_openerp_services(options=None):
         os.environ['TZ'] = 'UTC'
         options = options and options.split() or []
         openerp.tools.config.parse_config(options)
-        openerp.netsvc.init_logger()
-        openerp.osv.osv.start_object_proxy()
-        openerp.service.web_services.start_web_services()
+        if openerp.release.version_info < (7,):
+            openerp.netsvc.init_logger()
+            openerp.osv.osv.start_object_proxy()
+            openerp.service.web_services.start_web_services()
+        else:
+            openerp.service.start_internal()
 
     # Helper; use get_pool(db_name).db.cursor() to grab a cursor
     def get_pool(db_name=None):
@@ -403,8 +403,8 @@ class Client(object):
         self.db = get_proxy('db')
         self.common = get_proxy('common')
         self._object = get_proxy('object')
-        self._wizard = get_proxy('wizard')
         self._report = get_proxy('report')
+        self._wizard = get_proxy('wizard') if major_version < '7.0' else None
         if db:
             # Try to login
             self._login(user, password=password, database=db)
@@ -461,14 +461,15 @@ class Client(object):
             return functools.partial(method, self._db, uid, password)
         self._execute = authenticated(self._object.execute)
         self._exec_workflow = authenticated(self._object.exec_workflow)
-        self._wizard_execute = authenticated(self._wizard.execute)
-        self._wizard_create = authenticated(self._wizard.create)
         self.report = authenticated(self._report.report)
         self.report_get = authenticated(self._report.report_get)
         if self.major_version != '5.0':
             # Only for OpenERP >= 6
             self.execute_kw = authenticated(self._object.execute_kw)
             self.render_report = authenticated(self._report.render_report)
+        if self._wizard:
+            self._wizard_execute = authenticated(self._wizard.execute)
+            self._wizard_create = authenticated(self._wizard.create)
         return uid
 
     # Needed for interactive use
@@ -664,6 +665,8 @@ class Client(object):
         If the `name` is a string, the wizard is created before the execution.
         The optional `datas` argument provides data for the action.
         The optional `context` argument is passed to the RPC method.
+
+        Removed in OpenERP 7.
         """
         if isinstance(name, int_types):
             wiz_id = name

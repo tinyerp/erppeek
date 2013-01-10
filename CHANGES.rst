@@ -5,6 +5,8 @@ Changelog
 1.x (unreleased)
 ~~~~~~~~~~~~~~~~
 
+* Compatible with OpenERP 7.
+
 * Set the database name as thread attribute to print it in the log file
   (local mode only).
 

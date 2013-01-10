@@ -116,8 +116,8 @@ Objects
 Advanced methods
 ~~~~~~~~~~~~~~~~
 
-Those methods give more control on the OpenERP objects: workflows, wizards
-and reports.  Please refer to `the OpenERP documentation`_ for details.
+Those methods give more control on the OpenERP objects: workflows and reports.
+Please refer to `the OpenERP documentation`_ for details.
 
 
 .. automethod:: Client.execute(obj, method, *params, **kwargs)
@@ -129,8 +129,6 @@ and reports.  Please refer to `the OpenERP documentation`_ for details.
    Does not exist if server is OpenERP 5.
 
 .. automethod:: Client.exec_workflow
-
-.. automethod:: Client.wizard
 
 .. method:: Client.report(obj, ids, datas=None, context=None)
 
@@ -145,6 +143,8 @@ and reports.  Please refer to `the OpenERP documentation`_ for details.
 .. method:: Client.report_get(report_id)
 
    Wrapper around ``report.report_get`` RPC method.
+
+.. automethod:: Client.wizard
 
 
 XML-RPC Services
@@ -176,13 +176,15 @@ object itself.  Please refer to `the OpenERP documentation`_ for more details.
 
    Expose the ``object`` :class:`Service`.
 
+.. attribute:: Client._report
+
+   Expose the ``report`` :class:`Service`.
+
 .. attribute:: Client._wizard
 
    Expose the ``wizard`` :class:`Service`.
 
-.. attribute:: Client._report
-
-   Expose the ``report`` :class:`Service`.
+   Removed in OpenERP 7.
 
 .. autoclass:: Service
    :members:
