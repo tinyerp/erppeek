@@ -127,11 +127,8 @@ _methods_6_1 = {
                'authenticate', 'get_os_time', 'get_sqlcount'],
     'object': ['execute_kw'],
     'report': ['render_report'],
-    'wizard': [],
 }
 # Hidden methods:
-#  - (not in 6.1) 'common': ['logout', 'ir_get', 'ir_set', 'ir_del']
-#  - (not in 6.1) 'object': ['obj_list']
 #  - 'common': ['get_available_updates', 'get_migration_scripts',
 #               'set_loglevel']
 _cause_message = ("\nThe above exception was the direct cause "
@@ -320,15 +317,15 @@ class Service(object):
             proxy = server.netsvc.ExportService.getService(endpoint)
             self._dispatch = proxy.dispatch
         self._endpoint = endpoint
-        self._methods = sorted(methods)
+        self._methods = methods
         self._verbose = verbose
 
     def __repr__(self):
-        return '<Service %r>' % (self._rpcpath + self._endpoint)
+        return "<Service '%s%s'>" % (self._rpcpath, self._endpoint)
     __str__ = __repr__
 
     def __dir__(self):
-        return self._methods
+        return sorted(self._methods)
 
     def __getattr__(self, name):
         if name not in self._methods:
@@ -367,7 +364,7 @@ class Client(object):
     This is the top level object.
     The `server` is the URL of the instance, like ``http://localhost:8069``.
     If `server` is an ``openerp`` module, it is used to connect to the local
-    server (6.1 only).
+    server (>= 6.1).
 
     The `db` is the name of the database and the `user` should exist in the
     table ``res.users``.  If the `password` is not provided, it will be
@@ -388,7 +385,7 @@ class Client(object):
         major_version = None
 
         def get_proxy(name):
-            if major_version in ('5.0', None):
+            if major_version in ('5.0', None) or name == 'wizard':
                 methods = _methods[name]
             else:
                 # Only for OpenERP >= 6
