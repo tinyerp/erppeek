@@ -2,6 +2,12 @@ Changelog
 ---------
 
 
+1.x (unreleased)
+~~~~~~~~~~~~~~~~
+
+* Fix compatibility with Python 3.
+
+
 1.4.3 (2013-01-10)
 ~~~~~~~~~~~~~~~~~~
 

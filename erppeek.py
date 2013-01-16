@@ -1040,7 +1040,7 @@ class Model(object):
             if field_type in ('one2many', 'many2many'):
                 if not value:
                     new_values[key] = [(6, 0, [])]
-                elif isinstance(value[0], (int, long)):
+                elif isinstance(value[0], int_types):
                     new_values[key] = [(6, 0, value)]
         return new_values
 
