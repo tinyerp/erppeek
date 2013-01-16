@@ -5,6 +5,8 @@ Changelog
 1.x (unreleased)
 ~~~~~~~~~~~~~~~~
 
+* Remove deprecated ``Record.client``.
+
 * Fix compatibility with Python 3.
 
 

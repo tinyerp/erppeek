@@ -29,15 +29,12 @@ except ImportError:     # Python 2
     int_types = int, long
 
 try:
-    # first, try importing directly
     from ast import literal_eval
-except ImportError:
+except ImportError:     # Python 2.5
     import _ast
 
     # Port of Python 2.6's ast.literal_eval for use under Python 2.5
-    SAFE_CONSTANTS = {'None': None, 'True': True, 'False': False}
-
-    def _convert(node):
+    def _convert(node, _consts={'None': None, 'True': True, 'False': False}):
         if isinstance(node, _ast.Str):
             return node.s
         if isinstance(node, _ast.Num):
@@ -47,10 +44,10 @@ except ImportError:
         if isinstance(node, _ast.List):
             return list(map(_convert, node.elts))
         if isinstance(node, _ast.Dict):
-            return dict((_convert(k), _convert(v))
-                        for (k, v) in zip(node.keys, node.values))
-        if isinstance(node, _ast.Name) and node.id in SAFE_CONSTANTS:
-            return SAFE_CONSTANTS[node.id]
+            return dict([(_convert(k), _convert(v))
+                         for (k, v) in zip(node.keys, node.values)])
+        if isinstance(node, _ast.Name) and node.id in _consts:
+            return _consts[node.id]
         raise ValueError('malformed or disallowed expression')
 
     def literal_eval(node_or_string):
@@ -887,8 +884,8 @@ class Client(object):
             self.__dict__[method] = rv
             return rv
         if method.startswith('_'):
-            raise AttributeError("'Client' object has no attribute %r" %
-                                 method)
+            errmsg = "'Client' object has no attribute %r" % method
+            raise AttributeError(errmsg)
 
         # miscellaneous object methods
         def wrapper(self, obj, *params, **kwargs):
@@ -1171,11 +1168,6 @@ class RecordList(object):
         if attr.startswith('_'):
             errmsg = "'RecordList' object has no attribute %r" % attr
             raise AttributeError(errmsg)
-        if attr == '_ids':
-            # deprecated since 1.2.1
-            warnings.warn("Attribute 'RecordList._ids' is deprecated, "
-                          "use 'RecordList.id' instead.")
-            return self.id
 
         def wrapper(self, *params, **kwargs):
             """Wrapper for client.execute(%r, %r, [...], *params, **kwargs)."""
@@ -1331,11 +1323,6 @@ class Record(object):
             return name
         if attr.startswith('_'):
             raise AttributeError("'Record' object has no attribute %r" % attr)
-        if attr == 'client':
-            # deprecated since 1.2.1
-            warnings.warn("Attribute 'Record.client' is deprecated, "
-                          "use 'Record._model.client' instead.")
-            return self._model.client
 
         def wrapper(self, *params, **kwargs):
             """Wrapper for client.execute(%r, %r, %d, *params, **kwargs)."""
