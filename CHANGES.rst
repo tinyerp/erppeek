@@ -9,6 +9,9 @@ Changelog
 
 * Fix compatibility with Python 3.
 
+* Add optional argument ``check`` to the ``Client.model`` method to
+  bypass the verification in some cases, used to speed up the read methods.
+
 
 1.4.3 (2013-01-10)
 ~~~~~~~~~~~~~~~~~~

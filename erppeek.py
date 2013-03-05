@@ -813,13 +813,14 @@ class Client(object):
         names = [m['model'] for m in models]
         return dict([(mixedcase(name), self._model(name)) for name in names])
 
-    def model(self, name):
+    def model(self, name, check=True):
         """Return a :class:`Model` instance.
 
-        The argument `name` is the name of the model.
+        The argument `name` is the name of the model.  If the optional
+        argument `check` is :const:`False`, no validity check is done.
         """
         try:
-            return self._models[name]
+            return self._models[name] if check else self._model(name)
         except KeyError:
             models = self.models(name)
         if name in self._models:
@@ -1011,14 +1012,15 @@ class Model(object):
             field_type = field['type']
             if field_type == 'many2one':
                 if value:
-                    rel_model = self.client.model(field['relation'])
+                    rel_model = self.client.model(field['relation'], False)
                     values[key] = Record(rel_model, value, context=context)
             elif field_type in ('one2many', 'many2many'):
-                rel_model = self.client.model(field['relation'])
+                rel_model = self.client.model(field['relation'], False)
                 values[key] = RecordList(rel_model, value, context=context)
             elif value and field_type == 'reference':
                 res_model, res_id = value.split(',')
-                values[key] = Record(self.client.model(res_model), int(res_id))
+                rel_model = self.client.model(res_model, False)
+                values[key] = Record(rel_model, int(res_id))
         return values
 
     def _unbrowse_values(self, values):
@@ -1116,17 +1118,17 @@ class RecordList(object):
             field = self._model._fields.get(fields)
             if field:
                 if field['type'] == 'many2one':
-                    rel_model = client.model(field['relation'])
+                    rel_model = client.model(field['relation'], False)
                     return RecordList(rel_model, values, context=context)
                 if field['type'] in ('one2many', 'many2many'):
-                    rel_model = client.model(field['relation'])
+                    rel_model = client.model(field['relation'], False)
                     return [RecordList(rel_model, v) for v in values]
                 if field['type'] == 'reference':
                     records = []
                     for value in values:
                         if value:
                             res_model, res_id = value.split(',')
-                            rel_model = client.model(res_model)
+                            rel_model = client.model(res_model, False)
                             value = Record(rel_model, int(res_id))
                         records.append(value)
                     return records
