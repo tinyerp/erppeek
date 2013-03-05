@@ -2,8 +2,8 @@ Changelog
 ---------
 
 
-1.x (unreleased)
-~~~~~~~~~~~~~~~~
+1.4.4 (2013-03-05)
+~~~~~~~~~~~~~~~~~~
 
 * Remove deprecated ``Record.client``.
 
