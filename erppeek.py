@@ -135,8 +135,7 @@ _methods_6_1 = {
     'report': ['render_report'],
 }
 # Hidden methods:
-#  - 'common': ['get_available_updates', 'get_migration_scripts',
-#               'set_loglevel']
+#  - common: get_available_updates, get_migration_scripts, set_loglevel
 _cause_message = ("\nThe above exception was the direct cause "
                   "of the following exception:\n\n")
 
@@ -232,7 +231,7 @@ def start_openerp_services(options=None):
     global get_pool
     if not openerp.osv.osv.service:
         os.environ['TZ'] = 'UTC'
-        options = options and options.split() or []
+        options = options.split() if options else []
         openerp.tools.config.parse_config(options)
         if openerp.release.version_info < (7,):
             openerp.netsvc.init_logger()
@@ -337,10 +336,10 @@ class Service(object):
         if name not in self._methods:
             raise AttributeError("'Service' object has no attribute %r" % name)
         if self._verbose:
-            def sanitize(args, _pos=(self._endpoint == 'db') and 999 or 2):
-                if len(args) > _pos:
+            def sanitize(args):
+                if self._endpoint != 'db' and len(args) > 2:
                     args = list(args)
-                    args[_pos] = '*'
+                    args[2] = '*'
                 return args
             maxcol = MAXCOL[min(len(MAXCOL), self._verbose) - 1]
 
@@ -848,7 +847,7 @@ class Client(object):
         """
         domain = [('name', 'like', name)]
         if installed is not None:
-            op = installed and 'not in' or 'in'
+            op = 'not in' if installed else 'in'
             domain.append(('state', op, ['uninstalled', 'uninstallable']))
         mods = self.read('ir.module.module', domain, 'name state')
         if mods:
@@ -989,7 +988,7 @@ class Model(object):
         ids = self._execute('search', *params)
         if len(ids) > 1:
             raise ValueError('domain matches too many records (%d)' % len(ids))
-        return ids and Record(self, ids[0], context=context) or None
+        return Record(self, ids[0], context=context) if ids else None
 
     def create(self, values, context=None):
         """Create a :class:`Record`.
@@ -1161,7 +1160,7 @@ class RecordList(object):
         idname = self._idnames[key]
         if idname is False:
             return False
-        cls = isinstance(key, slice) and RecordList or Record
+        cls = RecordList if isinstance(key, slice) else Record
         return cls(self._model, idname, context=self._context)
 
     def __getattr__(self, attr):
@@ -1273,7 +1272,7 @@ class Record(object):
         See :meth:`Client.perm_read` for details.
         """
         rv = self._execute('perm_read', [self.id], context=context)
-        return rv and rv[0] or None
+        return rv[0] if rv else None
 
     def write(self, values, context=None):
         """Write the `values` in the :class:`Record`."""
