@@ -12,6 +12,9 @@ Changelog
 * Add optional argument ``check`` to the ``Client.model`` method to
   bypass the verification in some cases, used to speed up the read methods.
 
+* Do not crash when mixing non-existing and existing records: return
+  always ``False`` for non-existing records.
+
 
 1.4.3 (2013-01-10)
 ~~~~~~~~~~~~~~~~~~

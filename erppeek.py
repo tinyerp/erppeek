@@ -629,15 +629,13 @@ class Client(object):
         for item in kwargs.items():
             print('Ignoring: %s = %r' % item)
         res = self._execute(obj, method, *params)
-        if res and ordered:
+        if ordered:
             # The results are not in the same order as the ids
             # when received from the server
-            assert len(res) == len(set(ids))
             resdic = dict([(val['id'], val) for val in res])
-            if isinstance(ordered, list):
-                res = [id_ and resdic[id_] for id_ in ordered]
-            else:
-                res = [resdic[id_] for id_ in ids]
+            if not isinstance(ordered, list):
+                ordered = ids
+            res = [resdic.get(id_, False) for id_ in ordered]
         return res
 
     def exec_workflow(self, obj, signal, obj_id):
