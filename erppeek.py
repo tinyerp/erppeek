@@ -24,6 +24,7 @@ try:                    # Python 3
     int_types = int
 except ImportError:     # Python 2
     import ConfigParser as configparser
+    from itertools import ifilter as filter
     from threading import currentThread as current_thread
     from xmlrpclib import Fault, ServerProxy
     int_types = int, long
@@ -58,8 +59,13 @@ except ImportError:     # Python 2.5
             node_or_string = node_or_string.body
         return _convert(node_or_string)
 
+    def next(iterator, default):
+        for item in iterator:
+            return item
+        return default
 
-__version__ = '1.4.4'
+
+__version__ = '1.4.5.dev0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_openerp_services']
 
@@ -1106,9 +1112,9 @@ class RecordList(object):
         if self.id:
             values = client.read(self._model_name, self.id,
                                  fields, order=True, context=context)
-            if values and isinstance(values[0], dict):
+            if isinstance(next(filter(None, values), None), dict):
                 browse_values = self._model._browse_values
-                return [browse_values(v) for v in values]
+                return [v and browse_values(v) for v in values]
         else:
             values = []
 

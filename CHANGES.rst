@@ -2,6 +2,12 @@ Changelog
 ---------
 
 
+1.x (unreleased)
+~~~~~~~~~~~~~~~~
+
+* Fix AttributeError when reading a mix of valid and invalid records.
+
+
 1.4.4 (2013-03-05)
 ~~~~~~~~~~~~~~~~~~
 
