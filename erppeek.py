@@ -164,7 +164,7 @@ def lowercase(s, _sub=re.compile('[A-Z]').sub,
         return _cache[s]
     except KeyError:
         _cache[s] = s = _sub(_repl, s).lstrip('.')
-        return s
+    return s
 
 
 def format_exception(exc_type, exc, tb, limit=None, chain=True,
@@ -1079,7 +1079,6 @@ class RecordList(object):
                 _ids.append(id_)
         # Bypass the __setattr__ method
         self.__dict__.update({
-            # 'client': res_model.client,
             'id': _ids,
             '_model_name': res_model._name,
             '_model': res_model,
