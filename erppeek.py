@@ -1095,8 +1095,8 @@ class RecordList(object):
         return "<RecordList '%s,%s'>" % (self._model_name, ids)
 
     def __dir__(self):
-        return ['__getitem__', 'read', 'write', 'unlink',
-                'id', '_context', '_idnames', '_model', '_model_name']
+        return ['__getitem__', 'read', 'write', 'unlink', '_context',
+                '_idnames', '_model', '_model_name'] + self._model._keys
 
     def __len__(self):
         return len(self.id)
@@ -1312,8 +1312,8 @@ class Record(object):
 
     def __dir__(self):
         return ['read', 'write', 'copy', 'unlink', '_send', 'refresh',
-                'id', '_context', '_model', '_model_name',
-                '_name', '_keys', '_fields'] + self._model._keys
+                '_context', '_model', '_model_name', '_name',
+                '_keys', '_fields'] + self._model._keys
 
     def __getattr__(self, attr):
         context = self._context

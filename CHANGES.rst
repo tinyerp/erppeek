@@ -7,6 +7,9 @@ Changelog
 
 * Fix AttributeError when reading a mix of valid and invalid records.
 
+* Fix ``dir()`` on ``Record`` and ``RecordList`` to return all declared
+  fields, and do not report ``id`` field twice.
+
 * Fix a crash with built-in OS X readline on Python 2.5 or 2.6.
 
 
