@@ -7,6 +7,8 @@ Changelog
 
 * Fix AttributeError when reading a mix of valid and invalid records.
 
+* Fix a crash with built-in OS X readline on Python 2.5 or 2.6.
+
 
 1.4.4 (2013-03-05)
 ~~~~~~~~~~~~~~~~~~

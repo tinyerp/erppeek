@@ -1377,17 +1377,17 @@ def _interact(use_pprint=True, usage=USAGE):
     try:
         import readline as rl
         import rlcompleter
-    except ImportError:
+        rl.parse_and_bind('tab: complete')
+        # IOError if file missing, or broken Apple readline
+        rl.read_history_file(HIST_FILE)
+    except Exception:
         pass
     else:
         import atexit
-        rl.parse_and_bind('tab: complete')
-        if os.path.exists(HIST_FILE):
-            rl.read_history_file(HIST_FILE)
-            if rl.get_history_length() < 0:
-                rl.set_history_length(int(os.environ.get('HISTSIZE', 500)))
-            # better append instead of replace?
-            atexit.register(rl.write_history_file, HIST_FILE)
+        if rl.get_history_length() < 0:
+            rl.set_history_length(int(os.environ.get('HISTSIZE', 500)))
+        # better append instead of replace?
+        atexit.register(rl.write_history_file, HIST_FILE)
 
     class Console(code.InteractiveConsole):
         def runcode(self, code):
