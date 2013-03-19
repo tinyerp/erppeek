@@ -974,36 +974,26 @@ class Model(object):
             assert not params and not kwargs
         return RecordList(self, domain, context=context)
 
-    def _xml_id_get(self, xml_id, context=None):
-        """Return a single :class: `Record` by his XML id"""
-        # Inspired by A. Fayolle OERPScenario dsl.py code
-        module, name = xml_id.split('.')
-        search_domain = [('module', '=', module), ('name', '=', name)]
-        record = self.client.model('ir.model.data').get(search_domain)
-        if not record:
-            return None
-        res = record.read('model res_id')
-        assert res['model'] == self._name
-        if res['res_id']:
-            return Record(self, res['res_id'], context=context)
-        else:
-            return None
-
-    def get(self, domain=None, xml_id=None, context=None):
+    def get(self, domain, context=None):
         """Return a single :class:`Record`.
 
         The argument `domain` accepts a single integer ``id`` or a
-        search domain.  The return value is a :class:`Record` or None.
-        If multiple records are found, a ``ValueError`` is raised.
+        search domain, or an ``xml_id``.  The return value is a
+        :class:`Record` or None.  If multiple records are found,
+        a ``ValueError`` is raised.
         """
-        assert not (xml_id and domain), 'domain and xml_id can not be set together'
-        if xml_id:
-            return self._xml_id_get(xml_id)
-        if isinstance(domain, int_types):
+        if isinstance(domain, int_types):   # a single id
             return Record(self, domain, context=context)
-        assert issearchdomain(domain)
-        params = searchargs((domain,), context=context)
-        ids = self._execute('search', *params)
+        if isinstance(domain, basestring):  # lookup the xml_id
+            module, name = domain.split('.')
+            data = self.client.model('ir.model.data').read(
+                [('module', '=', module), ('name', '=', name)], 'model res_id')
+            assert not data or data[0]['model'] == self._name
+            ids = [res['res_id'] for res in data]
+        else:                               # a search domain
+            assert issearchdomain(domain)
+            params = searchargs((domain,), context=context)
+            ids = self._execute('search', *params)
         if len(ids) > 1:
             raise ValueError('domain matches too many records (%d)' % len(ids))
         return Record(self, ids[0], context=context) if ids else None

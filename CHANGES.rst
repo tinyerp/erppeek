@@ -5,6 +5,8 @@ Changelog
 1.x (unreleased)
 ~~~~~~~~~~~~~~~~
 
+* Extend ``Model.get`` to retrieve a record by ``xml_id``.
+
 * Fix AttributeError when reading a mix of valid and invalid records.
 
 * Fix ``dir()`` on ``Record`` and ``RecordList`` to return all declared
