@@ -350,11 +350,6 @@ class TestModel(TestCase):
         )
         self.assertOutput('')
 
-    def test_xml_id_get(self):
-        FooBar = self.model('res.company')
-        FooBar.xml_id_get('base.main_company')
-        self.assertOutput('Your Company')
-
     def test_method(self, method_name='method', single_id=True):
         FooBar = self.model('foo.bar')
         FooBar_method = getattr(FooBar, method_name)
