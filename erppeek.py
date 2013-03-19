@@ -974,23 +974,7 @@ class Model(object):
             assert not params and not kwargs
         return RecordList(self, domain, context=context)
 
-    def get(self, domain, context=None):
-        """Return a single :class:`Record`.
-
-        The argument `domain` accepts a single integer ``id`` or a
-        search domain.  The return value is a :class:`Record` or None.
-        If multiple records are found, a ``ValueError`` is raised.
-        """
-        if isinstance(domain, int_types):
-            return Record(self, domain, context=context)
-        assert issearchdomain(domain)
-        params = searchargs((domain,), context=context)
-        ids = self._execute('search', *params)
-        if len(ids) > 1:
-            raise ValueError('domain matches too many records (%d)' % len(ids))
-        return Record(self, ids[0], context=context) if ids else None
-
-    def xml_id_get(self, xml_id, context=None):
+    def _xml_id_get(self, xml_id, context=None):
         """Return a single :class: `Record` by his XML id"""
         # Inspired by A. Fayolle OERPScenario dsl.py code
         module, name = xml_id.split('.')
@@ -1004,6 +988,25 @@ class Model(object):
             return Record(self, res['res_id'], context=context)
         else:
             return None
+
+    def get(self, domain=None, xml_id=None, context=None):
+        """Return a single :class:`Record`.
+
+        The argument `domain` accepts a single integer ``id`` or a
+        search domain.  The return value is a :class:`Record` or None.
+        If multiple records are found, a ``ValueError`` is raised.
+        """
+        assert not (xml_id and  domain), 'domain and xml_id can not be set together'
+        if xml_id:
+            return self._xml_id_get(xml_id)
+        if isinstance(domain, int_types):
+            return Record(self, domain, context=context)
+        assert issearchdomain(domain)
+        params = searchargs((domain,), context=context)
+        ids = self._execute('search', *params)
+        if len(ids) > 1:
+            raise ValueError('domain matches too many records (%d)' % len(ids))
+        return Record(self, ids[0], context=context) if ids else None
 
     def create(self, values, context=None):
         """Create a :class:`Record`.
