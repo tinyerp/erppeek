@@ -996,7 +996,7 @@ class Model(object):
         search domain.  The return value is a :class:`Record` or None.
         If multiple records are found, a ``ValueError`` is raised.
         """
-        assert not (xml_id and  domain), 'domain and xml_id can not be set together'
+        assert not (xml_id and domain), 'domain and xml_id can not be set together'
         if xml_id:
             return self._xml_id_get(xml_id)
         if isinstance(domain, int_types):
