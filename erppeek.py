@@ -990,6 +990,21 @@ class Model(object):
             raise ValueError('domain matches too many records (%d)' % len(ids))
         return Record(self, ids[0], context=context) if ids else None
 
+    def xml_id_get(self, xml_id, context=None):
+        """Return a single :class: `Record` by his XML id"""
+        # Inspired by A. Fayolle OERPScenario dsl.py code
+        module, name = xml_id.split('.')
+        search_domain = [('module', '=', module), ('name', '=', name)]
+        record = self.client.model('ir.model.data').get(search_domain)
+        if not record:
+            return None
+        res = record.read('model res_id')
+        assert res['model'] == self._name
+        if res['res_id']:
+            return Record(self, res['res_id'], context=context)
+        else:
+            return None
+
     def create(self, values, context=None):
         """Create a :class:`Record`.
 
