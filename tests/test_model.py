@@ -16,12 +16,19 @@ class TestCase(XmlRpcTestCase):
 
     def obj_exec(self, *args):
         if args[4] == 'search':
-            if args[3] == 'ir.model' and 'foo' in str(args[5]):
+            if args[3].startswith('ir.model') and 'foo' in str(args[5]):
                 return sentinel.FOO
+            if args[5] == [('name', '=', 'Morice')]:
+                return [sentinel.ID3]
+            if 'missing' in str(args[5]):
+                return []
             return [sentinel.ID1, sentinel.ID2]
         if args[4] == 'read':
             if args[5] is sentinel.FOO:
-                return [{'model': 'foo.bar', 'id': 371}]
+                if args[3] == 'ir.model.data':
+                    return [{'model': 'foo.bar', 'id': 1733, 'res_id': 42}]
+                return [{'model': 'foo.bar', 'id': 371},
+                        {'model': 'ir.model.data', 'id': 17}]
 
             class IdentDict(dict):
                 def __init__(self, id_):
@@ -274,9 +281,6 @@ class TestModel(TestCase):
     def test_browse(self):
         FooBar = self.model('foo.bar')
 
-        def call_read(fields=None):
-            return OBJ('foo.bar', 'read', [sentinel.ID1, sentinel.ID2], fields)
-
         self.assertIsInstance(FooBar.browse(42), erppeek.Record)
         self.assertIsInstance(FooBar.browse([42]), erppeek.RecordList)
         self.assertEqual(len(FooBar.browse([13, 17])), 2)
@@ -325,6 +329,44 @@ class TestModel(TestCase):
         self.assertRaises(ValueError, FooBar.browse, ['abc'])
         self.assertRaises(ValueError, FooBar.browse, ['< id'])
         self.assertRaises(ValueError, FooBar.browse, ['name Morice'])
+
+        self.assertCalls()
+        self.assertOutput('')
+
+    def test_get(self):
+        FooBar = self.model('foo.bar')
+
+        self.assertIsInstance(FooBar.get(42), erppeek.Record)
+        self.assertCalls()
+        self.assertOutput('')
+
+        self.assertIsInstance(FooBar.get(['name = Morice']), erppeek.Record)
+        self.assertIsInstance(FooBar.get('base.foo_company'), erppeek.Record)
+        self.assertIsNone(FooBar.get('base.missing_company'))
+        self.assertIsNone(FooBar.get(['name = Blinky', 'missing = False']))
+        self.assertRaises(ValueError, FooBar.get, ['name like Morice'])
+
+        imd_domain = [('module', '=', 'base'), ('name', '=', 'foo_company')]
+        self.assertCalls(
+            OBJ('foo.bar', 'search', [('name', '=', 'Morice')]),
+            OBJ('ir.model.data', 'search', [('module', '=', 'base'), ('name', '=', 'foo_company')]),
+            OBJ('ir.model.data', 'read', sentinel.FOO, ['model', 'res_id']),
+            OBJ('ir.model.data', 'search', [('module', '=', 'base'), ('name', '=', 'missing_company')]),
+            OBJ('foo.bar', 'search', [('name', '=', 'Blinky'), ('missing', '=', False)]),
+            OBJ('foo.bar', 'search', [('name', 'like', 'Morice')]),
+        )
+        self.assertOutput('')
+
+        self.assertRaises(ValueError, FooBar.get, 'name = Morice')
+        self.assertRaises(ValueError, FooBar.get, ['abc'])
+        self.assertRaises(ValueError, FooBar.get, ['< id'])
+        self.assertRaises(ValueError, FooBar.get, ['name Morice'])
+
+        self.assertRaises(TypeError, FooBar.get)
+        self.assertRaises(TypeError, FooBar.get, ['name = Morice'], limit=1)
+
+        self.assertRaises(AssertionError, FooBar.get, [42])
+        self.assertRaises(AssertionError, FooBar.get, [13, 17])
 
         self.assertCalls()
         self.assertOutput('')
