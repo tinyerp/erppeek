@@ -346,7 +346,6 @@ class TestModel(TestCase):
         self.assertIsNone(FooBar.get(['name = Blinky', 'missing = False']))
         self.assertRaises(ValueError, FooBar.get, ['name like Morice'])
 
-        imd_domain = [('module', '=', 'base'), ('name', '=', 'foo_company')]
         self.assertCalls(
             OBJ('foo.bar', 'search', [('name', '=', 'Morice')]),
             OBJ('ir.model.data', 'search', [('module', '=', 'base'), ('name', '=', 'foo_company')]),
