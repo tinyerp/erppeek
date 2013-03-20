@@ -2,8 +2,8 @@ Changelog
 ---------
 
 
-1.x (unreleased)
-~~~~~~~~~~~~~~~~
+1.4.5 (2013-03-20)
+~~~~~~~~~~~~~~~~~~
 
 * Extend ``Model.get`` to retrieve a record by ``xml_id``.
 

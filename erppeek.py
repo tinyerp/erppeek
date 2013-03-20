@@ -65,7 +65,7 @@ except ImportError:     # Python 2.5
         return default
 
 
-__version__ = '1.4.5.dev0'
+__version__ = '1.4.5'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_openerp_services']
 
