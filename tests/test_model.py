@@ -341,16 +341,11 @@ class TestModel(TestCase):
         self.assertOutput('')
 
         self.assertIsInstance(FooBar.get(['name = Morice']), erppeek.Record)
-        self.assertIsInstance(FooBar.get('base.foo_company'), erppeek.Record)
-        self.assertIsNone(FooBar.get('base.missing_company'))
         self.assertIsNone(FooBar.get(['name = Blinky', 'missing = False']))
         self.assertRaises(ValueError, FooBar.get, ['name like Morice'])
 
         self.assertCalls(
             OBJ('foo.bar', 'search', [('name', '=', 'Morice')]),
-            OBJ('ir.model.data', 'search', [('module', '=', 'base'), ('name', '=', 'foo_company')]),
-            OBJ('ir.model.data', 'read', sentinel.FOO, ['model', 'res_id']),
-            OBJ('ir.model.data', 'search', [('module', '=', 'base'), ('name', '=', 'missing_company')]),
             OBJ('foo.bar', 'search', [('name', '=', 'Blinky'), ('missing', '=', False)]),
             OBJ('foo.bar', 'search', [('name', 'like', 'Morice')]),
         )
@@ -368,6 +363,27 @@ class TestModel(TestCase):
         self.assertRaises(AssertionError, FooBar.get, [13, 17])
 
         self.assertCalls()
+        self.assertOutput('')
+
+    def test_get_xml_id(self):
+        FooBar = self.model('foo.bar')
+        BabarFoo = self.model('babar.foo', check=False)
+        self.assertIsInstance(BabarFoo, erppeek.Model)
+
+        self.assertIsNone(FooBar.get('base.missing_company'))
+        self.assertIsInstance(FooBar.get('base.foo_company'), erppeek.Record)
+
+        # model mismatch
+        self.assertRaises(AssertionError, BabarFoo.get, 'base.foo_company')
+
+        self.assertCalls(
+            OBJ('ir.model.data', 'search', [('module', '=', 'base'), ('name', '=', 'missing_company')]),
+            OBJ('ir.model.data', 'search', [('module', '=', 'base'), ('name', '=', 'foo_company')]),
+            OBJ('ir.model.data', 'read', sentinel.FOO, ['model', 'res_id']),
+            OBJ('ir.model.data', 'search', [('module', '=', 'base'), ('name', '=', 'foo_company')]),
+            OBJ('ir.model.data', 'read', sentinel.FOO, ['model', 'res_id']),
+        )
+
         self.assertOutput('')
 
     def test_create(self):
