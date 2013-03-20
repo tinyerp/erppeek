@@ -342,6 +342,8 @@ class TestModel(TestCase):
 
         self.assertIsInstance(FooBar.get(['name = Morice']), erppeek.Record)
         self.assertIsNone(FooBar.get(['name = Blinky', 'missing = False']))
+
+        # domain matches too many records (2)
         self.assertRaises(ValueError, FooBar.get, ['name like Morice'])
 
         self.assertCalls(
