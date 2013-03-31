@@ -2,6 +2,13 @@ Changelog
 ---------
 
 
+1.x (unreleased)
+~~~~~~~~~~~~~~~~
+
+* Always clear the ``Record`` cache when an arbitrary method is called on
+  this ``Record``.
+
+
 1.4.5 (2013-03-20)
 ~~~~~~~~~~~~~~~~~~
 

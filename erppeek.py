@@ -65,7 +65,7 @@ except ImportError:     # Python 2.5
         return default
 
 
-__version__ = '1.4.5'
+__version__ = '1.4.6.dev0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_openerp_services']
 
@@ -1338,6 +1338,7 @@ class Record(object):
             if context:
                 kwargs.setdefault('context', context)
             res = self._execute(attr, [self.id], *params, **kwargs)
+            self.refresh()
             if isinstance(res, list) and len(res) == 1:
                 return res[0]
             return res
