@@ -576,6 +576,10 @@ class TestRecord(TestCase):
         self.assertEqual(rec.id, 42)
         self.assertEqual(records.id, [13, 17])
 
+        # if the attribute is not a field, it could be a specific RPC method
+        self.assertEqual(rec.missingattr(), sentinel.OTHER)
+        self.assertEqual(records.missingattr(), [sentinel.OTHER])
+
         # existing fields can be read as attributes
         # attribute is writable on the Record object only
         self.assertFalse(callable(rec.message))
@@ -583,19 +587,15 @@ class TestRecord(TestCase):
         self.assertFalse(callable(rec.message))
         self.assertEqual(records.message, ['v_message', 'v_message'])
 
-        # if the attribute is not a field, it could be a specific RPC method
-        self.assertEqual(rec.missingattr(), sentinel.OTHER)
-        self.assertEqual(records.missingattr(), [sentinel.OTHER])
-
         self.assertCalls(
             OBJ('foo.bar', 'fields_get_keys'),
+            OBJ('foo.bar', 'missingattr', [42]),
+            OBJ('foo.bar', 'missingattr', [13, 17]),
             OBJ('foo.bar', 'read', 42, ['message']),
             OBJ('foo.bar', 'fields_get'),
             OBJ('foo.bar', 'write', [42], {'message': 'one giant leap for mankind'}),
             OBJ('foo.bar', 'read', 42, ['message']),
             OBJ('foo.bar', 'read', [13, 17], ['message']),
-            OBJ('foo.bar', 'missingattr', [42]),
-            OBJ('foo.bar', 'missingattr', [13, 17]),
         )
 
         # attribute "id" is never writable
