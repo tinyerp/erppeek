@@ -361,9 +361,9 @@ class TestModel(TestCase):
         self.assertRaises(ValueError, FooBar.get, ['name like Morice'])
 
         self.assertCalls(
-            OBJ('foo.bar', 'search', [('name', '=', 'Morice')]),
-            OBJ('foo.bar', 'search', [('name', '=', 'Blinky'), ('missing', '=', False)]),
-            OBJ('foo.bar', 'search', [('name', 'like', 'Morice')]),
+            OBJ('foo.bar', 'search', [('name', '=', 'Morice')], 0, None, None, None),
+            OBJ('foo.bar', 'search', [('name', '=', 'Blinky'), ('missing', '=', False)], 0, None, None, None),
+            OBJ('foo.bar', 'search', [('name', 'like', 'Morice')], 0, None, None, None),
         )
         self.assertOutput('')
 
