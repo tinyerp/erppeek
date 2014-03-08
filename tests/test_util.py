@@ -31,17 +31,6 @@ class TestUtils(unittest2.TestCase):
         self.assertEqual(searchargs((['name = mushroom', 'state != draft'],)),
                          (domain,))
 
-        with mock.patch('warnings.warn') as mock_warn:
-            self.assertEqual(searchargs(('state != draft',)),
-                             ([('state', '!=', 'draft')],))
-            mock_warn.assert_called_once_with(
-                "Domain should be a list: ['state != draft']")
-            mock_warn.reset_mock()
-            self.assertEqual(searchargs((('state', '!=', 'draft'),)),
-                             ([('state', '!=', 'draft')],))
-            mock_warn.assert_called_once_with(
-                "Domain should be a list: [('state', '!=', 'draft')]")
-
         self.assertEqual(searchargs((['status=Running'],)),
                          ([('status', '=', 'Running')],))
         self.assertEqual(searchargs((['state="in_use"'],)),
@@ -70,6 +59,37 @@ class TestUtils(unittest2.TestCase):
                          ([('status', '=?', 'Running')],))
         self.assertEqual(searchargs((['status=?Running'],)),
                          ([('status', '=?', 'Running')],))
+
+    def test_searchargs_date(self):
+        # Do not interpret dates as integers
+        self.assertEqual(searchargs((['create_date > "2001-12-31"'],)),
+                         ([('create_date', '>', '2001-12-31')],))
+        self.assertEqual(searchargs((['create_date > 2001-12-31'],)),
+                         ([('create_date', '>', '2001-12-31')],))
+
+        self.assertEqual(searchargs((['create_date > 2001-12-31 23:59:00'],)),
+                         ([('create_date', '>', '2001-12-31 23:59:00')],))
+
+        # Not a date, but it should be parsed as string too
+        self.assertEqual(searchargs((['port_nr != 122-2'],)),
+                         ([('port_nr', '!=', '122-2')],))
+
+    def test_searchargs_invalid(self):
+
+        with mock.patch('warnings.warn') as mock_warn:
+            self.assertEqual(searchargs(('state != draft',)),
+                             ([('state', '!=', 'draft')],))
+            mock_warn.assert_called_once_with(
+                "Domain should be a list: ['state != draft']")
+            mock_warn.reset_mock()
+            self.assertEqual(searchargs((('state', '!=', 'draft'),)),
+                             ([('state', '!=', 'draft')],))
+            mock_warn.assert_called_once_with(
+                "Domain should be a list: [('state', '!=', 'draft')]")
+
+        # Operator == is a typo
+        self.assertRaises(ValueError, searchargs, (['ham==2'],))
+        self.assertRaises(ValueError, searchargs, (['ham == 2'],))
 
         self.assertRaises(ValueError, searchargs, (['spam.hamin(1, 2)'],))
         self.assertRaises(ValueError, searchargs, (['spam.hamin (1, 2)'],))

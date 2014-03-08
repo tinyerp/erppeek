@@ -7,6 +7,7 @@ Author: Florent Xicluna
 """
 from __future__ import with_statement
 
+import _ast
 import functools
 import optparse
 import os
@@ -28,41 +29,6 @@ except ImportError:     # Python 2
     from threading import currentThread as current_thread
     from xmlrpclib import Fault, ServerProxy
     int_types = int, long
-
-try:
-    from ast import literal_eval
-except ImportError:     # Python 2.5
-    import _ast
-
-    # Port of Python 2.6's ast.literal_eval for use under Python 2.5
-    def _convert(node, _consts={'None': None, 'True': True, 'False': False}):
-        if isinstance(node, _ast.Str):
-            return node.s
-        if isinstance(node, _ast.Num):
-            return node.n
-        if isinstance(node, _ast.Tuple):
-            return tuple(map(_convert, node.elts))
-        if isinstance(node, _ast.List):
-            return list(map(_convert, node.elts))
-        if isinstance(node, _ast.Dict):
-            return dict([(_convert(k), _convert(v))
-                         for (k, v) in zip(node.keys, node.values)])
-        if isinstance(node, _ast.Name) and node.id in _consts:
-            return _consts[node.id]
-        raise ValueError('malformed or disallowed expression')
-
-    def literal_eval(node_or_string):
-        if isinstance(node_or_string, basestring):
-            node_or_string = compile(node_or_string,
-                                     '<unknown>', 'eval', _ast.PyCF_ONLY_AST)
-        if isinstance(node_or_string, _ast.Expression):
-            node_or_string = node_or_string.body
-        return _convert(node_or_string)
-
-    def next(iterator, default):
-        for item in iterator:
-            return item
-        return default
 
 
 __version__ = '1.4.6.dev0'
@@ -112,7 +78,7 @@ DOMAIN_OPERATORS = frozenset('!|&')
 #   =, !=, >, >=, <, <=, like, ilike, in, not like, not ilike, not in, child_of
 #   =like, =ilike (6.0), =? (6.0)
 _term_re = re.compile(
-    '([\w._]+)\s*'  '(=(?:like|ilike|\?)|[<>!]=|[<>=]'
+    '([\w._]+)\s*'  '(=(?:like|ilike|\?)|[<>]=?|!?=(?!=)'
     '|(?<= )(?:like|ilike|in|not like|not ilike|not in|child_of))'  '\s*(.*)')
 _fields_re = re.compile(r'(?:[^%]|^)%\(([^)]+)\)')
 
@@ -138,6 +104,37 @@ _methods_6_1 = {
 #  - common: get_available_updates, get_migration_scripts, set_loglevel
 _cause_message = ("\nThe above exception was the direct cause "
                   "of the following exception:\n\n")
+
+
+# Simplified ast.literal_eval which does not parse operators
+def _convert(node, _consts={'None': None, 'True': True, 'False': False}):
+    if isinstance(node, _ast.Str):
+        return node.s
+    if isinstance(node, _ast.Num):
+        return node.n
+    if isinstance(node, _ast.Tuple):
+        return tuple(map(_convert, node.elts))
+    if isinstance(node, _ast.List):
+        return list(map(_convert, node.elts))
+    if isinstance(node, _ast.Dict):
+        return dict([(_convert(k), _convert(v))
+                     for (k, v) in zip(node.keys, node.values)])
+    if isinstance(node, _ast.Name) and node.id in _consts:
+        return _consts[node.id]
+    raise ValueError('malformed or disallowed expression')
+
+
+def literal_eval(expression):
+    node = compile(expression, '<unknown>', 'eval', _ast.PyCF_ONLY_AST)
+    return _convert(node.body)
+
+
+def is_list_of_dict(iterator):
+    """Return True if the first non-false item is a dict."""
+    for item in iterator:
+        if item:
+            return isinstance(item, dict)
+    return False
 
 
 def mixedcase(s, _cache={}):
@@ -1118,7 +1115,7 @@ class RecordList(object):
         if self.id:
             values = client.read(self._model_name, self.id,
                                  fields, order=True, context=context)
-            if isinstance(next(filter(None, values), None), dict):
+            if is_list_of_dict(values):
                 browse_values = self._model._browse_values
                 return [v and browse_values(v) for v in values]
         else:

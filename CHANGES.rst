@@ -10,6 +10,10 @@ Changelog
 
 * Implement ``==`` comparison for ``Record`` instances.
 
+* Better parsing of dates in search terms.
+
+* Reject invalid ``==`` operator in search terms.
+
 * Fix ``TypeError`` when browsing duplicate ids.
 
 * Fix error with ``Model.get(['field = value'], context={...})``.
