@@ -1080,18 +1080,17 @@ class RecordList(object):
     """
 
     def __init__(self, res_model, ids, context=None):
-        _ids = []
-        for id_ in ids:
+        idnames = list(ids)
+        for (index, id_) in enumerate(ids):
             if isinstance(id_, (list, tuple)):
-                _ids.append(id_[0])
-            else:
-                _ids.append(id_)
+                ids[index] = id_ = id_[0]
+            assert isinstance(id_, int_types), repr(id_)
         # Bypass the __setattr__ method
         self.__dict__.update({
-            'id': _ids,
+            'id': ids,
             '_model_name': res_model._name,
             '_model': res_model,
-            '_idnames': ids,
+            '_idnames': idnames,
             '_context': context,
             '_execute': res_model._execute,
         })
@@ -1213,6 +1212,7 @@ class Record(object):
         if isinstance(res_id, (list, tuple)):
             (res_id, res_name) = res_id
             self.__dict__['_name'] = res_name
+        assert isinstance(res_id, int_types), repr(res_id)
         # Bypass the __setattr__ method
         self.__dict__.update({
             'id': res_id,

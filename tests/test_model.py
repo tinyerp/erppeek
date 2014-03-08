@@ -19,10 +19,10 @@ class TestCase(XmlRpcTestCase):
             if args[3].startswith('ir.model') and 'foo' in str(args[5]):
                 return sentinel.FOO
             if args[5] == [('name', '=', 'Morice')]:
-                return [sentinel.ID3]
+                return [1003]
             if 'missing' in str(args[5]):
                 return []
-            return [sentinel.ID1, sentinel.ID2]
+            return [1001, 1002]
         if args[4] == 'read':
             if args[5] is sentinel.FOO:
                 if args[3] == 'ir.model.data':
@@ -48,7 +48,7 @@ class TestCase(XmlRpcTestCase):
             return dict.fromkeys(('id', 'name', 'message', 'spam'),
                                  {'type': sentinel.FIELD_TYPE})
         if args[4] in ('create', 'copy'):
-            return sentinel.OTHER
+            return 1999
         else:
             return [sentinel.OTHER]
 
@@ -205,7 +205,7 @@ class TestModel(TestCase):
         FooBar = self.model('foo.bar')
 
         def call_read(fields=None):
-            return OBJ('foo.bar', 'read', [sentinel.ID1, sentinel.ID2], fields)
+            return OBJ('foo.bar', 'read', [1001, 1002], fields)
 
         FooBar.read(42)
         FooBar.read([42])
@@ -495,7 +495,7 @@ class TestRecord(TestCase):
 
         recopy = rec.copy()
         self.assertIsInstance(recopy, erppeek.Record)
-        self.assertEqual(recopy.id, sentinel.OTHER)
+        self.assertEqual(recopy.id, 1999)
 
         rec.copy({'spam': 42})
         rec.copy({'spam': rec})
