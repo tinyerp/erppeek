@@ -25,7 +25,6 @@ try:                    # Python 3
     int_types = int
 except ImportError:     # Python 2
     import ConfigParser as configparser
-    from itertools import ifilter as filter
     from threading import currentThread as current_thread
     from xmlrpclib import Fault, ServerProxy
     int_types = int, long
