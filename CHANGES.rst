@@ -10,6 +10,8 @@ Changelog
 
 * Implement ``==`` comparison for ``Record`` instances.
 
+* Fix TypeError when browsing duplicate ids.
+
 * Workaround an issue with some models: always pass a list of ids
   to ``read``.
 

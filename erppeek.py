@@ -1018,7 +1018,7 @@ class Model(object):
         Return a dictionary with the same keys as the `values` argument.
         """
         for key, value in values.items():
-            if key == 'id':
+            if key == 'id' or hasattr(value, 'id'):
                 continue
             field = self._fields[key]
             field_type = field['type']
@@ -1040,7 +1040,7 @@ class Model(object):
         new_values = values.copy()
         for key, value in values.items():
             field_type = self._fields[key]['type']
-            if isinstance(value, (Record, RecordList)):
+            if hasattr(value, 'id'):
                 if field_type == 'reference':
                     new_values[key] = '%s,%s' % (value._model_name, value.id)
                 else:

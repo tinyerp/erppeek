@@ -15,40 +15,53 @@ class TestCase(XmlRpcTestCase):
     uid = 1
 
     def obj_exec(self, *args):
-        if args[4] == 'search':
-            if args[3].startswith('ir.model') and 'foo' in str(args[5]):
+        (model, method) = args[3:5]
+        if method == 'search':
+            if model.startswith('ir.model') and 'foo' in str(args[5]):
                 return sentinel.FOO
             if args[5] == [('name', '=', 'Morice')]:
                 return [1003]
             if 'missing' in str(args[5]):
                 return []
             return [1001, 1002]
-        if args[4] == 'read':
+        if method == 'read':
             if args[5] is sentinel.FOO:
-                if args[3] == 'ir.model.data':
+                if model == 'ir.model.data':
                     return [{'model': 'foo.bar', 'id': 1733, 'res_id': 42}]
                 return [{'model': 'foo.bar', 'id': 371},
                         {'model': 'foo.other', 'id': 99},
                         {'model': 'ir.model.data', 'id': 17}]
 
+            # We no longer read single ids
+            self.assertIsInstance(args[5], list)
+
             class IdentDict(dict):
-                def __init__(self, id_):
-                    self._id = id_
+                def __init__(self, id_, fields=()):
                     self['id'] = id_
+                    for f in fields:
+                        self[f] = self[f]
 
                 def __getitem__(self, key):
-                    if key == 'id':
-                        return self._id
+                    if key in self:
+                        return dict.__getitem__(self, key)
                     return 'v_' + key
-            if isinstance(args[5], int):
-                return IdentDict(args[5])
-            return [IdentDict(arg) for arg in args[5]]
-        if args[4] == 'fields_get_keys':
-            return ['id', 'name', 'message']
-        if args[4] == 'fields_get':
-            return dict.fromkeys(('id', 'name', 'message', 'spam'),
-                                 {'type': sentinel.FIELD_TYPE})
-        if args[4] in ('create', 'copy'):
+            if model == 'foo.bar' and args[6] is None:
+                records = {}
+                for res_id in set(args[5]):
+                    rdic = IdentDict(res_id, ('name', 'message', 'spam'))
+                    rdic['misc_id'] = 421
+                    records[res_id] = rdic
+                return [records[res_id] for res_id in args[5]]
+            return [IdentDict(arg, args[6]) for arg in args[5]]
+        if method == 'fields_get_keys':
+            return ['id', 'name', 'message', 'misc_id']
+        if method == 'fields_get':
+            fields = dict.fromkeys(('id', 'name', 'message', 'spam',
+                                    'birthdate', 'city'),
+                                   {'type': sentinel.FIELD_TYPE})
+            fields['misc_id'] = {'type': 'many2one', 'relation': 'foo.misc'}
+            return fields
+        if method in ('create', 'copy'):
             return 1999
         else:
             return [sentinel.OTHER]
@@ -456,9 +469,9 @@ class TestRecord(TestCase):
 
         self.assertCalls(
             OBJ('foo.bar', 'read', [42], None),
+            OBJ('foo.bar', 'fields_get'),
             OBJ('foo.bar', 'read', [13, 17], None),
             OBJ('foo.bar', 'read', [42], ['message']),
-            OBJ('foo.bar', 'fields_get'),
             OBJ('foo.bar', 'read', [13, 17], ['message']),
             OBJ('foo.bar', 'read', [42], ['name', 'message']),
             OBJ('foo.bar', 'read', [13, 17], ['birthdate', 'city']),
@@ -640,4 +653,31 @@ class TestRecord(TestCase):
         self.assertNotEqual(rec1, records)
 
         self.assertCalls()
+        self.assertOutput('')
+
+    def test_read_duplicate(self):
+        records = self.model('foo.bar').browse([17, 17])
+
+        self.assertEqual(type(records), erppeek.RecordList)
+
+        values = records.read()
+        self.assertEqual(len(values), 2)
+        self.assertEqual(*values)
+        self.assertEqual(type(values[0]['misc_id']), erppeek.Record)
+
+        values = records.read('message')
+        self.assertEqual(values, ['v_message','v_message'])
+
+        values = records.read('birthdate city')
+        self.assertEqual(len(values), 2)
+        self.assertEqual(*values)
+        self.assertEqual(values[0], {'id': 17, 'city': 'v_city',
+                                     'birthdate': 'v_birthdate'})
+
+        self.assertCalls(
+            OBJ('foo.bar', 'read', [17], None),
+            OBJ('foo.bar', 'fields_get'),
+            OBJ('foo.bar', 'read', [17], ['message']),
+            OBJ('foo.bar', 'read', [17], ['birthdate', 'city']),
+        )
         self.assertOutput('')
