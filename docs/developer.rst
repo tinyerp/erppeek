@@ -11,7 +11,7 @@ Source code
 * `Source code <https://github.com/florentx/erppeek>`_ and
   `issue tracker <https://github.com/florentx/erppeek/issues>`_ on GitHub.
 * `Continuous tests <http://travis-ci.org/florentx/erppeek>`_ against Python
-  2.5 through 3.3 and PyPy, on `Travis-CI platform
+  2.6 through 3.3 and PyPy, on `Travis-CI platform
   <http://about.travis-ci.org/>`_.
 
 
