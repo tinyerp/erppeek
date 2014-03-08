@@ -10,7 +10,9 @@ Changelog
 
 * Implement ``==`` comparison for ``Record`` instances.
 
-* Fix TypeError when browsing duplicate ids.
+* Fix ``TypeError`` when browsing duplicate ids.
+
+* Fix error with ``Model.get(['field = value'], context={...})``.
 
 * Workaround an issue with some models: always pass a list of ids
   to ``read``.

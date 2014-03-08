@@ -993,7 +993,7 @@ class Model(object):
             ids = [res['res_id'] for res in data]
         else:                               # a search domain
             assert issearchdomain(domain)
-            params = searchargs((domain,), context=context)
+            params = searchargs((domain,), {}, context)
             ids = self._execute('search', *params)
         if len(ids) > 1:
             raise ValueError('domain matches too many records (%d)' % len(ids))
