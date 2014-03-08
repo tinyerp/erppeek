@@ -28,6 +28,7 @@ class TestCase(XmlRpcTestCase):
                 if args[3] == 'ir.model.data':
                     return [{'model': 'foo.bar', 'id': 1733, 'res_id': 42}]
                 return [{'model': 'foo.bar', 'id': 371},
+                        {'model': 'foo.other', 'id': 99},
                         {'model': 'ir.model.data', 'id': 17}]
 
             class IdentDict(dict):
@@ -616,6 +617,27 @@ class TestRecord(TestCase):
         self.assertRaises(AttributeError, delattr, rec, 'missingattr2')
         self.assertRaises(AttributeError, delattr, records, 'message')
         self.assertRaises(AttributeError, delattr, records, 'missingattr2')
+
+        self.assertCalls()
+        self.assertOutput('')
+
+    def test_equal(self):
+        rec1 = self.model('foo.bar').get(42)
+        rec2 = self.model('foo.bar').get(42)
+        rec3 = self.model('foo.bar').get(2)
+        rec4 = self.model('foo.other').get(42)
+        records = self.model('foo.bar').browse([42])
+
+        self.assertEqual(rec1.id, rec2.id)
+        self.assertEqual(rec1, rec2)
+
+        self.assertNotEqual(rec1.id, rec3.id)
+        self.assertEqual(rec1.id, rec4.id)
+        self.assertNotEqual(rec1, rec3)
+        self.assertNotEqual(rec1, rec4)
+
+        self.assertEqual(records.id, [42])
+        self.assertNotEqual(rec1, records)
 
         self.assertCalls()
         self.assertOutput('')

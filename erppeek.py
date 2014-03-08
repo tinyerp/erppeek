@@ -1355,6 +1355,10 @@ class Record(object):
             raise AttributeError("'Record' object attribute 'id' is read-only")
         self.write({attr: value})
 
+    def __eq__(self, other):
+        return (isinstance(other, Record) and
+                self.id == other.id and self._model_name == other._model_name)
+
 
 def _interact(use_pprint=True, usage=USAGE):
     import code
