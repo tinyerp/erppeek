@@ -593,7 +593,7 @@ class Client(object):
         assert isinstance(obj, basestring)
         assert isinstance(method, basestring) and method != 'browse'
         context = kwargs.pop('context', None)
-        ordered = None
+        ordered = single_id = False
         if method in ('read', 'name_get'):
             assert params
             if issearchdomain(params[0]):
@@ -609,7 +609,8 @@ class Client(object):
                     return [False] * len(ordered)
                 ids = sorted(ids)
             else:
-                ids = params[0]
+                single_id = True
+                ids = [params[0]]
             if not ids:
                 return []
             if len(params) > 1:
@@ -641,7 +642,7 @@ class Client(object):
             if not isinstance(ordered, list):
                 ordered = ids
             res = [resdic.get(id_, False) for id_ in ordered]
-        return res
+        return res[0] if single_id else res
 
     def exec_workflow(self, obj, signal, obj_id):
         """Wrapper around ``object.exec_workflow`` RPC method.

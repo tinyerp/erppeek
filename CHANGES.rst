@@ -8,6 +8,8 @@ Changelog
 * Always clear the ``Record`` cache when an arbitrary method is called on
   this ``Record``.
 
+* Workaround an issue with some models: always pass a list of ids to 'read'.
+
 
 1.4.5 (2013-03-20)
 ~~~~~~~~~~~~~~~~~~

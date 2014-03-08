@@ -212,7 +212,7 @@ class TestModel(TestCase):
         FooBar.read([13, 17])
         FooBar.read([42], 'first_name')
         self.assertCalls(
-            OBJ('foo.bar', 'read', 42, None),
+            OBJ('foo.bar', 'read', [42], None),
             OBJ('foo.bar', 'read', [42], None),
             OBJ('foo.bar', 'read', [13, 17], None),
             OBJ('foo.bar', 'read', [42], ['first_name']),
@@ -454,12 +454,12 @@ class TestRecord(TestCase):
         records.read('birthdate city')
 
         self.assertCalls(
-            OBJ('foo.bar', 'read', 42, None),
+            OBJ('foo.bar', 'read', [42], None),
             OBJ('foo.bar', 'read', [13, 17], None),
-            OBJ('foo.bar', 'read', 42, ['message']),
+            OBJ('foo.bar', 'read', [42], ['message']),
             OBJ('foo.bar', 'fields_get'),
             OBJ('foo.bar', 'read', [13, 17], ['message']),
-            OBJ('foo.bar', 'read', 42, ['name', 'message']),
+            OBJ('foo.bar', 'read', [42], ['name', 'message']),
             OBJ('foo.bar', 'read', [13, 17], ['birthdate', 'city']),
         )
         self.assertOutput('')
@@ -591,10 +591,10 @@ class TestRecord(TestCase):
             OBJ('foo.bar', 'fields_get_keys'),
             OBJ('foo.bar', 'missingattr', [42]),
             OBJ('foo.bar', 'missingattr', [13, 17]),
-            OBJ('foo.bar', 'read', 42, ['message']),
+            OBJ('foo.bar', 'read', [42], ['message']),
             OBJ('foo.bar', 'fields_get'),
             OBJ('foo.bar', 'write', [42], {'message': 'one giant leap for mankind'}),
-            OBJ('foo.bar', 'read', 42, ['message']),
+            OBJ('foo.bar', 'read', [42], ['message']),
             OBJ('foo.bar', 'read', [13, 17], ['message']),
         )
 

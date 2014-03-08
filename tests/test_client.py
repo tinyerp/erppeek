@@ -399,7 +399,7 @@ class TestClientApi(XmlRpcTestCase):
         read('foo.bar', [13, 17])
         read('foo.bar', [42], 'first_name')
         self.assertCalls(
-            OBJ('foo.bar', 'read', 42, None),
+            OBJ('foo.bar', 'read', [42], None),
             OBJ('foo.bar', 'read', [42], None),
             OBJ('foo.bar', 'read', [13, 17], None),
             OBJ('foo.bar', 'read', [42], ['first_name']),
