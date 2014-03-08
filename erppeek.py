@@ -1228,9 +1228,10 @@ class Record(object):
     def _get_name(self):
         try:
             (id_name,) = self._execute('name_get', [self.id])
-            name = '[%d] %s' % (self.id, id_name[1])
+            name = '%s' % (id_name[1],)
         except Exception:
-            name = '[%d] -' % (self.id,)
+            name = '%s,%d' % (self._model_name,self.id)
+        self.__dict__['_name'] = name
         return name
 
     @property
@@ -1325,8 +1326,7 @@ class Record(object):
         if attr in self._model._keys:
             return self.read(attr, context=context)
         if attr == '_name':
-            self.__dict__['_name'] = name = self._get_name()
-            return name
+            return self._get_name()
         if attr.startswith('_'):
             raise AttributeError("'Record' object has no attribute %r" % attr)
 

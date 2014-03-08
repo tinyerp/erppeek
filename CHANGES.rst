@@ -14,6 +14,9 @@ Changelog
 
 * Reject invalid ``==`` operator in search terms.
 
+* Now the ``str(...)`` of a ``Record`` is always retrieved with ``name_get``.
+  Previously, the output was sometimes inconsistent.
+
 * Fix ``TypeError`` when browsing duplicate ids.
 
 * Fix error with ``Model.get(['field = value'], context={...})``.

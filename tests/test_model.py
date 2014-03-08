@@ -61,10 +61,13 @@ class TestCase(XmlRpcTestCase):
                                    {'type': sentinel.FIELD_TYPE})
             fields['misc_id'] = {'type': 'many2one', 'relation': 'foo.misc'}
             return fields
+        if method == 'name_get':
+            if 404 in args[5]:
+                1 / 0
+            return [(res_id, 'name_%s' % res_id) for res_id in args[5]]
         if method in ('create', 'copy'):
             return 1999
-        else:
-            return [sentinel.OTHER]
+        return [sentinel.OTHER]
 
     def setUp(self):
         super(TestCase, self).setUp()
@@ -689,4 +692,35 @@ class TestRecord(TestCase):
             OBJ('foo.bar', 'read', [17], ['message']),
             OBJ('foo.bar', 'read', [17], ['birthdate', 'city']),
         )
+        self.assertOutput('')
+
+    def test_str(self):
+        records = erppeek.RecordList(self.model('foo.bar'), [(13, 'treize'), (17, 'dix-sept')])
+        rec1 = self.model('foo.bar').browse(42)
+        rec2 = records[0]
+        rec3 = self.model('foo.bar').browse(404)
+
+        self.assertEqual(str(rec1), 'name_42')
+        self.assertEqual(str(rec2), 'treize')
+        self.assertEqual(rec1._name, 'name_42')
+        self.assertEqual(rec2._name, 'treize')
+
+        # Broken name_get
+        self.assertEqual(str(rec3), 'foo.bar,404')
+
+        self.assertCalls(
+            OBJ('foo.bar', 'fields_get_keys'),
+            OBJ('foo.bar', 'name_get', [42]),
+            OBJ('foo.bar', 'name_get', [404]),
+        )
+
+        # This str() is never updated (for performance reason).
+        rec1.refresh()
+        rec2.refresh()
+        rec3.refresh()
+        self.assertEqual(str(rec1), 'name_42')
+        self.assertEqual(str(rec2), 'treize')
+        self.assertEqual(str(rec3), 'foo.bar,404')
+
+        self.assertCalls()
         self.assertOutput('')
