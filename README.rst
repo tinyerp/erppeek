@@ -126,7 +126,7 @@ This is a sample session::
     True
     >>> client.ResUsers.count()
     4
-    >>> read('ir.cron', ['active = False'], 'active function')
+    >>> model('ir.cron').read(['active = False'], 'active function')
     [{'active': False, 'function': 'run_mail_scheduler', 'id': 1},
      {'active': False, 'function': 'run_bdr_scheduler', 'id': 2},
      {'active': False, 'function': 'scheduled_fetch_new_scans', 'id': 9}]

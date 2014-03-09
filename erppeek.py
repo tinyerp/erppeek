@@ -514,8 +514,6 @@ class Client(object):
     def _set_interactive(cls):
         # Don't call multiple times
         del Client._set_interactive
-        global_names = ['wizard', 'exec_workflow', 'read', 'search', 'count',
-                        'model', 'models', 'keys', 'fields', 'field', 'access']
 
         def connect(self, env=None):
             """Connect to another environment and replace the globals()."""
@@ -531,13 +529,12 @@ class Client(object):
             sys.ps2 = '%s ... ' % (env,)
             # Logged in?
             if client.user:
+                g['model'] = client.model
+                g['models'] = client.models
                 g['do'] = client.execute
-                for name in global_names:
-                    g[name] = getattr(client, name)
                 print('Logged in as %r' % (client.user,))
             else:
-                g['do'] = None
-                g.update(dict.fromkeys(global_names))
+                g['model'] = g['models'] = g['do'] = None
 
         def login(self, user, password=None, database=None):
             """Switch `user` and (optionally) `database`."""

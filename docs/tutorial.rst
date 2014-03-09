@@ -38,28 +38,20 @@ On login, it prints few lines about the commands available.
 .. sourcecode:: pycon
 
     $ erppeek
-    Usage (main commands):
-        search(obj, domain)
-        search(obj, domain, offset=0, limit=None, order=None)
-                                        # Return a list of IDs
-        count(obj, domain)              # Count the matching objects
-
-        read(obj, ids, fields=None)
-        read(obj, domain, fields=None)
-        read(obj, domain, fields=None, offset=0, limit=None, order=None)
-                                        # Return values for the fields
-
+    Usage (some commands):
         models(name)                    # List models matching pattern
         model(name)                     # Return a Model instance
-        keys(obj)                       # List field names of the model
-        fields(obj, names=None)         # Return details for the fields
-        field(obj, name)                # Return details for the field
-        access(obj, mode='read')        # Check access on the model
+        model(name).keys()              # List field names of the model
+        model(name).fields(names=None)  # Return details for the fields
+        model(name).field(name)         # Return details for the field
+        model(name).browse(domain)
+        model(name).browse(domain, offset=0, limit=None, order=None)
+                                        # Return a RecordList
 
-        do(obj, method, *params)        # Generic 'object.execute'
-        exec_workflow(obj, signal, id)  # Trigger workflow signal
+        rec = model(name).get(domain)   # Get the Record matching domain
+        rec.some_field                  # Return the value of this field
+        rec.read(fields=None)           # Return values for the fields
 
-        client                          # Client object, connected
         client.login(user)              # Login with another user
         client.connect(env)             # Connect to another env.
         client.modules(name)            # List modules matching pattern
@@ -380,5 +372,3 @@ Query the ``ResCountry`` model::
 ... the tutorial is done.
 
 Jump to the :doc:`api` for further details.
-
-

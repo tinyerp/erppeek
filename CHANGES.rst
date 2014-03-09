@@ -8,6 +8,10 @@ Changelog
 * Advertize the ``Model`` and ``Record`` paradigm in the ``usage`` printed
   in interactive mode: it's far more easier to use, and available since 1.0.
 
+* In interactive mode, only inject four global names: ``client``, ``models``,
+  ``model`` and ``do``.  Other methods are available on ``Model``
+  and ``Client`` instances (``read search count keys fields access ...``).
+
 * Always clear the ``Record`` cache when an arbitrary method is called on
   this ``Record``.
 

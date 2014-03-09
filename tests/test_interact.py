@@ -46,7 +46,7 @@ class TestInteract(XmlRpcTestCase):
         # Launch interactive
         self.infunc.side_effect = [
             "client\n",
-            "read\n",
+            "model\n",
             "client.login('gaspard')\n",
             "23 + 19\n",
             EOFError('Finished')]
@@ -68,7 +68,7 @@ class TestInteract(XmlRpcTestCase):
         self.assertSequenceEqual(outlines[-5:], [
             "Logged in as 'usr'",
             "<Client 'http://127.0.0.1:8069#database'>",
-            "<bound method Client.read of "
+            "<bound method Client.model of "
             "<Client 'http://127.0.0.1:8069#database'>>",
             "Logged in as 'gaspard'",
             "42",
@@ -85,7 +85,7 @@ class TestInteract(XmlRpcTestCase):
         # Launch interactive
         self.infunc.side_effect = [
             "client\n",
-            "read\n",
+            "model\n",
             "client.login('gaspard')\n",
             EOFError('Finished')]
         erppeek.main()
