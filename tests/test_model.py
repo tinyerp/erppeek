@@ -678,7 +678,7 @@ class TestRecord(TestCase):
         self.assertEqual(type(values[0]['misc_id']), erppeek.Record)
 
         values = records.read('message')
-        self.assertEqual(values, ['v_message','v_message'])
+        self.assertEqual(values, ['v_message', 'v_message'])
 
         values = records.read('birthdate city')
         self.assertEqual(len(values), 2)

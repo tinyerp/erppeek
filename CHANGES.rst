@@ -5,6 +5,9 @@ Changelog
 1.x (unreleased)
 ~~~~~~~~~~~~~~~~
 
+* Advertize the ``Model`` and ``Record`` paradigm in the ``usage`` printed
+  in interactive mode: it's far more easier to use, and available since 1.0.
+
 * Always clear the ``Record`` cache when an arbitrary method is called on
   this ``Record``.
 
