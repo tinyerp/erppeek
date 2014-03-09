@@ -17,17 +17,21 @@ class TestCase(XmlRpcTestCase):
     def obj_exec(self, *args):
         (model, method) = args[3:5]
         if method == 'search':
-            if model.startswith('ir.model') and 'foo' in str(args[5]):
+            domain = args[5]
+            if model.startswith('ir.model') and 'foo' in str(domain):
+                if "'in', []" in str(domain) or 'other_module' in str(domain):
+                    return []
                 return sentinel.FOO
-            if args[5] == [('name', '=', 'Morice')]:
+            if domain == [('name', '=', 'Morice')]:
                 return [1003]
-            if 'missing' in str(args[5]):
+            if 'missing' in str(domain):
                 return []
             return [1001, 1002]
         if method == 'read':
             if args[5] is sentinel.FOO:
                 if model == 'ir.model.data':
-                    return [{'model': 'foo.bar', 'id': 1733, 'res_id': 42}]
+                    return [{'model': 'foo.bar', 'module': 'this_module',
+                             'name': 'xml_name', 'id': 1733, 'res_id': 42}]
                 return [{'model': 'foo.bar', 'id': 371},
                         {'model': 'foo.other', 'id': 99},
                         {'model': 'ir.model.data', 'id': 17}]
@@ -56,9 +60,11 @@ class TestCase(XmlRpcTestCase):
         if method == 'fields_get_keys':
             return ['id', 'name', 'message', 'misc_id']
         if method == 'fields_get':
-            fields = dict.fromkeys(('id', 'name', 'message', 'spam',
-                                    'birthdate', 'city'),
-                                   {'type': sentinel.FIELD_TYPE})
+            if model == 'ir.model.data':
+                keys = ('id', 'model', 'module', 'name', 'res_id')
+            else:
+                keys = ('id', 'name', 'message', 'spam', 'birthdate', 'city')
+            fields = dict.fromkeys(keys, {'type': sentinel.FIELD_TYPE})
             fields['misc_id'] = {'type': 'many2one', 'relation': 'foo.misc'}
             return fields
         if method == 'name_get':
@@ -461,6 +467,21 @@ class TestModel(TestCase):
 
         self.test_method('perm_read', single_id=False)
 
+    def test_get_external_ids(self):
+        FooBar = self.model('foo.bar')
+
+        self.assertEqual(FooBar._get_external_ids(), {'this_module.xml_name': FooBar.get(42)})
+        FooBar._get_external_ids([])
+        FooBar._get_external_ids([2001, 2002])
+        self.assertCalls(
+            OBJ('ir.model.data', 'search', [('model', '=', 'foo.bar')]),
+            OBJ('ir.model.data', 'read', sentinel.FOO, ['module', 'name', 'res_id']),
+            OBJ('ir.model.data', 'search', [('model', '=', 'foo.bar'), ('res_id', 'in', [])]),
+            OBJ('ir.model.data', 'search', [('model', '=', 'foo.bar'), ('res_id', 'in', [2001, 2002])]),
+            OBJ('ir.model.data', 'read', sentinel.FOO, ['module', 'name', 'res_id']),
+        )
+        self.assertOutput('')
+
 
 class TestRecord(TestCase):
     """Tests the Model class and methods."""
@@ -723,4 +744,59 @@ class TestRecord(TestCase):
         self.assertEqual(str(rec3), 'foo.bar,404')
 
         self.assertCalls()
+        self.assertOutput('')
+
+    def test_external_id(self):
+        records = self.model('foo.bar').browse([13, 17])
+        rec = self.model('foo.bar').browse(42)
+        rec3 = self.model('foo.bar').browse([17, 13, 42])
+
+        self.assertEqual(rec._external_id, 'this_module.xml_name')
+        self.assertEqual(records._external_id, [False, False])
+        self.assertEqual(rec3._external_id, [False, False, 'this_module.xml_name'])
+
+        self.assertCalls(
+            OBJ('ir.model.data', 'search', [('model', '=', 'foo.bar'), ('res_id', 'in', [42])]),
+            OBJ('ir.model.data', 'read', sentinel.FOO, ['module', 'name', 'res_id']),
+            OBJ('ir.model.data', 'search', [('model', '=', 'foo.bar'), ('res_id', 'in', [13, 17])]),
+            OBJ('ir.model.data', 'read', sentinel.FOO, ['module', 'name', 'res_id']),
+            OBJ('ir.model.data', 'search', [('model', '=', 'foo.bar'), ('res_id', 'in', [17, 13, 42])]),
+            OBJ('ir.model.data', 'read', sentinel.FOO, ['module', 'name', 'res_id']),
+        )
+
+    def test_set_external_id(self):
+        records = self.model('foo.bar').browse([13, 17])
+        rec = self.model('foo.bar').browse(42)
+        rec3 = self.model('foo.bar').browse([17, 13, 42])
+
+        # Assign an External ID on a record which does not have one
+        records[0]._external_id = 'other_module.dummy'
+        xml_domain = ['|', '&', ('model', '=', 'foo.bar'), ('res_id', '=', 13),
+                      '&', ('module', '=', 'other_module'), ('name', '=', 'dummy')]
+        imd_values = {'model': 'foo.bar', 'name': 'dummy',
+                      'res_id': 13, 'module': 'other_module'}
+        self.assertCalls(
+            OBJ('ir.model.data', 'search', xml_domain),
+            OBJ('ir.model.data', 'fields_get'),
+            OBJ('ir.model.data', 'create', imd_values),
+        )
+
+        # Cannot assign an External ID if there's already one
+        self.assertRaises(ValueError, setattr, rec, '_external_id', 'ab.cdef')
+        # Cannot assign an External ID to a RecordList
+        self.assertRaises(AttributeError, setattr, rec3, '_external_id', 'ab.cdef')
+
+        # Reject invalid External IDs
+        self.assertRaises(ValueError, setattr, records[1], '_external_id', '')
+        self.assertRaises(ValueError, setattr, records[1], '_external_id', 'ab')
+        self.assertRaises(ValueError, setattr, records[1], '_external_id', 'ab.cd.ef')
+        self.assertRaises(AttributeError, setattr, records[1], '_external_id', False)
+        records[1]._external_id = 'other_module.dummy'
+
+        self.assertCalls(
+            OBJ('ir.model.data', 'search', ANY),
+            OBJ('foo.bar', 'fields_get_keys'),
+            OBJ('ir.model.data', 'search', ANY),
+            OBJ('ir.model.data', 'create', ANY),
+        )
         self.assertOutput('')

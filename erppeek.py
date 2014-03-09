@@ -271,7 +271,7 @@ def searchargs(params, kwargs=None, context=None):
         if isinstance(term, basestring) and term not in DOMAIN_OPERATORS:
             m = _term_re.match(term.strip())
             if not m:
-                raise ValueError("Cannot parse term %r" % term)
+                raise ValueError('Cannot parse term %r' % term)
             (field, operator, value) = m.groups()
             try:
                 value = literal_eval(value)
@@ -969,7 +969,7 @@ class Model(object):
             return Record(self, domain, context=context)
         if isinstance(domain, basestring):  # lookup the xml_id
             (module, name) = domain.split('.')
-            data = self.client.model('ir.model.data').read(
+            data = self._imd_read(
                 [('module', '=', module), ('name', '=', name)], 'model res_id')
             assert not data or data[0]['model'] == self._name
             ids = [res['res_id'] for res in data]
@@ -1034,10 +1034,29 @@ class Model(object):
                     new_values[key] = [(6, 0, value)]
         return new_values
 
+    def _get_external_ids(self, ids=None):
+        """Retrieve the External IDs of the records.
+
+        Return a dictionary with keys being the fully qualified
+        External IDs, and values the ``Record`` entries.
+        """
+        search_domain = [('model', '=', self._name)]
+        if ids is not None:
+            search_domain.append(('res_id', 'in', ids))
+        existing = self._imd_read(search_domain, ['module', 'name', 'res_id'])
+        res = {}
+        for rec in existing:
+            res['%(module)s.%(name)s' % rec] = self.get(rec['res_id'])
+        return res
+
     def __getattr__(self, attr):
         if attr in ('_keys', '_fields'):
             self.__dict__[attr] = rv = getattr(self, '_get' + attr)()
             return rv
+        if attr.startswith('_imd_'):
+            imd = self.client.model('ir.model.data')
+            self.__dict__[attr] = imd_method = getattr(imd, attr[5:])
+            return imd_method
         if attr.startswith('_'):
             raise AttributeError("'Model' object has no attribute %r" % attr)
 
@@ -1086,7 +1105,8 @@ class RecordList(object):
 
     def __dir__(self):
         return ['__getitem__', 'read', 'write', 'unlink', '_context',
-                '_idnames', '_model', '_model_name'] + self._model._keys
+                '_idnames', '_model', '_model_name',
+                '_external_id'] + self._model._keys
 
     def __len__(self):
         return len(self.id)
@@ -1144,6 +1164,18 @@ class RecordList(object):
             context = self._context
         rv = self._execute('unlink', self.id, context=context)
         return rv
+
+    @property
+    def _external_id(self):
+        """Retrieve the External IDs of the :class:`RecordList`.
+
+        Return the fully qualified External IDs with default value
+        False if there's none.  If multiple IDs exist for a record,
+        only one of them is returned (randomly).
+        """
+        xml_ids = dict([(r.id, xml_id) for (xml_id, r) in
+                        self._model._get_external_ids(self.id).items()])
+        return [xml_ids.get(res_id, False) for res_id in self.id]
 
     def __getitem__(self, key):
         idname = self._idnames[key]
@@ -1302,9 +1334,31 @@ class Record(object):
         self.refresh()
         return rv
 
+    @property
+    def _external_id(self):
+        """Retrieve the External ID of the :class:`Record`.
+
+        Return the fully qualified External ID of the :class:`Record`,
+        with default value False if there's none.  If multiple IDs
+        exist, only one of them is returned (randomly).
+        """
+        xml_ids = self._model._get_external_ids([self.id])
+        return list(xml_ids)[0] if xml_ids else False
+
+    def _set_external_id(self, xml_id):
+        """Set the External ID of this record."""
+        (mod, name) = xml_id.split('.')
+        obj = self._model_name
+        domain = ['|', '&', ('model', '=', obj), ('res_id', '=', self.id),
+                  '&', ('module', '=', mod), ('name', '=', name)]
+        if self._model._imd_search(domain):
+            raise ValueError('ID %r collides with another entry' % xml_id)
+        vals = {'model': obj, 'res_id': self.id, 'module': mod, 'name': name}
+        self._model._imd_create(vals)
+
     def __dir__(self):
         return ['read', 'write', 'copy', 'unlink', '_send', 'refresh',
-                '_context', '_model', '_model_name', '_name',
+                '_context', '_model', '_model_name', '_name', '_external_id',
                 '_keys', '_fields'] + self._model._keys
 
     def __getattr__(self, attr):
@@ -1331,6 +1385,8 @@ class Record(object):
         return mobj
 
     def __setattr__(self, attr, value):
+        if attr == '_external_id':
+            return self._set_external_id(value)
         if attr not in self._model._keys:
             raise AttributeError("'Record' object has no attribute %r" % attr)
         if attr == 'id':

@@ -17,6 +17,10 @@ Changelog
 
 * Implement ``==`` comparison for ``Record`` instances.
 
+* New computed attributes ``Record._external_id`` and
+  ``RecordList._external_id``, and new method
+  ``Model._get_external_ids(ids=None)``.
+
 * Better parsing of dates in search terms.
 
 * Reject invalid ``==`` operator in search terms.

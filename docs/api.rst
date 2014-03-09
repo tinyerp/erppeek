@@ -249,6 +249,8 @@ the same :class:`Model`.
 
    .. automethod:: create
 
+   .. automethod:: _get_external_ids
+
 ..
    search count read ...
 
@@ -274,8 +276,16 @@ the same :class:`Model`.
 
       Wrapper for the :meth:`Record.unlink` method.
 
+   .. attribute:: _external_id
+
+      Retrieve the External IDs of the :class:`RecordList`.
+
+      Return the list of fully qualified External IDs of
+      the :class:`RecordList`, with default value False if there's none.
+      If multiple IDs exist for a record, only one of them is returned.
+
 .. autoclass:: Record(model, id)
-   :members: read, perm_read, write, copy, unlink, _send, refresh
+   :members: read, perm_read, write, copy, unlink, _send, _external_id, refresh
    :undoc-members:
 
 
