@@ -763,6 +763,7 @@ class TestRecord(TestCase):
             OBJ('ir.model.data', 'search', [('model', '=', 'foo.bar'), ('res_id', 'in', [17, 13, 42])]),
             OBJ('ir.model.data', 'read', sentinel.FOO, ['module', 'name', 'res_id']),
         )
+        self.assertOutput('')
 
     def test_set_external_id(self):
         records = self.model('foo.bar').browse([13, 17])
