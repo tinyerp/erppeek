@@ -266,7 +266,7 @@ def searchargs(params, kwargs=None, context=None):
         warnings.warn('Domain should be a list: %s' % domain)
     elif not isinstance(domain, list):
         return params
-    for idx, term in enumerate(domain):
+    for (idx, term) in enumerate(domain):
         if isinstance(term, basestring) and term not in DOMAIN_OPERATORS:
             m = _term_re.match(term.strip())
             if not m:
@@ -1002,7 +1002,7 @@ class Model(object):
         the value is wrapped in a Record or a RecordList.
         Return a dictionary with the same keys as the `values` argument.
         """
-        for key, value in values.items():
+        for (key, value) in values.items():
             if key == 'id' or hasattr(value, 'id'):
                 continue
             field = self._fields[key]
@@ -1023,7 +1023,7 @@ class Model(object):
     def _unbrowse_values(self, values):
         """Unwrap the id of Record and RecordList."""
         new_values = values.copy()
-        for key, value in values.items():
+        for (key, value) in values.items():
             field_type = self._fields[key]['type']
             if hasattr(value, 'id'):
                 if field_type == 'reference':
