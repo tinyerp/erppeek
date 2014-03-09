@@ -8,6 +8,7 @@ Author: Florent Xicluna
 from __future__ import with_statement
 
 import _ast
+import collections
 import functools
 import optparse
 import os
@@ -778,9 +779,7 @@ class Client(object):
         try:
             return self._models[name]
         except KeyError:
-            m = object.__new__(Model)
-        m._init(self, name)
-        self._models[name] = m
+            self._models[name] = m = Model._new(self, name)
         return m
 
     def models(self, name=''):
@@ -836,12 +835,9 @@ class Client(object):
             domain.append(('state', op, ['uninstalled', 'uninstallable']))
         mods = self.read('ir.module.module', domain, 'name state')
         if mods:
-            res = {}
+            res = collections.defaultdict(list)
             for mod in mods:
-                if mod['state'] in res:
-                    res[mod['state']].append(mod['name'])
-                else:
-                    res[mod['state']] = [mod['name']]
+                res[mod['state']].append(mod['name'])
             return res
 
     def keys(self, obj):
@@ -888,13 +884,15 @@ class Model(object):
     def __new__(cls, client, name):
         return client.model(name)
 
-    def _init(self, client, name):
-        self.client = client
-        self._name = name
-        self._execute = functools.partial(client.execute, name)
-        self.search = functools.partial(client.search, name)
-        self.count = functools.partial(client.count, name)
-        self.read = functools.partial(client.read, name)
+    @classmethod
+    def _new(cls, client, name):
+        m = object.__new__(cls)
+        (m.client, m._name) = (client, name)
+        m._execute = functools.partial(client.execute, name)
+        m.search = functools.partial(client.search, name)
+        m.count = functools.partial(client.count, name)
+        m.read = functools.partial(client.read, name)
+        return m
 
     def __repr__(self):
         return "<Model '%s'>" % (self._name,)
