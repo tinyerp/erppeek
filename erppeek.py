@@ -167,7 +167,7 @@ def format_exception(exc_type, exc, tb, limit=None, chain=True,
     if ((issubclass(exc_type, Fault) and
          isinstance(exc.faultCode, basestring))):
         # Format readable 'Fault' errors
-        etype, _, msg = exc.faultCode.partition('--')
+        (etype, _, msg) = exc.faultCode.partition('--')
         server_tb = None
         if etype.strip() != 'warning':
             msg = exc.faultCode
@@ -774,11 +774,10 @@ class Client(object):
             return res[fields[0]]
         return res
 
-    def _model(self, name):
+    def _models_get(self, name):
         try:
             return self._models[name]
         except KeyError:
-            # m = Model(self, name)
             m = object.__new__(Model)
         m._init(self, name)
         self._models[name] = m
@@ -800,7 +799,7 @@ class Client(object):
         domain = [('model', 'like', name)]
         models = self.execute('ir.model', 'read', domain, ('model',))
         names = [m['model'] for m in models]
-        return dict([(mixedcase(name), self._model(name)) for name in names])
+        return dict([(mixedcase(mod), self._models_get(mod)) for mod in names])
 
     def model(self, name, check=True):
         """Return a :class:`Model` instance.
@@ -809,7 +808,7 @@ class Client(object):
         argument `check` is :const:`False`, no validity check is done.
         """
         try:
-            return self._models[name] if check else self._model(name)
+            return self._models[name] if check else self._models_get(name)
         except KeyError:
             models = self.models(name)
         if name in self._models:
@@ -971,7 +970,7 @@ class Model(object):
         if isinstance(domain, int_types):   # a single id
             return Record(self, domain, context=context)
         if isinstance(domain, basestring):  # lookup the xml_id
-            module, name = domain.split('.')
+            (module, name) = domain.split('.')
             data = self.client.model('ir.model.data').read(
                 [('module', '=', module), ('name', '=', name)], 'model res_id')
             assert not data or data[0]['model'] == self._name
@@ -1015,7 +1014,7 @@ class Model(object):
                 rel_model = self.client.model(field['relation'], False)
                 values[key] = RecordList(rel_model, value, context=context)
             elif value and field_type == 'reference':
-                res_model, res_id = value.split(',')
+                (res_model, res_id) = value.split(',')
                 rel_model = self.client.model(res_model, False)
                 values[key] = Record(rel_model, int(res_id))
         return values
@@ -1122,7 +1121,7 @@ class RecordList(object):
                     records = []
                     for value in values:
                         if value:
-                            res_model, res_id = value.split(',')
+                            (res_model, res_id) = value.split(',')
                             rel_model = client.model(res_model, False)
                             value = Record(rel_model, int(res_id))
                         records.append(value)
@@ -1396,7 +1395,7 @@ def _interact(use_pprint=True, usage=USAGE):
             except:
                 # Print readable 'Fault' errors
                 # Work around http://bugs.python.org/issue12643
-                exc_type, exc, tb = sys.exc_info()
+                (exc_type, exc, tb) = sys.exc_info()
                 msg = ''.join(format_exception(exc_type, exc, tb, chain=False))
                 print(msg.strip())
 
