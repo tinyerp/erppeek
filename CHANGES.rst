@@ -31,6 +31,9 @@ Changelog
 * Workaround an issue with some models: always pass a list of ids
   to ``read``.
 
+* Test the behaviour when ``read`` is called with a ``False`` id: it happens
+  when browsing a ``RecordList`` for example.
+
 
 1.4.5 (2013-03-20)
 ~~~~~~~~~~~~~~~~~~

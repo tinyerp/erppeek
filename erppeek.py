@@ -590,14 +590,14 @@ class Client(object):
                 ordered = kwargs.pop('order', False) and params[0]
                 ids = set(params[0])
                 ids.discard(False)
-                if not ids:
+                if not ids and ordered:
                     return [False] * len(ordered)
                 ids = sorted(ids)
             else:
                 single_id = True
-                ids = [params[0]]
+                ids = [params[0]] if params[0] else False
             if not ids:
-                return []
+                return ids
             if len(params) > 1:
                 params = (ids,) + params[1:]
             elif method == 'read':

@@ -8,7 +8,7 @@ import erppeek
 from ._common import XmlRpcTestCase, OBJ
 
 AUTH = sentinel.AUTH
-ID1, ID2 = sentinel.ID1, sentinel.ID2
+ID1, ID2 = 4001, 4002
 
 
 class IdentDict(object):
@@ -19,7 +19,7 @@ class IdentDict(object):
         return 'IdentDict(%s)' % (self._id,)
 
     def __getitem__(self, key):
-        return (key == 'id') and self._id or ('v_' + key)
+        return (key == 'id') and self._id or ('v_%s_%s' % (key, self._id))
 
     def __eq__(self, other):
         return self._id == other._id
@@ -269,7 +269,7 @@ class TestClientApi(XmlRpcTestCase):
         if args[4] == 'search':
             return [ID2, ID1]
         if args[4] == 'read':
-            return [DIC1, DIC2]
+            return [IdentDict(res_id) for res_id in args[5][::-1]]
         return sentinel.OTHER
 
     def test_create_database(self):
@@ -387,12 +387,9 @@ class TestClientApi(XmlRpcTestCase):
         self.assertCalls()
         self.assertOutput('')
 
-    def test_read(self):
+    def test_read_simple(self):
         read = self.client.read
         self.service.object.execute.side_effect = self.obj_exec
-
-        def call_read(fields=None):
-            return OBJ('foo.bar', 'read', [ID2, ID1], fields)
 
         read('foo.bar', 42)
         read('foo.bar', [42])
@@ -405,6 +402,10 @@ class TestClientApi(XmlRpcTestCase):
             OBJ('foo.bar', 'read', [42], ['first_name']),
         )
         self.assertOutput('')
+
+    def test_read_complex(self):
+        read = self.client.read
+        self.service.object.execute.side_effect = self.obj_exec
 
         searchterm = 'name like Morice'
         self.assertEqual(read('foo.bar', [searchterm]), [DIC1, DIC2])
@@ -423,8 +424,11 @@ class TestClientApi(XmlRpcTestCase):
 
         rv = read('foo.bar', ['name like Morice'],
                   'aaa %(birthdate)s bbb %(city)s', offset=80, limit=99)
-        self.assertEqual(rv, ['aaa v_birthdate bbb v_city'] * 2)
+        self.assertEqual(rv, ['aaa v_birthdate_4001 bbb v_city_4001',
+                              'aaa v_birthdate_4002 bbb v_city_4002'])
 
+        def call_read(fields=None):
+            return OBJ('foo.bar', 'read', [ID2, ID1], fields)
         domain = [('name', 'like', 'Morice')]
         domain2 = [('name', '=', 'mushroom'), ('state', '!=', 'draft')]
         self.assertCalls(
@@ -448,15 +452,62 @@ class TestClientApi(XmlRpcTestCase):
         )
         self.assertOutput('')
 
+    def test_read_false(self):
+        read = self.client.read
+        self.service.object.execute.side_effect = self.obj_exec
+
+        self.assertEqual(read('foo.bar', False), False)
+
+        self.assertEqual(read('foo.bar', [False]), [])
+        self.assertEqual(read('foo.bar', [False, False]), [])
+        self.assertEqual(read('foo.bar', [False], 'first_name'), [])
+        self.assertEqual(read('foo.bar', [False], order=True),
+                         [False])
+        self.assertEqual(read('foo.bar', [False, False], order=True),
+                         [False, False])
+        self.assertEqual(read('foo.bar', [False], 'first_name', order=True),
+                         [False])
+
+        self.assertCalls()
+
+        self.assertEqual(read('foo.bar', [False, 42]), [IdentDict(42)])
+        self.assertEqual(read('foo.bar', [False, 13, 17, False]),
+                         [IdentDict(17), IdentDict(13)])
+        self.assertEqual(read('foo.bar', [13, False, 17], 'first_name'),
+                         ['v_first_name_17', 'v_first_name_13'])
+        self.assertEqual(read('foo.bar', [False, 42], order=True),
+                         [False, IdentDict(42)])
+        self.assertEqual(read('foo.bar', [False, 13, 17, False], order=True),
+                         [False, IdentDict(13), IdentDict(17), False])
+        self.assertEqual(read('foo.bar', [13, False, 17], 'city', order=True),
+                         ['v_city_13', False, 'v_city_17'])
+
+        self.assertCalls(
+            OBJ('foo.bar', 'read', [42], None),
+            OBJ('foo.bar', 'read', [13, 17], None),
+            OBJ('foo.bar', 'read', [13, 17], ['first_name']),
+            OBJ('foo.bar', 'read', [42], None),
+            OBJ('foo.bar', 'read', [13, 17], None),
+            OBJ('foo.bar', 'read', [13, 17], ['city']),
+        )
+        self.assertOutput('')
+
+    def test_read_invalid(self):
+        read = self.client.read
+        domain = [('name', 'like', 'Morice')]
+
         warn = mock.patch('warnings.warn').start()
         read('foo.bar', 'name like Morice')
-        self.assertCalls(OBJ('foo.bar', 'search', domain), call_read())
         warn.assert_called_once_with(
             "Domain should be a list: ['name like Morice']")
 
         read('foo.bar', ['name like Morice'], missingkey=42)
-        self.assertCalls(OBJ('foo.bar', 'search', domain, 0, None, None, None),
-                         call_read())
+
+        self.assertCalls(
+            OBJ('foo.bar', 'search', domain),
+            OBJ('foo.bar', 'read', ANY, None),
+            OBJ('foo.bar', 'search', domain, 0, None, None, None),
+            OBJ('foo.bar', 'read', ANY, None))
         self.assertOutput('Ignoring: missingkey = 42\n')
 
         self.assertRaises(TypeError, read)
