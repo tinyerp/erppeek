@@ -297,7 +297,7 @@ class Service(object):
             self._rpcpath = rpcpath = server + '/xmlrpc/'
             proxy = ServerProxy(rpcpath + endpoint, allow_none=True)
             self._dispatch = proxy._ServerProxy__request
-            if hasattr(proxy._ServerProxy__transport, 'close'):
+            if hasattr(proxy._ServerProxy__transport, 'close'):   # >= 2.7
                 self.close = proxy._ServerProxy__transport.close
         else:
             self._rpcpath = ''
@@ -516,6 +516,15 @@ class Client(object):
         for name in ['__name__', '__doc__'] + __all__:
             global_vars[name] = globals()[name]
 
+        def get_pool(db_name=None):
+            """Return a model registry.
+
+            Use get_pool(db_name).db.cursor() to grab a cursor.
+            """
+            client = global_vars['client']
+            registry = client._server.modules.registry
+            return registry.RegistryManager.get(db_name or client._db)
+
         def connect(self, env=None):
             """Connect to another environment and replace the globals()."""
             if env:
@@ -528,13 +537,6 @@ class Client(object):
                 env = self._environment or self._db
             global_vars['client'] = client
             if hasattr(client._server, 'modules'):
-                # Helper; use get_pool(db_name).db.cursor() to grab a cursor
-                def get_pool(db_name=None):
-                    """Return a model registry."""
-                    if not db_name:
-                        db_name = client._db
-                    return registry.RegistryManager.get(db_name)
-                registry = client._server.modules.registry
                 global_vars['get_pool'] = get_pool
             # Tweak prompt
             sys.ps1 = '%s >>> ' % (env,)

@@ -12,6 +12,9 @@ Changelog
 
 * Close socket to avoid ``ResourceWarning`` on Python 3.
 
+* The ``get_pool`` helper is only available in interactive mode and if
+  the client is connected locally using the ``openerp`` package.
+
 
 1.5 (2014-03-10)
 ~~~~~~~~~~~~~~~~
