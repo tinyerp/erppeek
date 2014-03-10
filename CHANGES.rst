@@ -2,6 +2,12 @@ Changelog
 ---------
 
 
+1.x (unreleased)
+~~~~~~~~~~~~~~~~
+
+* Avoid cluttering the globals in interactive mode.
+
+
 1.5 (2014-03-10)
 ~~~~~~~~~~~~~~~~
 

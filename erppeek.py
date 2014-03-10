@@ -31,7 +31,7 @@ except ImportError:     # Python 2
     int_types = int, long
 
 
-__version__ = '1.5'
+__version__ = '1.5.1.dev0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_openerp_services']
 
@@ -217,7 +217,6 @@ def start_openerp_services(options=None):
     Return the openerp module.
     """
     import openerp
-    global get_pool
     if not openerp.osv.osv.service:
         os.environ['TZ'] = 'UTC'
         options = options.split() if options else []
@@ -228,14 +227,6 @@ def start_openerp_services(options=None):
             openerp.service.web_services.start_web_services()
         else:
             openerp.service.start_internal()
-
-    # Helper; use get_pool(db_name).db.cursor() to grab a cursor
-    def get_pool(db_name=None):
-        """Return a model registry."""
-        if not db_name:
-            db_name = client._db
-        pool = openerp.modules.registry.RegistryManager.get(db_name)
-        return pool
     return openerp
 
 
@@ -405,7 +396,7 @@ class Client(object):
         ``erppeek.ini`` file and return a connected :class:`Client`.
         See :func:`read_config` for details of the configuration file format.
         """
-        server, db, user, password = read_config(environment)
+        (server, db, user, password) = read_config(environment)
         if server[0] == 'local':
             server = start_openerp_services(server[1])
         client = cls(server, db, user, password, verbose=verbose)
@@ -512,9 +503,12 @@ class Client(object):
         return (uid, password)
 
     @classmethod
-    def _set_interactive(cls):
+    def _set_interactive(cls, global_vars={}):
         # Don't call multiple times
         del Client._set_interactive
+
+        for name in ['__name__', '__doc__'] + __all__:
+            global_vars[name] = globals()[name]
 
         def connect(self, env=None):
             """Connect to another environment and replace the globals()."""
@@ -523,19 +517,27 @@ class Client(object):
             else:
                 client = self
                 env = self._environment or self._db
-            g = globals()
-            g['client'] = client
+            global_vars['client'] = client
+            if hasattr(client._server, 'modules'):
+                # Helper; use get_pool(db_name).db.cursor() to grab a cursor
+                def get_pool(db_name=None):
+                    """Return a model registry."""
+                    if not db_name:
+                        db_name = client._db
+                    return registry.RegistryManager.get(db_name)
+                registry = client._server.modules.registry
+                global_vars['get_pool'] = get_pool
             # Tweak prompt
             sys.ps1 = '%s >>> ' % (env,)
             sys.ps2 = '%s ... ' % (env,)
             # Logged in?
             if client.user:
-                g['model'] = client.model
-                g['models'] = client.models
-                g['do'] = client.execute
+                global_vars['model'] = client.model
+                global_vars['models'] = client.models
+                global_vars['do'] = client.execute
                 print('Logged in as %r' % (client.user,))
             else:
-                g['model'] = g['models'] = g['do'] = None
+                global_vars.update({'model': None, 'models': None, 'do': None})
 
         def login(self, user, password=None, database=None):
             """Switch `user` and (optionally) `database`."""
@@ -546,6 +548,8 @@ class Client(object):
         # Set hooks to recreate the globals()
         cls.login = login
         cls.connect = connect
+
+        return global_vars
 
     def create_database(self, passwd, database, demo=False, lang='en_US',
                         user_password='admin'):
@@ -1398,7 +1402,7 @@ class Record(object):
                 self.id == other.id and self._model_name == other._model_name)
 
 
-def _interact(use_pprint=True, usage=USAGE):
+def _interact(global_vars, use_pprint=True, usage=USAGE):
     import code
     try:
         import builtins
@@ -1407,8 +1411,6 @@ def _interact(use_pprint=True, usage=USAGE):
         def _exec(code, g):
             exec('exec code in g')
         import __builtin__ as builtins
-    # Do not run twice
-    del globals()['_interact']
 
     if use_pprint:
         def displayhook(value, _printer=pprint, _builtins=builtins):
@@ -1443,7 +1445,7 @@ def _interact(use_pprint=True, usage=USAGE):
     class Console(code.InteractiveConsole):
         def runcode(self, code):
             try:
-                _exec(code, globals())
+                _exec(code, global_vars)
             except SystemExit:
                 raise
             except:
@@ -1504,7 +1506,7 @@ def main():
         return
 
     if (args.interact or not args.model):
-        Client._set_interactive()
+        global_vars = Client._set_interactive()
         print(USAGE)
 
     if args.env:
@@ -1521,7 +1523,7 @@ def main():
         # Set the globals()
         client.connect()
         # Enter interactive mode
-        _interact()
+        _interact(global_vars)
 
 if __name__ == '__main__':
     main()
