@@ -7,6 +7,8 @@ Changelog
 
 * Avoid cluttering the globals in interactive mode.
 
+* Close socket to avoid ``ResourceWarning`` on Python 3.
+
 
 1.5 (2014-03-10)
 ~~~~~~~~~~~~~~~~
@@ -16,7 +18,8 @@ Changelog
 
 * In interactive mode, only inject four global names: ``client``, ``models``,
   ``model`` and ``do``.  Other methods are available on ``Model``
-  and ``Client`` instances (``read search count keys fields access ...``).
+  and ``Client`` instances (``read`` ``search`` ``count`` ``keys`` ``fields``
+  ``access`` ...).
 
 * Always clear the ``Record`` cache when an arbitrary method is called on
   this ``Record``.

@@ -297,6 +297,7 @@ class Service(object):
             self._rpcpath = rpcpath = server + '/xmlrpc/'
             proxy = ServerProxy(rpcpath + endpoint, allow_none=True)
             self._dispatch = proxy._ServerProxy__request
+            self.close = proxy._ServerProxy__close
         else:
             self._rpcpath = ''
             proxy = server.netsvc.ExportService.getService(endpoint)
@@ -341,6 +342,10 @@ class Service(object):
             wrapper = lambda s, *args: s._dispatch(name, args)
         wrapper.__name__ = name
         return wrapper.__get__(self, type(self))
+
+    def __del__(self):
+        if hasattr(self, 'close'):
+            self.close()
 
 
 class Client(object):
