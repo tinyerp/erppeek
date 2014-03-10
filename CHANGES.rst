@@ -2,7 +2,7 @@ Changelog
 ---------
 
 
-1.x (unreleased)
+1.5 (2014-03-10)
 ~~~~~~~~~~~~~~~~
 
 * Advertize the ``Model`` and ``Record`` paradigm in the ``usage`` printed

@@ -31,7 +31,7 @@ except ImportError:     # Python 2
     int_types = int, long
 
 
-__version__ = '1.4.6.dev0'
+__version__ = '1.5'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_openerp_services']
 
@@ -168,7 +168,7 @@ def format_exception(exc_type, exc, tb, limit=None, chain=True,
     if ((issubclass(exc_type, Fault) and
          isinstance(exc.faultCode, basestring))):
         # Format readable 'Fault' errors
-        (etype, _, msg) = exc.faultCode.partition('--')
+        (etype, __, msg) = exc.faultCode.partition('--')
         server_tb = None
         if etype.strip() != 'warning':
             msg = exc.faultCode
