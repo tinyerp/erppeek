@@ -49,7 +49,7 @@ Although it is quite limited::
     and pass search terms or ids as positional parameters after the options.
 
     Options:
-      --version             show program\'s version number and exit
+      --version             show program's version number and exit
       -h, --help            show this help message and exit
       -l, --list            list sections of the configuration
       --env=ENV             read connection settings from the given section
