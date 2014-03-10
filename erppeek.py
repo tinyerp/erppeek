@@ -297,7 +297,8 @@ class Service(object):
             self._rpcpath = rpcpath = server + '/xmlrpc/'
             proxy = ServerProxy(rpcpath + endpoint, allow_none=True)
             self._dispatch = proxy._ServerProxy__request
-            self.close = proxy._ServerProxy__close
+            if hasattr(proxy._ServerProxy__transport, 'close'):
+                self.close = proxy._ServerProxy__transport.close
         else:
             self._rpcpath = ''
             proxy = server.netsvc.ExportService.getService(endpoint)
