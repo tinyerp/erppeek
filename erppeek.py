@@ -520,7 +520,8 @@ class Client(object):
             """Connect to another environment and replace the globals()."""
             if env:
                 # Safety measure: turn down the previous connection
-                client._execute = client._exec_workflow = None
+                previous = global_vars['client']
+                previous._execute = previous._exec_workflow = None
                 client = self.from_config(env, verbose=self.db._verbose)
             else:
                 client = self
