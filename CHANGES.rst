@@ -5,6 +5,9 @@ Changelog
 1.x (unreleased)
 ~~~~~~~~~~~~~~~~
 
+* When switching to a different environment, with ``Client.connect``,
+  invalidate the previous connection to avoid mistakes (interactive mode).
+
 * Avoid cluttering the globals in interactive mode.
 
 * Close socket to avoid ``ResourceWarning`` on Python 3.
