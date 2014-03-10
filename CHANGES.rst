@@ -15,6 +15,9 @@ Changelog
 * The ``get_pool`` helper is only available in interactive mode and if
   the client is connected locally using the ``openerp`` package.
 
+* Clear the last exception before entering interactive mode, only needed
+  on Python 2.
+
 
 1.5 (2014-03-10)
 ~~~~~~~~~~~~~~~~

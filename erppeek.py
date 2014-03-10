@@ -1467,6 +1467,7 @@ def _interact(global_vars, use_pprint=True, usage=USAGE):
                 print(msg.strip())
 
     warnings.simplefilter('always', UserWarning)
+    sys.exc_clear() if hasattr(sys, 'exc_clear') else None  # Python 2.x
     # Key UP to avoid an empty line
     Console().interact('\033[A')
 
