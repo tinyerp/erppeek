@@ -18,6 +18,8 @@ Changelog
 * Clear the last exception before entering interactive mode, only needed
   on Python 2.
 
+* Fix the ``searchargs`` domain parser for compatibility with Python 3.4.
+
 
 1.5 (2014-03-10)
 ~~~~~~~~~~~~~~~~

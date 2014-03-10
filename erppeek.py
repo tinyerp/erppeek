@@ -111,8 +111,10 @@ def _convert(node, _consts={'None': None, 'True': True, 'False': False}):
     if isinstance(node, _ast.Dict):
         return dict([(_convert(k), _convert(v))
                      for (k, v) in zip(node.keys, node.values)])
+    if hasattr(node, 'value') and str(node.value) in _consts:
+        return node.value         # Python 3.4+
     if isinstance(node, _ast.Name) and node.id in _consts:
-        return _consts[node.id]
+        return _consts[node.id]   # Python <= 3.3
     raise ValueError('malformed or disallowed expression')
 
 
