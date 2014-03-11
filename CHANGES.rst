@@ -2,8 +2,8 @@ Changelog
 ---------
 
 
-1.x (unreleased)
-~~~~~~~~~~~~~~~~
+1.5.1 (2014-03-11)
+~~~~~~~~~~~~~~~~~~
 
 * When switching to a different environment, with ``Client.connect``,
   invalidate the previous connection to avoid mistakes (interactive mode).
