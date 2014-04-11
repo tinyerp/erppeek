@@ -2,6 +2,16 @@ Changelog
 ---------
 
 
+1.x (unreleased)
+~~~~~~~~~~~~~~~~
+
+* Set the ``PGAPPNAME`` used for the PostgreSQL connection, in local mode.
+
+* Close PostgreSQL connections on exit, in local mode.
+
+* Implement the context manager protocol.
+
+
 1.5.1 (2014-03-11)
 ~~~~~~~~~~~~~~~~~~
 

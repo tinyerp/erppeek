@@ -8,6 +8,7 @@ Author: Florent Xicluna
 from __future__ import with_statement
 
 import _ast
+import atexit
 import collections
 import functools
 import optparse
@@ -31,7 +32,7 @@ except ImportError:     # Python 2
     int_types = int, long
 
 
-__version__ = '1.5.1'
+__version__ = '1.5.2.dev0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_openerp_services']
 
@@ -220,6 +221,7 @@ def start_openerp_services(options=None):
     """
     import openerp
     if not openerp.osv.osv.service:
+        os.environ['PGAPPNAME'] = os.path.basename(__file__)
         os.environ['TZ'] = 'UTC'
         options = options.split() if options else []
         openerp.tools.config.parse_config(options)
@@ -229,6 +231,12 @@ def start_openerp_services(options=None):
             openerp.service.web_services.start_web_services()
         else:
             openerp.service.start_internal()
+
+    def close_all():
+        for db in openerp.modules.registry.RegistryManager.registries:
+            openerp.sql_db.close_db(db)
+    atexit.register(close_all)
+
     return openerp
 
 
@@ -531,8 +539,7 @@ class Client(object):
             """Connect to another environment and replace the globals()."""
             if env:
                 # Safety measure: turn down the previous connection
-                previous = global_vars['client']
-                previous._execute = previous._exec_workflow = None
+                global_vars['client'].close()
                 client = self.from_config(env, verbose=self.db._verbose)
             else:
                 client = self
@@ -893,6 +900,15 @@ class Client(object):
         wrapper.__name__ = method
         wrapper.__doc__ %= method
         return wrapper.__get__(self, type(self))
+
+    def close(self):
+        self._execute = self._exec_workflow = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb):
+        self.close()
 
 
 class Model(object):
@@ -1449,7 +1465,6 @@ def _interact(global_vars, use_pprint=True, usage=USAGE):
     except Exception:
         pass
     else:
-        import atexit
         if rl.get_history_length() < 0:
             rl.set_history_length(int(os.environ.get('HISTSIZE', 500)))
         # better append instead of replace?
