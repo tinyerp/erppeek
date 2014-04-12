@@ -380,10 +380,7 @@ class Client(object):
             server = server.rstrip('/')
         self._server = server
         self._db = ()
-        self._environment = None
-        self.user = None
-        self._execute = None
-        self._models = {}
+        self.reset()
         major_version = None
 
         def get_proxy(name):
@@ -449,8 +446,8 @@ class Client(object):
             print('Error: Invalid username or password')
             return
         if self._db != database:
+            self.reset()
             self._db = database
-            self._environment = None
         self.user = user
 
         # Authenticated endpoints
@@ -541,7 +538,7 @@ class Client(object):
             """Connect to another environment and replace the globals()."""
             if env:
                 # Safety measure: turn down the previous connection
-                global_vars['client'].close()
+                global_vars['client'].reset()
                 client = self.from_config(env, verbose=self.db._verbose)
             else:
                 client = self
@@ -905,14 +902,16 @@ class Client(object):
         wrapper.__doc__ %= method
         return wrapper.__get__(self, type(self))
 
-    def close(self):
+    def reset(self):
         self._execute = self._exec_workflow = None
+        self.user = self._environment = None
+        self._models = {}
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
-        self.close()
+        self.reset()
 
 
 class Model(object):
