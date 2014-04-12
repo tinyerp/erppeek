@@ -379,8 +379,6 @@ class Client(object):
         if isinstance(server, basestring) and server[-1:] == '/':
             server = server.rstrip('/')
         self._server = server
-        self._db = ()
-        self.reset()
         major_version = None
 
         def get_proxy(name):
@@ -398,6 +396,7 @@ class Client(object):
         self._object = get_proxy('object')
         self._report = get_proxy('report')
         self._wizard = get_proxy('wizard') if major_version < '7.0' else None
+        self.reset()
         if db:
             # Try to login
             self._login(user, password=password, database=db)
@@ -417,6 +416,11 @@ class Client(object):
         client = cls(server, db, user, password, verbose=verbose)
         client._environment = environment
         return client
+
+    def reset(self):
+        self.user = self._environment = None
+        self._db, self._models = (), {}
+        self._execute = self._exec_workflow = None
 
     def __repr__(self):
         return "<Client '%s#%s'>" % (self._server or '', self._db)
@@ -901,11 +905,6 @@ class Client(object):
         wrapper.__name__ = method
         wrapper.__doc__ %= method
         return wrapper.__get__(self, type(self))
-
-    def reset(self):
-        self._execute = self._exec_workflow = None
-        self.user = self._environment = None
-        self._models = {}
 
     def __enter__(self):
         return self
