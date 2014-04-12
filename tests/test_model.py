@@ -685,6 +685,10 @@ class TestRecord(TestCase):
         self.assertEqual(records.id, [42])
         self.assertNotEqual(rec1, records)
 
+        # if client is different, records do not compare equal
+        rec2.__dict__['_model'] = sentinel.OTHER_MODEL
+        self.assertNotEqual(rec1, rec2)
+
         self.assertCalls()
         self.assertOutput('')
 

@@ -7,6 +7,8 @@ Changelog
 
 * Return an appropriate error message when the client is not connected.
 
+* Two similar ``Record`` from different connections do not compare equal.
+
 * Set the ``PGAPPNAME`` used for the PostgreSQL connection, in local mode.
 
 * Close PostgreSQL connections on exit, in local mode.

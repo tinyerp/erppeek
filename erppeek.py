@@ -1430,7 +1430,7 @@ class Record(object):
 
     def __eq__(self, other):
         return (isinstance(other, Record) and
-                self.id == other.id and self._model_name == other._model_name)
+                self.id == other.id and self._model is other._model)
 
 
 def _interact(global_vars, use_pprint=True, usage=USAGE):
