@@ -122,9 +122,7 @@ This is a sample session::
 
     >>> model('res.users')
     <Model 'res.users'>
-    >>> client.ResUsers is model('res.users')
-    True
-    >>> client.ResUsers.count()
+    >>> model('res.users').count()
     4
     >>> model('ir.cron').read(['active = False'], 'active function')
     [{'active': False, 'function': 'run_mail_scheduler', 'id': 1},
