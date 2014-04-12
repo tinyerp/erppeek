@@ -233,10 +233,10 @@ def start_openerp_services(options=None, appname=None):
         else:
             openerp.service.start_internal()
 
-    def close_all():
-        for db in openerp.modules.registry.RegistryManager.registries:
-            openerp.sql_db.close_db(db)
-    atexit.register(close_all)
+        def close_all():
+            for db in openerp.modules.registry.RegistryManager.registries:
+                openerp.sql_db.close_db(db)
+        atexit.register(close_all)
 
     return openerp
 
