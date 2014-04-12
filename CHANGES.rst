@@ -2,8 +2,8 @@ Changelog
 ---------
 
 
-1.x (unreleased)
-~~~~~~~~~~~~~~~~
+1.5.2 (2014-04-12)
+~~~~~~~~~~~~~~~~~~
 
 * Return an appropriate error message when the client is not connected.
 

@@ -32,7 +32,7 @@ except ImportError:     # Python 2
     int_types = int, long
 
 
-__version__ = '1.5.2.dev0'
+__version__ = '1.5.2'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_openerp_services']
 
