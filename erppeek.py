@@ -600,6 +600,7 @@ class Client(object):
         Method `params` are allowed.  If needed, keyword
         arguments are collected in `kwargs`.
         """
+        assert self.user, 'Not connected'
         assert isinstance(obj, basestring)
         assert isinstance(method, basestring) and method != 'browse'
         context = kwargs.pop('context', None)
@@ -660,6 +661,7 @@ class Client(object):
         Argument `obj` is the name of the model.  The `signal`
         is sent to the object identified by its integer ``id`` `obj_id`.
         """
+        assert self.user, 'Not connected'
         assert isinstance(obj, basestring) and isinstance(signal, basestring)
         return self._exec_workflow(obj, signal, obj_id)
 
