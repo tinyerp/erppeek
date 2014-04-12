@@ -211,7 +211,7 @@ def read_config(section=None):
     return (server, env['database'], env['username'], env.get('password'))
 
 
-def start_openerp_services(options=None):
+def start_openerp_services(options=None, appname=None):
     """Initialize the OpenERP services.
 
     Import the ``openerp`` package and load the OpenERP services.
@@ -221,8 +221,9 @@ def start_openerp_services(options=None):
     """
     import openerp
     if not openerp.osv.osv.service:
-        os.environ['PGAPPNAME'] = os.path.basename(__file__)
         os.environ['TZ'] = 'UTC'
+        if appname is not None:
+            os.environ['PGAPPNAME'] = appname
         options = options.split() if options else []
         openerp.tools.config.parse_config(options)
         if openerp.release.version_info < (7,):
@@ -414,7 +415,8 @@ class Client(object):
         """
         (server, db, user, password) = read_config(environment)
         if server[0] == 'local':
-            server = start_openerp_services(server[1])
+            appname = os.path.basename(__file__)
+            server = start_openerp_services(server[1], appname=appname)
         client = cls(server, db, user, password, verbose=verbose)
         client._environment = environment
         return client
