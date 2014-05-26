@@ -32,7 +32,7 @@ except ImportError:     # Python 2
     int_types = int, long
 
 
-__version__ = '1.5.2'
+__version__ = '1.5.3.dev0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_openerp_services']
 
@@ -411,7 +411,7 @@ class Client(object):
         """
         (server, db, user, password) = read_config(environment)
         if server[0] == 'local':
-            appname = os.path.basename(__file__)
+            appname = os.path.basename(__file__).rstrip('co')
             server = start_openerp_services(server[1], appname=appname)
         client = cls(server, db, user, password, verbose=verbose)
         client._environment = environment
