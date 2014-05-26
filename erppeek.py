@@ -47,7 +47,7 @@ except ImportError:     # Python 2
                     for cell in rowlst]
 
 
-__version__ = '1.5.3.dev0'
+__version__ = '1.5.3'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_openerp_services']
 

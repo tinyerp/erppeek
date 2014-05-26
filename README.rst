@@ -72,20 +72,22 @@ Although it is quite limited::
 Example::
 
     $ erppeek -d demo -m res.partner -f name -f lang 1
-    [{'id': 1, 'lang': 'en_US', 'name': 'Your Company'}]
+    "name","lang"
+    "Your Company","en_US"
 
 ::
 
     $ erppeek -d demo -m res.groups -f full_name 'id > 0'
-    [{'full_name': 'Administration / Access Rights', 'id': 1},
-     {'full_name': 'Administration / Configuration', 'id': 2},
-     {'full_name': 'Human Resources / Employee', 'id': 3},
-     {'full_name': 'Usability / Multi Companies', 'id': 4},
-     {'full_name': 'Usability / Extended View', 'id': 5},
-     {'full_name': 'Usability / Technical Features', 'id': 6},
-     {'full_name': 'Sales Management / User', 'id': 7},
-     {'full_name': 'Sales Management / Manager', 'id': 8},
-     {'full_name': 'Partner Manager', 'id': 9}]
+    "full_name"
+    "Administration / Access Rights"
+    "Administration / Configuration"
+    "Human Resources / Employee"
+    "Usability / Multi Companies"
+    "Usability / Extended View"
+    "Usability / Technical Features"
+    "Sales Management / User"
+    "Sales Management / Manager"
+    "Partner Manager"
 
 
 

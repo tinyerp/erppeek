@@ -2,8 +2,8 @@ Changelog
 ---------
 
 
-1.x (unreleased)
-~~~~~~~~~~~~~~~~
+1.5.3 (2014-05-26)
+~~~~~~~~~~~~~~~~~~
 
 * Change command line output to CSV format.
 
