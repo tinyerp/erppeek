@@ -10,6 +10,7 @@ from __future__ import with_statement
 import _ast
 import atexit
 import collections
+import csv
 import functools
 import optparse
 import os
@@ -25,11 +26,25 @@ try:                    # Python 3
     from xmlrpc.client import Fault, ServerProxy
     basestring = str
     int_types = int
+    _DictWriter = csv.DictWriter
 except ImportError:     # Python 2
     import ConfigParser as configparser
     from threading import currentThread as current_thread
     from xmlrpclib import Fault, ServerProxy
     int_types = int, long
+
+    class _DictWriter(csv.DictWriter):
+        """Unicode CSV Writer, which encodes output to UTF-8."""
+
+        def writeheader(self):
+            # Method 'writeheader' does not exist in Python 2.6
+            header = dict(zip(self.fieldnames, self.fieldnames))
+            self.writerow(header)
+
+        def _dict_to_list(self, rowdict):
+            rowlst = csv.DictWriter._dict_to_list(self, rowdict)
+            return [cell.encode('utf-8') if hasattr(cell, 'encode') else cell
+                    for cell in rowlst]
 
 
 __version__ = '1.5.3.dev0'
@@ -1553,8 +1568,16 @@ def main():
                         verbose=args.verbose)
 
     if args.model and domain and client.user:
-        data = client.execute(args.model, 'read', domain, args.fields)
-        pprint(data)
+        context = {'lang': (os.environ.get('LANG') or 'en_US').split('.')[0]}
+        data = client.execute(args.model, 'read', domain, args.fields, context)
+        if not args.fields:
+            args.fields = ['id']
+            if data:
+                args.fields.extend([fld for fld in data[0] if fld != 'id'])
+        writer = _DictWriter(sys.stdout, args.fields, "", "ignore",
+                             quoting=csv.QUOTE_NONNUMERIC)
+        writer.writeheader()
+        writer.writerows(data)
 
     if client.connect is not None:
         # Set the globals()

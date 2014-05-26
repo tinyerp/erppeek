@@ -5,9 +5,13 @@ Changelog
 1.x (unreleased)
 ~~~~~~~~~~~~~~~~
 
+* Change command line output to CSV format.
+
+* Translate command line output according to LANG environment variable.
+
 * Pretty print the list of modules.
 
-* Do not report ``Module(s) not found`` when you try to install a
+* Do not report ``Module(s) not found`` when trying to install a
   module already installed.
 
 
