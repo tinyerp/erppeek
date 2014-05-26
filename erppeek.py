@@ -707,7 +707,7 @@ class Client(object):
         if not mods:
             if ids:
                 print('Already up-to-date: %s' %
-                      client.modules([('id', 'in', ids)]))
+                      self.modules([('id', 'in', ids)]))
             elif modules:
                 print('Module(s) not found: %s' % ', '.join(modules))
             else:
