@@ -705,7 +705,10 @@ class Client(object):
         mods = self.read('ir.module.module',
                          [('state', 'not in', STABLE_STATES)], 'name state')
         if not mods:
-            if modules:
+            if ids:
+                print('Already up-to-date: %s' %
+                      client.modules([('id', 'in', ids)]))
+            elif modules:
                 print('Module(s) not found: %s' % ', '.join(modules))
             else:
                 print('%s module(s) updated' % updated)
@@ -858,7 +861,10 @@ class Client(object):
         The return value is a dictionary where module names are grouped in
         lists according to their ``state``.
         """
-        domain = [('name', 'like', name)]
+        if isinstance(name, basestring):
+            domain = [('name', 'like', name)]
+        else:
+            domain = name
         if installed is not None:
             op = 'not in' if installed else 'in'
             domain.append(('state', op, ['uninstalled', 'uninstallable']))
@@ -867,7 +873,7 @@ class Client(object):
             res = collections.defaultdict(list)
             for mod in mods:
                 res[mod['state']].append(mod['name'])
-            return res
+            return dict(res)
 
     def keys(self, obj):
         """Wrapper for :meth:`Model.keys` method."""

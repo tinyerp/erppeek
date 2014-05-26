@@ -2,6 +2,15 @@ Changelog
 ---------
 
 
+1.x (unreleased)
+~~~~~~~~~~~~~~~~
+
+* Pretty print the list of modules.
+
+* Do not report ``Module(s) not found`` when you try to install a
+  module already installed.
+
+
 1.5.2 (2014-04-12)
 ~~~~~~~~~~~~~~~~~~
 
