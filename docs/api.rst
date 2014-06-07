@@ -5,10 +5,10 @@ ERPpeek API
 .. module:: erppeek
 
 The library provides few objects to access the OpenObject model and the
-associated services provided by `the OpenERP XML-RPC API`_.
+associated services provided by `the Odoo XML-RPC API`_.
 
-The signature of the methods mimic the standard methods provided by the
-:class:`osv.osv` OpenERP class.  This is intended to help the developer when
+The signature of the methods mimics the standard methods provided by the
+:class:`osv.Model` Odoo class.  This is intended to help the developer when
 developping addons.  What is experimented at the interactive prompt should
 be portable in the application with little effort.
 
@@ -23,7 +23,7 @@ Client and Services
 
 The :class:`Client` object provides thin wrappers around XML-RPC services
 and their methods.  Additional helpers are provided to explore the models and
-list or install OpenERP addons.
+list or install Odoo add-ons.
 
 
 .. autoclass:: Client
@@ -44,7 +44,7 @@ list or install OpenERP addons.
 .. note::
 
    In :ref:`interactive mode <interactive-mode>`, when connected to the local
-   OpenERP, the `get_pool(db_name=None)` function helps to grab a model
+   Odoo, the `get_pool(db_name=None)` function helps to grab a model
    registry for the current database.  The cursor factory is available on the
    registry as ``get_pool().db.cursor()``.
 
@@ -116,8 +116,8 @@ Objects
 Advanced methods
 ~~~~~~~~~~~~~~~~
 
-Those methods give more control on the OpenERP objects: workflows and reports.
-Please refer to `the OpenERP documentation`_ for details.
+Those methods give more control on the Odoo objects: workflows and reports.
+Please refer to `the Odoo documentation`_ for details.
 
 
 .. automethod:: Client.execute(obj, method, *params, **kwargs)
@@ -156,7 +156,7 @@ methods which might be helpful for server administration.  Use the
 :func:`dir` function to introspect them.  The three other services should
 not be used directly: they are in the private namespace, starting with
 ``_`` because their methods are wrapped and  exposed on the :class:`Client`
-object itself.  Please refer to `the OpenERP documentation`_ for more details.
+object itself.  Please refer to `the Odoo documentation`_ for more details.
 
 
 .. attribute:: Client.db
@@ -190,8 +190,8 @@ object itself.  Please refer to `the OpenERP documentation`_ for more details.
    :members:
    :undoc-members:
 
-.. _the OpenERP documentation:
-.. _the OpenERP XML-RPC API: http://doc.openerp.com/v6.1/developer/12_api.html#api
+.. _the Odoo documentation:
+.. _the Odoo XML-RPC API: http://doc.openerp.com/v6.1/developer/12_api.html#api
 
 
 Manage addons
@@ -304,4 +304,4 @@ Utilities
 
 .. autofunction:: read_config
 
-.. autofunction:: start_openerp_services
+.. autofunction:: start_odoo_services

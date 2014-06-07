@@ -28,7 +28,7 @@ setup(
     name='ERPpeek',
     version=get_version(),
     license='BSD',
-    description='Versatile tool for browsing OpenERP data',
+    description='Versatile tool for browsing Odoo / OpenERP data',
     long_description=readme,
     url='http://erppeek.readthedocs.org/',
     author='Florent Xicluna',
@@ -41,7 +41,7 @@ setup(
             'erppeek = erppeek:main',
         ]
     },
-    keywords="openerp xml-rpc xmlrpc",
+    keywords="odoo openerp xml-rpc xmlrpc",
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',

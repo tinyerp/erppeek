@@ -6,7 +6,7 @@ Tutorial
 
 This tutorial demonstrates some features of ERPpeek in the interactive shell.
 
-It assumes an OpenERP server is installed.
+It assumes an Odoo or OpenERP server is installed.
 The shell is a true Python shell.  We have access to all the features and
 modules of the Python interpreter.
 
@@ -18,7 +18,7 @@ modules of the Python interpreter.
 First connection
 ----------------
 
-The server is freshly installed and does not have an OpenERP database yet.
+The server is freshly installed and does not have an Odoo database yet.
 The tutorial creates its own database ``demo`` to play with.
 
 Open the ERPpeek shell::

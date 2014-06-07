@@ -28,7 +28,7 @@ For example:
 * write BDD tests using the `Gherkin language <http://packages.python.org/
   behave/gherkin.html#gherkin-feature-testing-language>`_, and a library
   like `Behave <http://packages.python.org/behave/>`_.
-* build an interface for OpenERP, using a framework like
+* build an interface for Odoo, using a framework like
   `Flask <http://flask.pocoo.org/>`_ (HTML, JSON, SOAP, ...).
 
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" erppeek.py -- OpenERP command line tool
+""" erppeek.py -- Odoo / OpenERP command line tool
 
 Author: Florent Xicluna
 (derived from a script by Alan Bell)
@@ -50,7 +50,7 @@ except ImportError:     # Python 2
 
 __version__ = '1.6a0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
-           'format_exception', 'read_config', 'start_openerp_services']
+           'format_exception', 'read_config', 'start_odoo_services']
 
 CONF_FILE = 'erppeek.ini'
 HIST_FILE = os.path.expanduser('~/.erppeek_history')
@@ -227,39 +227,39 @@ def read_config(section=None):
     return (server, env['database'], env['username'], env.get('password'))
 
 
-def start_openerp_services(options=None, appname=None):
-    """Initialize the OpenERP services.
+def start_odoo_services(options=None, appname=None):
+    """Initialize the Odoo services.
 
-    Import the ``openerp`` package and load the OpenERP services.
+    Import the ``openerp`` package and load the Odoo services.
     The argument `options` receives the command line arguments for ``openerp``.
     Example: ``['-c', '/path/to/openerp-server.conf', '--without-demo', 'all']``.
     Return the openerp module.
     """
-    import openerp
-    openerp._api_v7 = openerp.release.version_info < (8,)
-    if not (openerp._api_v7 and openerp.osv.osv.service):
+    import openerp as odoo
+    odoo._api_v7 = odoo.release.version_info < (8,)
+    if not (odoo._api_v7 and odoo.osv.osv.service):
         os.environ['TZ'] = 'UTC'
         if appname is not None:
             os.environ['PGAPPNAME'] = appname
-        openerp.tools.config.parse_config(options or [])
-        if openerp.release.version_info < (7,):
-            openerp.netsvc.init_logger()
-            openerp.osv.osv.start_object_proxy()
-            openerp.service.web_services.start_web_services()
-        elif openerp._api_v7:
-            openerp.service.start_internal()
+        odoo.tools.config.parse_config(options or [])
+        if odoo.release.version_info < (7,):
+            odoo.netsvc.init_logger()
+            odoo.osv.osv.start_object_proxy()
+            odoo.service.web_services.start_web_services()
+        elif odoo._api_v7:
+            odoo.service.start_internal()
         else:   # Odoo v8
             try:
-                openerp.Environment._local.environments = set()
+                odoo.Environment._local.environments = set()
             except AttributeError:
                 pass
 
         def close_all():
-            for db in openerp.modules.registry.RegistryManager.registries:
-                openerp.sql_db.close_db(db)
+            for db in odoo.modules.registry.RegistryManager.registries:
+                odoo.sql_db.close_db(db)
         atexit.register(close_all)
 
-    return openerp
+    return odoo
 
 
 def issearchdomain(arg):
@@ -386,7 +386,7 @@ class Service(object):
 
 
 class Client(object):
-    """Connection to an OpenERP instance.
+    """Connection to an Odoo instance.
 
     This is the top level object.
     The `server` is the URL of the instance, like ``http://localhost:8069``.
@@ -405,7 +405,7 @@ class Client(object):
             server = server.rstrip('/')
         elif isinstance(server, list):
             appname = os.path.basename(__file__).rstrip('co')
-            server = start_openerp_services(server, appname=appname)
+            server = start_odoo_services(server, appname=appname)
         self._server = server
         major_version = None
 
@@ -413,7 +413,7 @@ class Client(object):
             if major_version in ('5.0', None) or name == 'wizard':
                 methods = _methods[name]
             else:
-                # Only for OpenERP >= 6
+                # Only for Odoo and OpenERP >= 6
                 methods = _methods[name] + _methods_6_1[name]
             return Service(server, name, methods, verbose=verbose)
         self.server_version = ver = get_proxy('db').server_version()
@@ -487,7 +487,7 @@ class Client(object):
         self.report = authenticated(self._report.report)
         self.report_get = authenticated(self._report.report_get)
         if self.major_version != '5.0':
-            # Only for OpenERP >= 6
+            # Only for Odoo and OpenERP >= 6
             self.execute_kw = authenticated(self._object.execute_kw)
             self.render_report = authenticated(self._report.render_report)
         if self._wizard:
@@ -945,7 +945,7 @@ class Client(object):
 
 
 class Model(object):
-    """The class for OpenERP models."""
+    """The class for Odoo models."""
 
     def __new__(cls, client, name):
         return client.model(name)
@@ -1136,7 +1136,7 @@ class Model(object):
 
 
 class RecordList(object):
-    """A sequence of OpenERP :class:`Record`.
+    """A sequence of Odoo :class:`Record`.
 
     It has a similar API as the :class:`Record` class, but for a list of
     records.  The attributes of the ``RecordList`` are read-only, and they
@@ -1277,9 +1277,9 @@ class RecordList(object):
 
 
 class Record(object):
-    """A class for all OpenERP records.
+    """A class for all Odoo records.
 
-    It maps any OpenERP object.
+    It maps any Odoo object.
     The fields can be accessed through attributes.  The changes are immediately
     sent to the server.
     The ``many2one``, ``one2many`` and ``many2many`` attributes are wrapped in
@@ -1523,7 +1523,7 @@ def _interact(global_vars, use_pprint=True, usage=USAGE):
 
 
 def main():
-    description = ('Inspect data on OpenERP objects.  Use interactively '
+    description = ('Inspect data on Odoo objects.  Use interactively '
                    'or query a model (-m) and pass search terms or '
                    'ids as positional parameters after the options.')
     parser = optparse.OptionParser(

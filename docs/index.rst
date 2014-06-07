@@ -7,10 +7,10 @@
 ERPpeek's documentation
 =======================
 
-*A versatile tool for browsing OpenERP data*
+*A versatile tool for browsing Odoo / OpenERP data*
 
-The ERPpeek library communicates with any `OpenERP server`_ (>= 5.0) using
-`the standard XML-RPC interface`_.
+The ERPpeek library communicates with any `Odoo / OpenERP server`_ (>= 5.0)
+using `the standard XML-RPC interface`_.
 
 It provides both a :ref:`fully featured low-level API <client-and-services>`,
 and an encapsulation of the methods on :ref:`Active Record objects
@@ -37,7 +37,7 @@ Contents:
 * Online documentation: http://erppeek.readthedocs.org/
 * Source code and issue tracker: https://github.com/tinyerp/erppeek
 
-.. _OpenERP server: http://doc.openerp.com/
+.. _Odoo / OpenERP server: http://doc.openerp.com/
 .. _the standard XML-RPC interface: http://doc.openerp.com/v6.1/developer/12_api.html#api
 
 

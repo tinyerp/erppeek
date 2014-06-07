@@ -1,6 +1,6 @@
-===================================================
-ERPpeek, a versatile tool for browsing OpenERP data
-===================================================
+==========================================================
+ERPpeek, a versatile tool for browsing Odoo / OpenERP data
+==========================================================
 
 Download and install the latest release::
 
@@ -28,7 +28,7 @@ Key features:
 - single executable ``erppeek.py``, no external dependency
 - wrappers for ``search+read``, for data model introspection, etc...
 - simpler syntax for ``domain`` and ``fields``
-- full API accessible on the ``Client`` object for OpenERP 5.0 through 7.0
+- full API accessible on the ``Client`` object for OpenERP 5.0 through Odoo 8.0
 - the module can be imported and used as a library: ``from erppeek import Client``
 - supports Python 3 and Python 2 (>= 2.5)
 
@@ -39,13 +39,13 @@ Key features:
 Command line arguments
 ----------------------
 
-There are few arguments to query OpenERP models from the command line.
+There are few arguments to query Odoo models from the command line.
 Although it is quite limited::
 
     $ erppeek --help
     Usage: erppeek [options] [search_term_or_id [search_term_or_id ...]]
 
-    Inspect data on OpenERP objects.  Use interactively or query a model (-m)
+    Inspect data on Odoo objects.  Use interactively or query a model (-m)
     and pass search terms or ids as positional parameters after the options.
 
     Options:
@@ -114,7 +114,7 @@ Edit ``erppeek.ini`` and declare the environment(s)::
     scheme = local
 
 
-Connect to the OpenERP server::
+Connect to the Odoo server::
 
     erppeek --list
     erppeek --env demo
