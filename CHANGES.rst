@@ -2,7 +2,7 @@ Changelog
 ---------
 
 
-1.x (unreleased)
+1.6a0 (unreleased)
 ~~~~~~~~~~~~~~~~~~
 
 * Switch to local mode when the command line argument points at the
