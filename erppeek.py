@@ -16,6 +16,7 @@ import optparse
 import os
 from pprint import pprint
 import re
+import shlex
 import sys
 import time
 import traceback
@@ -47,7 +48,7 @@ except ImportError:     # Python 2
                     for cell in rowlst]
 
 
-__version__ = '1.5.3'
+__version__ = '1.5.4.dev0'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_openerp_services']
 
@@ -220,7 +221,7 @@ def read_config(section=None):
     env = dict(p.items(section))
     scheme = env.get('scheme', 'http')
     if scheme == 'local':
-        server = (scheme, env.get('options', ''))
+        server = shlex.split(env.get('options', ''))
     else:
         server = '%s://%s:%s' % (scheme, env['host'], env['port'])
     return (server, env['database'], env['username'], env.get('password'))
@@ -231,7 +232,7 @@ def start_openerp_services(options=None, appname=None):
 
     Import the ``openerp`` package and load the OpenERP services.
     The argument `options` receives the command line arguments for ``openerp``.
-    Example: ``"-c /path/to/openerp-server.conf --without-demo all"``.
+    Example: ``['-c', '/path/to/openerp-server.conf', '--without-demo', 'all']``.
     Return the openerp module.
     """
     import openerp
@@ -239,8 +240,7 @@ def start_openerp_services(options=None, appname=None):
         os.environ['TZ'] = 'UTC'
         if appname is not None:
             os.environ['PGAPPNAME'] = appname
-        options = options.split() if options else []
-        openerp.tools.config.parse_config(options)
+        openerp.tools.config.parse_config(options or [])
         if openerp.release.version_info < (7,):
             openerp.netsvc.init_logger()
             openerp.osv.osv.start_object_proxy()
@@ -387,12 +387,15 @@ class Client(object):
     table ``res.users``.  If the `password` is not provided, it will be
     asked on login.
     """
-    _config_file = os.path.join(os.path.curdir, CONF_FILE)
+    _config_file = os.path.join(os.curdir, CONF_FILE)
 
     def __init__(self, server, db=None, user=None, password=None,
                  verbose=False):
         if isinstance(server, basestring) and server[-1:] == '/':
             server = server.rstrip('/')
+        elif isinstance(server, list):
+            appname = os.path.basename(__file__).rstrip('co')
+            server = start_openerp_services(server, appname=appname)
         self._server = server
         major_version = None
 
@@ -425,9 +428,6 @@ class Client(object):
         See :func:`read_config` for details of the configuration file format.
         """
         (server, db, user, password) = read_config(environment)
-        if server[0] == 'local':
-            appname = os.path.basename(__file__).rstrip('co')
-            server = start_openerp_services(server[1], appname=appname)
         client = cls(server, db, user, password, verbose=verbose)
         client._environment = environment
         return client
@@ -1527,10 +1527,10 @@ def main():
         '--env',
         help='read connection settings from the given section')
     parser.add_option(
-        '-c', '--config', default=CONF_FILE,
+        '-c', '--config', default=None,
         help='specify alternate config file (default: %r)' % CONF_FILE)
     parser.add_option(
-        '--server', default=DEFAULT_URL,
+        '--server', default=None,
         help='full URL to the XML-RPC server (default: %s)' % DEFAULT_URL)
     parser.add_option('-d', '--db', default=DEFAULT_DB, help='database')
     parser.add_option('-u', '--user', default=DEFAULT_USER, help='username')
@@ -1552,7 +1552,7 @@ def main():
 
     (args, domain) = parser.parse_args()
 
-    Client._config_file = os.path.join(os.path.curdir, args.config)
+    Client._config_file = os.path.join(os.curdir, args.config or CONF_FILE)
     if args.list_env:
         print('Available settings:  ' + ' '.join(read_config()))
         return
@@ -1564,6 +1564,8 @@ def main():
     if args.env:
         client = Client.from_config(args.env, verbose=args.verbose)
     else:
+        if not args.server:
+            args.server = ['-c', args.config] if args.config else DEFAULT_URL
         client = Client(args.server, args.db, args.user, args.password,
                         verbose=args.verbose)
 

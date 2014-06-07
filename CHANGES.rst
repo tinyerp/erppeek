@@ -2,6 +2,18 @@ Changelog
 ---------
 
 
+1.x (unreleased)
+~~~~~~~~~~~~~~~~~~
+
+* Switch to local mode when the command line argument points at the
+  server configuration, like ``-c openerp-server.conf``.
+
+* Use shell-like parsing for ``options =`` setting in local mode.
+
+* Incompatible change: function ``start_openerp_services`` receives a
+  list of options in the first argument, similar to ``sys.argv[1:]``.
+
+
 1.5.3 (2014-05-26)
 ~~~~~~~~~~~~~~~~~~
 
