@@ -236,7 +236,8 @@ def start_openerp_services(options=None, appname=None):
     Return the openerp module.
     """
     import openerp
-    if not openerp.osv.osv.service:
+    openerp._api_v7 = openerp.release.version_info < (8,)
+    if not (openerp._api_v7 and openerp.osv.osv.service):
         os.environ['TZ'] = 'UTC'
         if appname is not None:
             os.environ['PGAPPNAME'] = appname
@@ -245,8 +246,13 @@ def start_openerp_services(options=None, appname=None):
             openerp.netsvc.init_logger()
             openerp.osv.osv.start_object_proxy()
             openerp.service.web_services.start_web_services()
-        else:
+        elif openerp._api_v7:
             openerp.service.start_internal()
+        else:   # Odoo v8
+            try:
+                openerp.Environment._local.environments = set()
+            except AttributeError:
+                pass
 
         def close_all():
             for db in openerp.modules.registry.RegistryManager.registries:
@@ -318,6 +324,8 @@ class Service(object):
     which should be exposed on this endpoint.  Use ``dir(...)`` on the
     instance to list them.
     """
+    _rpcpath = ''
+
     def __init__(self, server, endpoint, methods, verbose=False):
         if isinstance(server, basestring):
             self._rpcpath = rpcpath = server + '/xmlrpc/'
@@ -325,10 +333,12 @@ class Service(object):
             self._dispatch = proxy._ServerProxy__request
             if hasattr(proxy._ServerProxy__transport, 'close'):   # >= 2.7
                 self.close = proxy._ServerProxy__transport.close
-        else:
-            self._rpcpath = ''
+        elif server._api_v7:
             proxy = server.netsvc.ExportService.getService(endpoint)
             self._dispatch = proxy.dispatch
+        else:   # Odoo v8
+            self._dispatch = functools.partial(server.http.dispatch_rpc,
+                                               endpoint)
         self._endpoint = endpoint
         self._methods = methods
         self._verbose = verbose

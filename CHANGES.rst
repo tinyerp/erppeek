@@ -8,6 +8,9 @@ Changelog
 * Switch to local mode when the command line argument points at the
   server configuration, like ``-c openerp-server.conf``.
 
+* Local mode compatible with Odoo trunk: support both the old and the
+  new API.
+
 * Use shell-like parsing for ``options =`` setting in local mode.
 
 * Incompatible change: function ``start_openerp_services`` receives a
