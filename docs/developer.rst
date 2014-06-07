@@ -8,9 +8,9 @@ Developer's notes
 Source code
 -----------
 
-* `Source code <https://github.com/florentx/erppeek>`_ and
-  `issue tracker <https://github.com/florentx/erppeek/issues>`_ on GitHub.
-* `Continuous tests <http://travis-ci.org/florentx/erppeek>`_ against Python
+* `Source code <https://github.com/tinyerp/erppeek>`_ and
+  `issue tracker <https://github.com/tinyerp/erppeek/issues>`_ on GitHub.
+* `Continuous tests <http://travis-ci.org/tinyerp/erppeek>`_ against Python
   2.6 through 3.4 and PyPy, on `Travis-CI platform
   <http://about.travis-ci.org/>`_.
 

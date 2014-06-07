@@ -35,7 +35,7 @@ Contents:
    developer
 
 * Online documentation: http://erppeek.readthedocs.org/
-* Source code and issue tracker: https://github.com/florentx/erppeek
+* Source code and issue tracker: https://github.com/tinyerp/erppeek
 
 .. _OpenERP server: http://doc.openerp.com/
 .. _the standard XML-RPC interface: http://doc.openerp.com/v6.1/developer/12_api.html#api
