@@ -44,9 +44,10 @@ list or install Odoo add-ons.
 .. note::
 
    In :ref:`interactive mode <interactive-mode>`, when connected to the local
-   Odoo, the `get_pool(db_name=None)` function helps to grab a model
+   Odoo server, the `get_pool(db_name=None)` function helps to grab a model
    registry for the current database.  The cursor factory is available on the
-   registry as ``get_pool().db.cursor()``.
+   registry as ``get_pool().cursor()`` (Odoo) or ``get_pool().db.cursor()``
+   (OpenERP <= 7).
 
 
 Objects

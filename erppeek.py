@@ -562,6 +562,7 @@ class Client(object):
             """Return a model registry.
 
             Use get_pool(db_name).db.cursor() to grab a cursor.
+            With Odoo v8, use get_pool(db_name).cursor() instead.
             """
             client = global_vars['client']
             registry = client._server.modules.registry
