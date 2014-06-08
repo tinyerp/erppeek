@@ -6,18 +6,20 @@ Changelog
 ~~~~~~~~~~~~~~~~~~
 
 * When a function or a method fails, raise an ``erppeek.Error`` instead
-  of printing a message and returning None.
+  of printing a message and returning ``None``.
 
 * Switch to local mode when the command line argument points at the
-  server configuration, like ``-c openerp-server.conf``.
+  server configuration, like ``-c path/toopenerp-server.conf``.
 
 * Local mode compatible with Odoo trunk: support both the old and the
   new API.
 
 * Use shell-like parsing for ``options =`` setting in local mode.
 
-* Incompatible change: function ``start_openerp_services`` receives a
-  list of options in the first argument, similar to ``sys.argv[1:]``.
+* Function ``start_openerp_services`` is replaced with
+  ``start_odoo_services``: it is still compatible with OpenERP 6.1 and 7
+  and it accepts a list of options in the first argument, similar to
+  ``sys.argv[1:]``.
 
 
 1.5.3 (2014-05-26)
