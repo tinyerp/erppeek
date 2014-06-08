@@ -84,8 +84,8 @@ Usage (some commands):
 STABLE_STATES = ('uninstallable', 'uninstalled', 'installed')
 DOMAIN_OPERATORS = frozenset('!|&')
 # Supported operators are:
-#   =, !=, >, >=, <, <=, like, ilike, in, not like, not ilike, not in, child_of
-#   =like, =ilike (6.0), =? (6.0)
+#   =, !=, >, >=, <, <=, like, ilike, in, not like, not ilike, not in,
+#   child_of, =like, =ilike, =?
 _term_re = re.compile(
     '([\w._]+)\s*'  '(=(?:like|ilike|\?)|[<>]=?|!?=(?!=)'
     '|(?<= )(?:like|ilike|in|not like|not ilike|not in|child_of))'  '\s*(.*)')
