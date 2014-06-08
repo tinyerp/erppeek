@@ -5,6 +5,9 @@ Changelog
 1.6a0 (unreleased)
 ~~~~~~~~~~~~~~~~~~
 
+* When a function or a method fails, raise an ``erppeek.Error`` instead
+  of printing a message and returning None.
+
 * Switch to local mode when the command line argument points at the
   server configuration, like ``-c openerp-server.conf``.
 

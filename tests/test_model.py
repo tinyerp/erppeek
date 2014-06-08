@@ -91,10 +91,9 @@ class TestModel(TestCase):
         # Reset cache for this test
         self.client._models.clear()
 
-        self.assertIsNone(self.client.model('mic.mac'))
-        self.assertIsNone(self.client.MicMac)
+        self.assertRaises(erppeek.Error, self.client.model, 'mic.mac')
+        self.assertRaises(erppeek.Error, getattr, self.client, 'MicMac')
         self.assertCalls(ANY, ANY, ANY, ANY)
-        self.assertIn('Model not found', self.stdout.popvalue())
         self.assertOutput('')
 
         self.assertIs(self.client.model('foo.bar'),

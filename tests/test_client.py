@@ -126,14 +126,23 @@ class TestCreateClient(XmlRpcTestCase):
         getpass = mock.patch('getpass.getpass',
                              return_value='password').start()
         self.service.db.list.return_value = ['database']
-
-        client = erppeek.Client('http://127.0.0.1:8069', 'database', 'usr')
         expected_calls = self.startup_calls + (
             ('common.login', 'database', 'usr', 'password'),)
+
+        # A: Invalid login
+        self.assertRaises(erppeek.Error, erppeek.Client,
+                          'http://127.0.0.1:8069', 'database', 'usr')
+        self.assertCalls(*expected_calls)
+        self.assertEqual(getpass.call_count, 1)
+
+        # B: Valid login
+        self.service.common.login.return_value = 17
+        getpass.reset_mock()
+
+        client = erppeek.Client('http://127.0.0.1:8069', 'database', 'usr')
         self.assertIsInstance(client, erppeek.Client)
         self.assertCalls(*expected_calls)
         self.assertEqual(getpass.call_count, 1)
-        self.assertOutput('Error: Invalid username or password\n')
 
     def test_create_with_cache(self):
         self.service.db.list.return_value = ['database']
@@ -156,15 +165,25 @@ class TestCreateClient(XmlRpcTestCase):
         getpass = mock.patch('getpass.getpass',
                              return_value='password').start()
         self.service.db.list.return_value = ['database']
-
-        client = erppeek.Client.from_config('test')
         expected_calls = self.startup_calls + (
             ('common.login', 'database', 'usr', 'password'),)
+
+        # A: Invalid login
+        self.assertRaises(erppeek.Error, erppeek.Client.from_config, 'test')
+        self.assertCalls(*expected_calls)
+        self.assertEqual(read_config.call_count, 1)
+        self.assertEqual(getpass.call_count, 1)
+
+        # B: Valid login
+        self.service.common.login.return_value = 17
+        read_config.reset_mock()
+        getpass.reset_mock()
+
+        client = erppeek.Client.from_config('test')
         self.assertIsInstance(client, erppeek.Client)
         self.assertCalls(*expected_calls)
         self.assertEqual(read_config.call_count, 1)
         self.assertEqual(getpass.call_count, 1)
-        self.assertOutput('Error: Invalid username or password\n')
 
 
 class TestSampleSession(XmlRpcTestCase):
@@ -557,12 +576,11 @@ class TestClientApi(XmlRpcTestCase):
         )
         self.assertOutput('')
 
-        self.assertIsNone(self.client.model('foo.bar'))
+        self.assertRaises(erppeek.Error, self.client.model, 'foo.bar')
         self.assertCalls(
             OBJ('ir.model', 'search', [('model', 'like', 'foo.bar')]),
             OBJ('ir.model', 'read', [ID2, ID1], ('model',)),
         )
-        self.assertIn('Model not found', self.stdout.popvalue())
         self.assertOutput('')
 
         self.service.object.execute.side_effect = [

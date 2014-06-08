@@ -184,8 +184,10 @@ def format_exception(exc_type, exc, tb, limit=None, chain=True,
     If `chain` is True, then the original exception is printed too.
     """
     values = _format_exception(exc_type, exc, tb, limit=limit)
-    if ((issubclass(exc_type, Fault) and
-         isinstance(exc.faultCode, basestring))):
+    if issubclass(exc_type, Error):
+        values = [str(exc) + '\n']
+    elif ((issubclass(exc_type, Fault) and
+           isinstance(exc.faultCode, basestring))):
         # Format readable 'Fault' errors
         (etype, __, msg) = exc.faultCode.partition('--')
         server_tb = None
@@ -231,9 +233,10 @@ def start_odoo_services(options=None, appname=None):
     """Initialize the Odoo services.
 
     Import the ``openerp`` package and load the Odoo services.
-    The argument `options` receives the command line arguments for ``openerp``.
-    Example: ``['-c', '/path/to/openerp-server.conf', '--without-demo', 'all']``.
-    Return the openerp module.
+    The argument `options` receives the command line arguments
+    for ``openerp``.  Example:
+      ``['-c', '/path/to/openerp-server.conf', '--without-demo', 'all']``.
+    Return the ``openerp`` package.
     """
     import openerp as odoo
     odoo._api_v7 = odoo.release.version_info < (8,)
@@ -311,6 +314,10 @@ def searchargs(params, kwargs=None, context=None):
     else:
         params = (domain,) + params[1:]
     return params
+
+
+class Error(Exception):
+    """An ERPpeek error."""
 
 
 class Service(object):
@@ -427,7 +434,7 @@ class Client(object):
         self.reset()
         if db:
             # Try to login
-            self._login(user, password=password, database=db)
+            self.login(user, password=password, database=db)
 
     @classmethod
     def from_config(cls, environment, verbose=False):
@@ -458,22 +465,19 @@ class Client(object):
         if database:
             dbs = self.db.list()
             if database not in dbs:
-                print("Error: Database '%s' does not exist: %s" %
-                      (database, dbs))
-                return
+                raise Error("Database '%s' does not exist: %s" %
+                            (database, dbs))
         elif self._db:
             database = self._db
         else:
-            print('Error: Not connected')
-            return
+            raise Error('Not connected')
         # Used for logging, copied from openerp.sql_db.db_connect
         current_thread().dbname = database
         (uid, password) = self._auth(database, user, password)
         if not uid:
             if not self._db:
                 self._db = database
-            print('Error: Invalid username or password')
-            return
+            raise Error('Invalid username or password')
         if self._db != database:
             self.reset()
             self._db = database
@@ -589,7 +593,11 @@ class Client(object):
 
         def login(self, user, password=None, database=None):
             """Switch `user` and (optionally) `database`."""
-            if self._login(user, password=password, database=database):
+            try:
+                self._login(user, password=password, database=database)
+            except Error as exc:
+                print('%s: %s' % (exc.__class__.__name__, exc))
+            else:
                 # Register the new globals()
                 self.connect()
 
@@ -734,9 +742,8 @@ class Client(object):
                 print('Already up-to-date: %s' %
                       self.modules([('id', 'in', ids)]))
             elif modules:
-                print('Module(s) not found: %s' % ', '.join(modules))
-            else:
-                print('%s module(s) updated' % updated)
+                raise Error('Module(s) not found: %s' % ', '.join(modules))
+            print('%s module(s) updated' % updated)
             return
         print('%s module(s) selected' % len(ids))
         print('%s module(s) to process:' % len(mods))
@@ -873,7 +880,7 @@ class Client(object):
             errmsg = 'Model not found.  These models exist:'
         else:
             errmsg = 'Model not found: %s' % (name,)
-        print('\n * '.join([errmsg] + [str(m) for m in models.values()]))
+        raise Error('\n * '.join([errmsg] + [str(m) for m in models.values()]))
 
     def modules(self, name='', installed=None):
         """Return a dictionary of modules.
