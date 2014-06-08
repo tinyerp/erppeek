@@ -135,23 +135,17 @@ Where is the table for the users?
     <Client 'http://localhost:8069#demo'>
     >>> models('user')
     {'ResUsers': <Model 'res.users'>, 'ResWidgetUser': <Model 'res.widget.user'>}
-    >>> client.ResUsers
-    <Model 'res.users'>
 
-We can reach the same model using the :meth:`~Client.model` method too.
+We've listed two models which matches the name, ``res.users`` and
+``res.widget.user``.  We reach the users' model using the :meth:`~Client.model`
+method and we want to introspect its fields.
+Fortunately, the :class:`Model` class provides methods to retrieve all
+the details.
 
 .. sourcecode:: pycon
 
     >>> model('res.users')
     <Model 'res.users'>
-    >>> model('res.users') is client.ResUsers
-    True
-
-But we don't know anything about the fields of this model.
-Fortunately, the :class:`Model` class provides methods to introspect the model.
-
-.. sourcecode:: pycon
-
     >>> print(model('res.users').keys())
     ['action_id', 'active', 'company_id', 'company_ids', 'context_lang',
      'context_tz', 'date', 'groups_id', 'id', 'login', 'menu_id', 'menu_tips',
