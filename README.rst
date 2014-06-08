@@ -143,8 +143,16 @@ This is a sample session::
       ...
     >>> #
 
+
 .. note::
 
    Use the ``--verbose`` switch to see what happens behind the scene.
    Lines are truncated at 79 chars.  Use ``-vv`` or ``-vvv`` to print
    more.
+
+
+.. note::
+
+   To preserve the history of commands when closing the session, first
+   create an empty file in your home directory:
+   ``touch ~/.erppeek_history``
