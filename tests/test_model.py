@@ -65,6 +65,8 @@ class TestCase(XmlRpcTestCase):
                 keys = ('id', 'name', 'message', 'spam', 'birthdate', 'city')
             fields = dict.fromkeys(keys, {'type': sentinel.FIELD_TYPE})
             fields['misc_id'] = {'type': 'many2one', 'relation': 'foo.misc'}
+            fields['line_ids'] = {'type': 'one2many', 'relation': 'foo.lines'}
+            fields['many_ids'] = {'type': 'many2many', 'relation': 'foo.many'}
             return fields
         if method == 'name_get':
             if 404 in args[5]:
@@ -429,6 +431,52 @@ class TestModel(TestCase):
         )
         self.assertOutput('')
 
+    def test_create_relation(self):
+        FooBar = self.model('foo.bar')
+
+        record42 = FooBar.browse(42)
+        recordlist42 = FooBar.browse([4, 2])
+        rec_null = FooBar.browse(False)
+
+        # one2many
+        FooBar.create({'line_ids': False})
+        FooBar.create({'line_ids': []})
+        FooBar.create({'line_ids': [123, 234]})
+        FooBar.create({'line_ids': [(6, 0, [76])]})
+        FooBar.create({'line_ids': recordlist42})
+
+        # many2many
+        FooBar.create({'many_ids': None})
+        FooBar.create({'many_ids': []})
+        FooBar.create({'many_ids': [123, 234]})
+        FooBar.create({'many_ids': [(6, 0, [76])]})
+        FooBar.create({'many_ids': recordlist42})
+
+        # many2one
+        FooBar.create({'misc_id': False})
+        FooBar.create({'misc_id': 123})
+        FooBar.create({'misc_id': record42})
+
+        self.assertCalls(
+            OBJ('foo.bar', 'fields_get'),
+            OBJ('foo.bar', 'create', {'line_ids': [(6, 0, [])]}),
+            OBJ('foo.bar', 'create', {'line_ids': [(6, 0, [])]}),
+            OBJ('foo.bar', 'create', {'line_ids': [(6, 0, [123, 234])]}),
+            OBJ('foo.bar', 'create', {'line_ids': [(6, 0, [76])]}),
+            OBJ('foo.bar', 'create', {'line_ids': [(6, 0, [4, 2])]}),
+
+            OBJ('foo.bar', 'create', {'many_ids': [(6, 0, [])]}),
+            OBJ('foo.bar', 'create', {'many_ids': [(6, 0, [])]}),
+            OBJ('foo.bar', 'create', {'many_ids': [(6, 0, [123, 234])]}),
+            OBJ('foo.bar', 'create', {'many_ids': [(6, 0, [76])]}),
+            OBJ('foo.bar', 'create', {'many_ids': [(6, 0, [4, 2])]}),
+
+            OBJ('foo.bar', 'create', {'misc_id': False}),
+            OBJ('foo.bar', 'create', {'misc_id': 123}),
+            OBJ('foo.bar', 'create', {'misc_id': 42}),
+        )
+        self.assertOutput('')
+
     def test_method(self, method_name='method', single_id=True):
         FooBar = self.model('foo.bar')
         FooBar_method = getattr(FooBar, method_name)
@@ -477,9 +525,11 @@ class TestRecord(TestCase):
     def test_read(self):
         records = self.model('foo.bar').browse([13, 17])
         rec = self.model('foo.bar').browse(42)
+        rec_null = self.model('foo.bar').browse(False)
 
         self.assertIsInstance(records, erppeek.RecordList)
         self.assertIsInstance(rec, erppeek.Record)
+        self.assertIsInstance(rec_null, erppeek.Record)
 
         rec.read()
         records.read()
@@ -522,6 +572,94 @@ class TestRecord(TestCase):
             OBJ('foo.bar', 'write', [13, 17], {'spam': 42}),
             OBJ('foo.bar', 'write', [13, 17], {'spam': [13, 17]}),
         )
+        self.assertOutput('')
+
+    def test_write_relation(self):
+        records = self.model('foo.bar').browse([13, 17])
+        rec = self.model('foo.bar').browse(42)
+        rec_null = self.model('foo.bar').browse(False)
+
+        # one2many
+        rec.write({'line_ids': False})
+        rec.write({'line_ids': []})
+        rec.write({'line_ids': [123, 234]})
+        rec.write({'line_ids': [(6, 0, [76])]})
+        rec.write({'line_ids': records})
+
+        # many2many
+        rec.write({'many_ids': None})
+        rec.write({'many_ids': []})
+        rec.write({'many_ids': [123, 234]})
+        rec.write({'many_ids': [(6, 0, [76])]})
+        rec.write({'many_ids': records})
+
+        # many2one
+        rec.write({'misc_id': False})
+        rec.write({'misc_id': 123})
+        rec.write({'misc_id': rec})
+
+        # one2many
+        records.write({'line_ids': None})
+        records.write({'line_ids': []})
+        records.write({'line_ids': [123, 234]})
+        records.write({'line_ids': [(6, 0, [76])]})
+        records.write({'line_ids': records})
+
+        # many2many
+        records.write({'many_ids': 0})
+        records.write({'many_ids': []})
+        records.write({'many_ids': [123, 234]})
+        records.write({'many_ids': [(6, 0, [76])]})
+        records.write({'many_ids': records})
+
+        # many2one
+        records.write({'misc_id': rec_null})
+        records.write({'misc_id': 123})
+        records.write({'misc_id': rec})
+
+        self.assertCalls(
+            OBJ('foo.bar', 'fields_get'),
+
+            OBJ('foo.bar', 'write', [42], {'line_ids': [(6, 0, [])]}),
+            OBJ('foo.bar', 'write', [42], {'line_ids': [(6, 0, [])]}),
+            OBJ('foo.bar', 'write', [42], {'line_ids': [(6, 0, [123, 234])]}),
+            OBJ('foo.bar', 'write', [42], {'line_ids': [(6, 0, [76])]}),
+            OBJ('foo.bar', 'write', [42], {'line_ids': [(6, 0, [13, 17])]}),
+
+            OBJ('foo.bar', 'write', [42], {'many_ids': [(6, 0, [])]}),
+            OBJ('foo.bar', 'write', [42], {'many_ids': [(6, 0, [])]}),
+            OBJ('foo.bar', 'write', [42], {'many_ids': [(6, 0, [123, 234])]}),
+            OBJ('foo.bar', 'write', [42], {'many_ids': [(6, 0, [76])]}),
+            OBJ('foo.bar', 'write', [42], {'many_ids': [(6, 0, [13, 17])]}),
+
+            OBJ('foo.bar', 'write', [42], {'misc_id': False}),
+            OBJ('foo.bar', 'write', [42], {'misc_id': 123}),
+            OBJ('foo.bar', 'write', [42], {'misc_id': 42}),
+
+            OBJ('foo.bar', 'write', [13, 17], {'line_ids': [(6, 0, [])]}),
+            OBJ('foo.bar', 'write', [13, 17], {'line_ids': [(6, 0, [])]}),
+            OBJ('foo.bar', 'write', [13, 17], {'line_ids': [(6, 0, [123, 234])]}),
+            OBJ('foo.bar', 'write', [13, 17], {'line_ids': [(6, 0, [76])]}),
+            OBJ('foo.bar', 'write', [13, 17], {'line_ids': [(6, 0, [13, 17])]}),
+
+            OBJ('foo.bar', 'write', [13, 17], {'many_ids': [(6, 0, [])]}),
+            OBJ('foo.bar', 'write', [13, 17], {'many_ids': [(6, 0, [])]}),
+            OBJ('foo.bar', 'write', [13, 17], {'many_ids': [(6, 0, [123, 234])]}),
+            OBJ('foo.bar', 'write', [13, 17], {'many_ids': [(6, 0, [76])]}),
+            OBJ('foo.bar', 'write', [13, 17], {'many_ids': [(6, 0, [13, 17])]}),
+
+            OBJ('foo.bar', 'write', [13, 17], {'misc_id': False}),
+            OBJ('foo.bar', 'write', [13, 17], {'misc_id': 123}),
+            OBJ('foo.bar', 'write', [13, 17], {'misc_id': 42}),
+        )
+
+        self.assertRaises(TypeError, rec.write, {'line_ids': 123})
+        self.assertRaises(TypeError, records.write, {'line_ids': 123})
+        self.assertRaises(TypeError, records.write, {'line_ids': rec})
+        self.assertRaises(TypeError, rec.write, {'many_ids': 123})
+        self.assertRaises(TypeError, records.write, {'many_ids': rec})
+
+        self.assertCalls()
         self.assertOutput('')
 
     def test_copy(self):

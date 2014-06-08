@@ -1052,7 +1052,12 @@ class Model(object):
         """Create a :class:`Record`.
 
         The argument `values` is a dictionary of values which are used to
-        create the record.  The newly created :class:`Record` is returned.
+        create the record.  Relationship fields `one2many` and `many2many`
+        accept either a list of ids or a RecordList or the extended Odoo
+        syntax.  Relationship fields `many2one` and `reference` accept
+        either a Record or the Odoo syntax.
+
+        The newly created :class:`Record` is returned.
         """
         values = self._unbrowse_values(values)
         new_id = self._execute('create', values, context=context)
@@ -1214,7 +1219,7 @@ class RecordList(object):
         return values
 
     def write(self, values, context=None):
-        """Write the `values` in the :class:`RecordList`."""
+        """Wrapper for :meth:`Record.write` method."""
         if not self.id:
             return True
         if context is None and self._context:
@@ -1365,7 +1370,11 @@ class Record(object):
         return rv[0] if rv else None
 
     def write(self, values, context=None):
-        """Write the `values` in the :class:`Record`."""
+        """Write the `values` in the :class:`Record`.
+
+        `values` is a dictionary of values.
+        See :meth:`Model.create` for details.
+        """
         if context is None and self._context:
             context = self._context
         values = self._model._unbrowse_values(values)
