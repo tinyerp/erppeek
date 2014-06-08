@@ -253,7 +253,7 @@ def start_odoo_services(options=None, appname=None):
             odoo.service.start_internal()
         else:   # Odoo v8
             try:
-                odoo.Environment._local.environments = set()
+                odoo.Environment._local.environments = odoo.osv.env.WeakSet()
             except AttributeError:
                 pass
 
