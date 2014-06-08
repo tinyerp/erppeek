@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import with_statement
-
 import unittest2
-import mock
 
 from erppeek import issearchdomain, searchargs
 
@@ -20,8 +17,10 @@ class TestUtils(unittest2.TestCase):
                                         ('state', '!=', 'draft')]))
         self.assertTrue(issearchdomain(['name = mushroom', 'state != draft']))
         self.assertTrue(issearchdomain([]))
-        self.assertTrue(issearchdomain('state != draft'))
-        self.assertTrue(issearchdomain(('state', '!=', 'draft')))
+
+        # Removed with 1.6
+        self.assertFalse(issearchdomain('state != draft'))
+        self.assertFalse(issearchdomain(('state', '!=', 'draft')))
 
     def test_searchargs(self):
         domain = [('name', '=', 'mushroom'), ('state', '!=', 'draft')]
@@ -76,16 +75,10 @@ class TestUtils(unittest2.TestCase):
 
     def test_searchargs_invalid(self):
 
-        with mock.patch('warnings.warn') as mock_warn:
-            self.assertEqual(searchargs(('state != draft',)),
-                             ([('state', '!=', 'draft')],))
-            mock_warn.assert_called_once_with(
-                "Domain should be a list: ['state != draft']")
-            mock_warn.reset_mock()
-            self.assertEqual(searchargs((('state', '!=', 'draft'),)),
-                             ([('state', '!=', 'draft')],))
-            mock_warn.assert_called_once_with(
-                "Domain should be a list: [('state', '!=', 'draft')]")
+        # No longer recognized as a search domain, since 1.6
+        self.assertEqual(searchargs(('state != draft',)), ('state != draft',))
+        self.assertEqual(searchargs((('state', '!=', 'draft'),)),
+                         (('state', '!=', 'draft'),))
 
         # Operator == is a typo
         self.assertRaises(ValueError, searchargs, (['ham==2'],))

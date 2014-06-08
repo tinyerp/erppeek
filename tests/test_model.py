@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import mock
 from mock import sentinel, ANY
 
 import erppeek
@@ -164,12 +163,9 @@ class TestModel(TestCase):
         )
         self.assertOutput('')
 
-        # UserWarning
-        warn = mock.patch('warnings.warn').start()
+        # No longer supported since 1.6
         FooBar.search('name like Morice')
-        self.assertCalls(OBJ('foo.bar', 'search', domain))
-        warn.assert_called_once_with(
-            "Domain should be a list: ['name like Morice']")
+        self.assertCalls(OBJ('foo.bar', 'search', 'name like Morice'))
 
         FooBar.search(['name like Morice'], missingkey=42)
         self.assertCalls(OBJ('foo.bar', 'search', domain, 0, None, None, None))
@@ -204,11 +200,9 @@ class TestModel(TestCase):
         )
         self.assertOutput('')
 
-        warn = mock.patch('warnings.warn').start()
+        # No longer supported since 1.6
         FooBar.count(searchterm)
-        self.assertCalls(OBJ('foo.bar', 'search_count', domain))
-        warn.assert_called_once_with(
-            "Domain should be a list: ['name like Morice']")
+        self.assertCalls(OBJ('foo.bar', 'search_count', searchterm))
 
         self.assertRaises(TypeError, FooBar.count,
                           [searchterm], limit=2)
@@ -281,11 +275,9 @@ class TestModel(TestCase):
         )
         self.assertOutput('')
 
-        warn = mock.patch('warnings.warn').start()
+        # No longer supported since 1.6
         FooBar.read(searchterm)
-        self.assertCalls(OBJ('foo.bar', 'search', domain), call_read())
-        warn.assert_called_once_with(
-            "Domain should be a list: ['name like Morice']")
+        self.assertCalls(OBJ('foo.bar', 'read', [searchterm], None))
 
         FooBar.read([searchterm], missingkey=42)
         self.assertCalls(OBJ('foo.bar', 'search', domain, 0, None, None, None),
@@ -333,11 +325,8 @@ class TestModel(TestCase):
         )
         self.assertOutput('')
 
-        warn = mock.patch('warnings.warn').start()
-        FooBar.browse(searchterm)
-        self.assertCalls(OBJ('foo.bar', 'search', domain))
-        warn.assert_called_once_with(
-            "Domain should be a list: ['name like Morice']")
+        # No longer supported since 1.6
+        self.assertRaises(AssertionError, FooBar.browse, searchterm)
 
         FooBar.browse([searchterm], limit=2, fields=['birthdate', 'city'])
         FooBar.browse([searchterm], missingkey=42)

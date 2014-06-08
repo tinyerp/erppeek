@@ -20,7 +20,6 @@ import shlex
 import sys
 import time
 import traceback
-import warnings
 try:                    # Python 3
     import configparser
     from threading import current_thread
@@ -273,10 +272,7 @@ def issearchdomain(arg):
       - ``['name = mushroom', 'state != draft']``
       - ``[]``
     """
-    # These ones are supported but discouraged:
-    # - 'state != draft'
-    # - ('state', '!=', 'draft')
-    return isinstance(arg, (list, tuple, basestring)) and not (arg and (
+    return isinstance(arg, list) and not (arg and (
         # Not a list of ids: [1, 2, 3]
         isinstance(arg[0], int_types) or
         # Not a list of ids as str: ['1', '2', '3']
@@ -288,10 +284,7 @@ def searchargs(params, kwargs=None, context=None):
     if not params:
         return ([],)
     domain = params[0]
-    if isinstance(domain, (basestring, tuple)):
-        domain = [domain]
-        warnings.warn('Domain should be a list: %s' % domain)
-    elif not isinstance(domain, list):
+    if not isinstance(domain, list):
         return params
     for (idx, term) in enumerate(domain):
         if isinstance(term, basestring) and term not in DOMAIN_OPERATORS:
@@ -1524,7 +1517,6 @@ def _interact(global_vars, use_pprint=True, usage=USAGE):
                 msg = ''.join(format_exception(exc_type, exc, tb, chain=False))
                 print(msg.strip())
 
-    warnings.simplefilter('always', UserWarning)
     sys.exc_clear() if hasattr(sys, 'exc_clear') else None  # Python 2.x
     # Key UP to avoid an empty line
     Console().interact('\033[A')

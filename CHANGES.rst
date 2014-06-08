@@ -21,6 +21,9 @@ Changelog
   and it accepts a list of options in the first argument, similar to
   ``sys.argv[1:]``.
 
+* Search domains require square brackets.  Usage without square brackets
+  was deprecated since 0.5, with ``UserWarning`` alerts.
+
 
 1.5.3 (2014-05-26)
 ~~~~~~~~~~~~~~~~~~

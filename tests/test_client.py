@@ -345,11 +345,9 @@ class TestClientApi(XmlRpcTestCase):
         )
         self.assertOutput('')
 
-        warn = mock.patch('warnings.warn').start()
+        # No longer supported since 1.6
         search('foo.bar', 'name like Morice')
-        self.assertCalls(OBJ('foo.bar', 'search', domain))
-        warn.assert_called_once_with(
-            "Domain should be a list: ['name like Morice']")
+        self.assertCalls(OBJ('foo.bar', 'search', 'name like Morice'))
 
         search('foo.bar', ['name like Morice'], missingkey=42)
         self.assertCalls(OBJ('foo.bar', 'search', domain, 0, None, None, None))
@@ -385,11 +383,9 @@ class TestClientApi(XmlRpcTestCase):
         )
         self.assertOutput('')
 
-        warn = mock.patch('warnings.warn').start()
+        # No longer supported since 1.6
         count('foo.bar', 'name like Morice')
-        self.assertCalls(OBJ('foo.bar', 'search_count', domain))
-        warn.assert_called_once_with(
-            "Domain should be a list: ['name like Morice']")
+        self.assertCalls(OBJ('foo.bar', 'search_count', 'name like Morice'))
 
         self.assertRaises(TypeError, count)
         self.assertRaises(TypeError, count,
@@ -513,18 +509,16 @@ class TestClientApi(XmlRpcTestCase):
 
     def test_read_invalid(self):
         read = self.client.read
+        self.service.object.execute.side_effect = self.obj_exec
         domain = [('name', 'like', 'Morice')]
 
-        warn = mock.patch('warnings.warn').start()
+        # No longer supported since 1.6
         read('foo.bar', 'name like Morice')
-        warn.assert_called_once_with(
-            "Domain should be a list: ['name like Morice']")
 
         read('foo.bar', ['name like Morice'], missingkey=42)
 
         self.assertCalls(
-            OBJ('foo.bar', 'search', domain),
-            OBJ('foo.bar', 'read', ANY, None),
+            OBJ('foo.bar', 'read', ['name like Morice'], None),
             OBJ('foo.bar', 'search', domain, 0, None, None, None),
             OBJ('foo.bar', 'read', ANY, None))
         self.assertOutput('Ignoring: missingkey = 42\n')
