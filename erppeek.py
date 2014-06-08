@@ -1600,8 +1600,8 @@ def main():
         writer.writerows(data)
 
     if client.connect is not None:
-        # Set the globals()
-        client.connect()
+        if not client.user:
+            client.connect()
         # Enter interactive mode
         _interact(global_vars)
 
