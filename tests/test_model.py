@@ -818,6 +818,37 @@ class TestRecord(TestCase):
         self.assertCalls()
         self.assertOutput('')
 
+    def test_add(self):
+        records1 = self.model('foo.bar').browse([42])
+        records2 = self.model('foo.bar').browse([42])
+        records3 = self.model('foo.bar').browse([13, 17])
+        records4 = self.model('foo.other').browse([4])
+        rec1 = self.model('foo.bar').get(42)
+
+        sum1 = records1 + records2
+        sum2 = records1 + records3
+        sum3 = records3
+        sum3 += records1
+        self.assertIsInstance(sum1, erppeek.RecordList)
+        self.assertIsInstance(sum2, erppeek.RecordList)
+        self.assertIsInstance(sum3, erppeek.RecordList)
+        self.assertEqual(sum1.id, [42, 42])
+        self.assertEqual(sum2.id, [42, 13, 17])
+        self.assertEqual(sum3.id, [13, 17, 42])
+        self.assertEqual(records3.id, [13, 17])
+
+        with self.assertRaises(AssertionError):
+            wrong = records1 + records4
+        with self.assertRaises(AttributeError):
+            wrong = records1 + rec1
+        with self.assertRaises(AttributeError):
+            wrong = records1 + [rec1]
+        with self.assertRaises(TypeError):
+            wrong = rec1 + rec1
+
+        self.assertCalls(OBJ('foo.bar', 'fields_get_keys'))
+        self.assertOutput('')
+
     def test_read_duplicate(self):
         records = self.model('foo.bar').browse([17, 17])
 

@@ -24,6 +24,8 @@ Changelog
 * Search domains require square brackets.  Usage without square brackets
   was deprecated since 0.5, with ``UserWarning`` alerts.
 
+* Implement addition of ``RecordList`` of the same model.
+
 * Drop support for Python 2.5.
 
 

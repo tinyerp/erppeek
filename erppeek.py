@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" erppeek.py -- Odoo / OpenERP command line tool
+""" erppeek.py -- Odoo / OpenERP client library and command line tool
 
 Author: Florent Xicluna
 (derived from a script by Alan Bell)
@@ -1182,6 +1182,11 @@ class RecordList(object):
 
     def __len__(self):
         return len(self.id)
+
+    def __add__(self, other):
+        assert self._model is other._model, 'Model mismatch'
+        ids = self._idnames + other._idnames
+        return RecordList(self._model, ids, self._context)
 
     def read(self, fields=None, context=None):
         """Wrapper for :meth:`Record.read` method."""
