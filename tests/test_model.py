@@ -439,7 +439,7 @@ class TestModel(TestCase):
         rec_null = FooBar.browse(False)
 
         # one2many
-        FooBar.create({'line_ids': False})
+        FooBar.create({'line_ids': rec_null})
         FooBar.create({'line_ids': []})
         FooBar.create({'line_ids': [123, 234]})
         FooBar.create({'line_ids': [(6, 0, [76])]})
@@ -838,13 +838,13 @@ class TestRecord(TestCase):
         self.assertEqual(records3.id, [13, 17])
 
         with self.assertRaises(AssertionError):
-            wrong = records1 + records4
+            records1 + records4
         with self.assertRaises(AttributeError):
-            wrong = records1 + rec1
+            records1 + rec1
         with self.assertRaises(AttributeError):
-            wrong = records1 + [rec1]
+            records1 + [rec1]
         with self.assertRaises(TypeError):
-            wrong = rec1 + rec1
+            rec1 + rec1
 
         self.assertCalls(OBJ('foo.bar', 'fields_get_keys'))
         self.assertOutput('')

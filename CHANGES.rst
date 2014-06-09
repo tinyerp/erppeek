@@ -9,7 +9,7 @@ Changelog
   of printing a message and returning ``None``.
 
 * Switch to local mode when the command line argument points at the
-  server configuration, like ``-c path/toopenerp-server.conf``.
+  server configuration, like ``-c path/to/openerp-server.conf``.
 
 * Local mode compatible with Odoo trunk: support both the old and the
   new API.
