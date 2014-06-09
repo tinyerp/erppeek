@@ -5,8 +5,6 @@
 Author: Florent Xicluna
 (derived from a script by Alan Bell)
 """
-from __future__ import with_statement
-
 import _ast
 import atexit
 import collections
