@@ -45,7 +45,7 @@ except ImportError:     # Python 2
                     for cell in rowlst]
 
 
-__version__ = '1.6a0'
+__version__ = '1.6b1'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_odoo_services']
 

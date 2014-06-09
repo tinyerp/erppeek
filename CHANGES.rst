@@ -2,7 +2,7 @@ Changelog
 ---------
 
 
-1.6a0 (unreleased)
+1.6b1 (2014-06-09)
 ~~~~~~~~~~~~~~~~~~
 
 * When a function or a method fails, raise an ``erppeek.Error`` instead
@@ -26,7 +26,7 @@ Changelog
 
 * Implement addition of ``RecordList`` of the same model.
 
-* Drop support for Python 2.5.
+* Drop compatibility with Python 2.5.
 
 
 1.5.3 (2014-05-26)
