@@ -30,7 +30,7 @@ Key features:
 - simpler syntax for ``domain`` and ``fields``
 - full API accessible on the ``Client`` object for OpenERP 5.0 through Odoo 8.0
 - the module can be imported and used as a library: ``from erppeek import Client``
-- supports Python 3 and Python 2 (>= 2.5)
+- supports Python 3 and Python 2 (>= 2.6)
 
 
 

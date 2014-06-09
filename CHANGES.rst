@@ -24,6 +24,8 @@ Changelog
 * Search domains require square brackets.  Usage without square brackets
   was deprecated since 0.5, with ``UserWarning`` alerts.
 
+* Drop support for Python 2.5.
+
 
 1.5.3 (2014-05-26)
 ~~~~~~~~~~~~~~~~~~
