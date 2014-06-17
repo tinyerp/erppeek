@@ -1007,6 +1007,8 @@ class Model(object):
         or a search domain.
         If it is a single integer, the return value is a :class:`Record`.
         Otherwise, the return value is a :class:`RecordList`.
+        Be careful when passing a list of ids, because an empty list will be
+        considered an empty domain and will find all records in the database.
         """
         context = kwargs.pop('context', None)
         if isinstance(domain, int_types):
