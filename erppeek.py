@@ -569,6 +569,8 @@ class Client(object):
                 return
             client = self
             env = client._environment or client._db
+            if 'client' in global_vars:
+                client.context = global_vars['client'].context
             global_vars['client'] = client
             if hasattr(client._server, 'modules'):
                 global_vars['get_pool'] = get_pool
