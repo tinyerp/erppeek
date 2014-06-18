@@ -5,6 +5,9 @@ Changelog
 1.x (unreleased)
 ~~~~~~~~~~~~~~~~
 
+* New attribute ``Client.context`` to set the default context for
+  all RPC calls.
+
 * Remove a duplicate ``Logged in as ...`` line in interactive mode.
 
 
