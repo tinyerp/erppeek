@@ -1065,7 +1065,7 @@ class Model(object):
         The newly created :class:`Record` is returned.
         """
         if context is None:
-            context = self.context
+            context = self.client.context
         values = self._unbrowse_values(values)
         new_id = self._execute('create', values, context=context)
         return Record(self, new_id, context=context)
