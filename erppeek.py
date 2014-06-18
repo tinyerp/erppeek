@@ -565,9 +565,9 @@ class Client(object):
                 # Safety measure: turn down the previous connection
                 global_vars['client'].reset()
                 client = self.from_config(env, verbose=self.db._verbose)
-            else:
-                client = self
-                env = self._environment or self._db
+                return
+            client = self
+            env = client._environment or client._db
             global_vars['client'] = client
             if hasattr(client._server, 'modules'):
                 global_vars['get_pool'] = get_pool

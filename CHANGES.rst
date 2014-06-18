@@ -2,6 +2,12 @@ Changelog
 ---------
 
 
+1.x (unreleased)
+~~~~~~~~~~~~~~~~
+
+* Remove a duplicate ``Logged in as ...`` line in interactive mode.
+
+
 1.6b1 (2014-06-09)
 ~~~~~~~~~~~~~~~~~~
 
