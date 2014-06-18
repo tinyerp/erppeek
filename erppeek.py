@@ -423,7 +423,7 @@ class Client(object):
         self._report = get_proxy('report')
         self._wizard = get_proxy('wizard') if major_version < '7.0' else None
         self.reset()
-        self.context = {'lang': (os.environ.get('LANG') or 'en_US').split('.')[0]}
+        self.context = None
         if db:
             # Try to login
             self.login(user, password=password, database=db)
@@ -1605,6 +1605,7 @@ def main():
             args.server = ['-c', args.config] if args.config else DEFAULT_URL
         client = Client(args.server, args.db, args.user, args.password,
                         verbose=args.verbose)
+    client.context = {'lang': (os.getenv('LANG') or 'en_US').split('.')[0]}
 
     if args.model and domain and client.user:
         data = client.execute(args.model, 'read', domain, args.fields)
