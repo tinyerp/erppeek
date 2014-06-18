@@ -1284,8 +1284,8 @@ class RecordList(object):
 
         def wrapper(self, *params, **kwargs):
             """Wrapper for client.execute(%r, %r, [...], *params, **kwargs)."""
-            if context is not None:
-                kwargs.setdefault('context', context)
+            if context is not None and 'context' not in kwargs:
+                kwargs['context'] = context
             return self._execute(attr, self.id, *params, **kwargs)
         wrapper.__name__ = attr
         wrapper.__doc__ %= (self._model_name, attr)
@@ -1470,8 +1470,8 @@ class Record(object):
 
         def wrapper(self, *params, **kwargs):
             """Wrapper for client.execute(%r, %r, %d, *params, **kwargs)."""
-            if context is not None:
-                kwargs.setdefault('context', context)
+            if context is not None and 'context' not in kwargs:
+                kwargs['context'] = context
             res = self._execute(attr, [self.id], *params, **kwargs)
             self.refresh()
             if isinstance(res, list) and len(res) == 1:
