@@ -1212,7 +1212,7 @@ class RecordList(object):
                                  fields, order=True, context=context)
             if is_list_of_dict(values):
                 browse_values = self._model._browse_values
-                return [v and browse_values(v) for v in values]
+                return [v and browse_values(v, context) for v in values]
         else:
             values = []
 
@@ -1224,14 +1224,14 @@ class RecordList(object):
                     return RecordList(rel_model, values, context=context)
                 if field['type'] in ('one2many', 'many2many'):
                     rel_model = client.model(field['relation'], False)
-                    return [RecordList(rel_model, v) for v in values]
+                    return [RecordList(rel_model, v, context) for v in values]
                 if field['type'] == 'reference':
                     records = []
                     for value in values:
                         if value:
                             (res_model, res_id) = value.split(',')
                             rel_model = client.model(res_model, False)
-                            value = Record(rel_model, int(res_id))
+                            value = Record(rel_model, int(res_id), context)
                         records.append(value)
                     return records
         return values
@@ -1423,7 +1423,7 @@ class Record(object):
         if default:
             default = self._model._unbrowse_values(default)
         new_id = self._execute('copy', self.id, default, context=context)
-        return Record(self._model, new_id)
+        return Record(self._model, new_id, context=context)
 
     def _send(self, signal):
         """Trigger workflow `signal` for this :class:`Record`."""
