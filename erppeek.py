@@ -569,8 +569,10 @@ class Client(object):
                 return
             client = self
             env = client._environment or client._db
-            if 'client' in global_vars:
-                client.context = global_vars['client'].context
+            try:  # copy the context to the new client
+                client.context = dict(global_vars['client'].context)
+            except (KeyError, TypeError):
+                pass  # client not yet in globals(), or context is None
             global_vars['client'] = client
             if hasattr(client._server, 'modules'):
                 global_vars['get_pool'] = get_pool
