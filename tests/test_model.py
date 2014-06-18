@@ -356,22 +356,31 @@ class TestModel(TestCase):
         self.assertIsInstance(FooBar.get(['name = Morice']), erppeek.Record)
         self.assertIsNone(FooBar.get(['name = Blinky', 'missing = False']))
 
+        # domain matches too many records (2)
+        self.assertRaises(ValueError, FooBar.get, ['name like Morice'])
+
+        # set default context
+        ctx = {'lang': 'en_GB', 'location': 'somewhere'}
+        self.client.context = dict(ctx)
+
         # with context
         value = FooBar.get(['name = Morice'], context={'lang': 'fr_FR'})
         self.assertEqual(type(value), erppeek.Record)
         self.assertIsInstance(value.name, str)
 
-        # domain matches too many records (2)
-        self.assertRaises(ValueError, FooBar.get, ['name like Morice'])
+        # with default context
+        value = FooBar.get(['name = Morice'])
+        self.assertEqual(type(value), erppeek.Record)
 
         self.assertCalls(
             OBJ('foo.bar', 'search', [('name', '=', 'Morice')]),
             OBJ('foo.bar', 'search', [('name', '=', 'Blinky'), ('missing', '=', False)]),
-            OBJ('foo.bar', 'search', [('name', '=', 'Morice')], 0, None, None, {'lang': 'fr_FR'}),
-            OBJ('foo.bar', 'fields_get_keys'),
-            OBJ('foo.bar', 'read', [1003], ['name'], {'lang': 'fr_FR'}),
-            OBJ('foo.bar', 'fields_get'),
             OBJ('foo.bar', 'search', [('name', 'like', 'Morice')]),
+            OBJ('foo.bar', 'search', [('name', '=', 'Morice')], 0, None, None, {'lang': 'fr_FR'}),
+            OBJ('foo.bar', 'fields_get_keys', ctx),
+            OBJ('foo.bar', 'read', [1003], ['name'], {'lang': 'fr_FR'}),
+            OBJ('foo.bar', 'fields_get', ctx),
+            OBJ('foo.bar', 'search', [('name', '=', 'Morice')], 0, None, None, ctx),
         )
         self.assertOutput('')
 
