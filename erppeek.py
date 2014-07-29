@@ -1608,8 +1608,14 @@ def main():
     if client.connect is not None:
         if not client.user:
             client.connect()
-        # Enter interactive mode
-        _interact(global_vars)
 
+        try:
+            # First try IPython
+            import IPython
+            return IPython.start_ipython(user_ns=global_vars, argv=[])
+        except ImportError:
+            # Enter interactive mode
+            _interact(global_vars)
+            
 if __name__ == '__main__':
     main()
