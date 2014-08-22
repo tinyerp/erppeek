@@ -607,8 +607,7 @@ class Client(object):
         By default, `demo` data are not loaded and `lang` is ``en_US``.
         Wait for the thread to finish and login if successful.
         """
-        import openerp as odoo
-        if odoo.release.version_info < (8,):
+        if self.major_version < '8.0':
             thread_id = self.db.create(passwd, database, demo, lang,
                                        user_password)
             progress = 0
