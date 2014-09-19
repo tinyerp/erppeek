@@ -57,7 +57,7 @@ class TestService(XmlRpcTestCase):
         self.assertCalls(call('login', ('aaa',)), 'call().__str__')
         self.assertOutput('')
 
-    def test_service_openerp_client(self, server_version='6.1'):
+    def test_service_openerp_client(self, server_version='8.0'):
         server = 'http://127.0.0.1:8069'
         self.service.side_effect = [server_version, ['newdb'], 1]
         client = erppeek.Client(server, 'newdb', 'usr', 'pss')
@@ -67,7 +67,7 @@ class TestService(XmlRpcTestCase):
         self.assertIsInstance(client.common, erppeek.Service)
         self.assertIsInstance(client._object, erppeek.Service)
         self.assertIsInstance(client._report, erppeek.Service)
-        if server_version == '7.0':
+        if server_version >= '7.0':
             self.assertNotIsInstance(client._wizard, erppeek.Service)
         else:
             self.assertIsInstance(client._wizard, erppeek.Service)
@@ -87,6 +87,9 @@ class TestService(XmlRpcTestCase):
 
     def test_service_openerp_50(self):
         self.test_service_openerp_client(server_version='5.0')
+
+    def test_service_openerp_61(self):
+        self.test_service_openerp_client(server_version='6.1')
 
     def test_service_openerp_70(self):
         self.test_service_openerp_client(server_version='7.0')

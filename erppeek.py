@@ -423,6 +423,7 @@ class Client(object):
         self._report = get_proxy('report')
         self._wizard = get_proxy('wizard') if major_version < '7.0' else None
         self.reset()
+        self.context = None
         if db:
             # Try to login
             self.login(user, password=password, database=db)
@@ -570,6 +571,10 @@ class Client(object):
                 return
             client = self
             env = client._environment or client._db
+            try:  # copy the context to the new client
+                client.context = dict(global_vars['client'].context)
+            except (KeyError, TypeError):
+                pass  # client not yet in globals(), or context is None
             global_vars['client'] = client
             if hasattr(client._server, 'modules'):
                 global_vars['get_pool'] = get_pool
@@ -634,6 +639,8 @@ class Client(object):
         assert isinstance(obj, basestring)
         assert isinstance(method, basestring) and method != 'browse'
         context = kwargs.pop('context', None)
+        if context is None:
+            context = self.context
         ordered = single_id = False
         if method == 'read':
             assert params
@@ -714,6 +721,8 @@ class Client(object):
             if action == 'init' and name != wiz_id:
                 return wiz_id
             datas = {}
+        if context is None:
+            context = self.context
         return self._wizard_execute(wiz_id, datas, action, context)
 
     def _upgrade(self, modules, button):
@@ -1059,6 +1068,8 @@ class Model(object):
 
         The newly created :class:`Record` is returned.
         """
+        if context is None:
+            context = self.client.context
         values = self._unbrowse_values(values)
         new_id = self._execute('create', values, context=context)
         return Record(self, new_id, context=context)
@@ -1086,7 +1097,7 @@ class Model(object):
             elif value and field_type == 'reference':
                 (res_model, res_id) = value.split(',')
                 rel_model = self.client.model(res_model, False)
-                values[key] = Record(rel_model, int(res_id))
+                values[key] = Record(rel_model, int(res_id), context=context)
         return values
 
     def _unbrowse_values(self, values):
@@ -1158,6 +1169,8 @@ class RecordList(object):
             if isinstance(id_, (list, tuple)):
                 ids[index] = id_ = id_[0]
             assert isinstance(id_, int_types), repr(id_)
+        if context is None:
+            context = res_model.client.context
         # Bypass the __setattr__ method
         self.__dict__.update({
             'id': ids,
@@ -1190,7 +1203,7 @@ class RecordList(object):
 
     def read(self, fields=None, context=None):
         """Wrapper for :meth:`Record.read` method."""
-        if context is None and self._context:
+        if context is None:
             context = self._context
 
         client = self._model.client
@@ -1199,7 +1212,7 @@ class RecordList(object):
                                  fields, order=True, context=context)
             if is_list_of_dict(values):
                 browse_values = self._model._browse_values
-                return [v and browse_values(v) for v in values]
+                return [v and browse_values(v, context) for v in values]
         else:
             values = []
 
@@ -1211,14 +1224,14 @@ class RecordList(object):
                     return RecordList(rel_model, values, context=context)
                 if field['type'] in ('one2many', 'many2many'):
                     rel_model = client.model(field['relation'], False)
-                    return [RecordList(rel_model, v) for v in values]
+                    return [RecordList(rel_model, v, context) for v in values]
                 if field['type'] == 'reference':
                     records = []
                     for value in values:
                         if value:
                             (res_model, res_id) = value.split(',')
                             rel_model = client.model(res_model, False)
-                            value = Record(rel_model, int(res_id))
+                            value = Record(rel_model, int(res_id), context)
                         records.append(value)
                     return records
         return values
@@ -1227,7 +1240,7 @@ class RecordList(object):
         """Wrapper for :meth:`Record.write` method."""
         if not self.id:
             return True
-        if context is None and self._context:
+        if context is None:
             context = self._context
         values = self._model._unbrowse_values(values)
         rv = self._execute('write', self.id, values, context=context)
@@ -1237,7 +1250,7 @@ class RecordList(object):
         """Wrapper for :meth:`Record.unlink` method."""
         if not self.id:
             return True
-        if context is None and self._context:
+        if context is None:
             context = self._context
         rv = self._execute('unlink', self.id, context=context)
         return rv
@@ -1271,8 +1284,8 @@ class RecordList(object):
 
         def wrapper(self, *params, **kwargs):
             """Wrapper for client.execute(%r, %r, [...], *params, **kwargs)."""
-            if context:
-                kwargs.setdefault('context', context)
+            if context is not None and 'context' not in kwargs:
+                kwargs['context'] = context
             return self._execute(attr, self.id, *params, **kwargs)
         wrapper.__name__ = attr
         wrapper.__doc__ %= (self._model_name, attr)
@@ -1304,6 +1317,8 @@ class Record(object):
             (res_id, res_name) = res_id
             self.__dict__['_name'] = res_name
         assert isinstance(res_id, int_types), repr(res_id)
+        if context is None:
+            context = res_model.client.context
         # Bypass the __setattr__ method
         self.__dict__.update({
             'id': res_id,
@@ -1356,7 +1371,7 @@ class Record(object):
         The argument `fields` accepts different kinds of values.
         See :meth:`Client.read` for details.
         """
-        if context is None and self._context:
+        if context is None:
             context = self._context
         rv = self._model.read(self.id, fields, context=context)
         if isinstance(rv, dict):
@@ -1371,6 +1386,8 @@ class Record(object):
         Return a dictionary of values.
         See :meth:`Client.perm_read` for details.
         """
+        if context is None:
+            context = self._context
         rv = self._execute('perm_read', [self.id], context=context)
         return rv[0] if rv else None
 
@@ -1380,7 +1397,7 @@ class Record(object):
         `values` is a dictionary of values.
         See :meth:`Model.create` for details.
         """
-        if context is None and self._context:
+        if context is None:
             context = self._context
         values = self._model._unbrowse_values(values)
         rv = self._execute('write', [self.id], values, context=context)
@@ -1389,7 +1406,7 @@ class Record(object):
 
     def unlink(self, context=None):
         """Delete the current :class:`Record` from the database."""
-        if context is None and self._context:
+        if context is None:
             context = self._context
         rv = self._execute('unlink', [self.id], context=context)
         self.refresh()
@@ -1401,12 +1418,12 @@ class Record(object):
         The optional argument `default` is a mapping which overrides some
         values of the new record.
         """
-        if context is None and self._context:
+        if context is None:
             context = self._context
         if default:
             default = self._model._unbrowse_values(default)
         new_id = self._execute('copy', self.id, default, context=context)
-        return Record(self._model, new_id)
+        return Record(self._model, new_id, context=context)
 
     def _send(self, signal):
         """Trigger workflow `signal` for this :class:`Record`."""
@@ -1453,8 +1470,8 @@ class Record(object):
 
         def wrapper(self, *params, **kwargs):
             """Wrapper for client.execute(%r, %r, %d, *params, **kwargs)."""
-            if context:
-                kwargs.setdefault('context', context)
+            if context is not None and 'context' not in kwargs:
+                kwargs['context'] = context
             res = self._execute(attr, [self.id], *params, **kwargs)
             self.refresh()
             if isinstance(res, list) and len(res) == 1:
@@ -1592,10 +1609,10 @@ def main():
             args.server = ['-c', args.config] if args.config else DEFAULT_URL
         client = Client(args.server, args.db, args.user, args.password,
                         verbose=args.verbose)
+    client.context = {'lang': (os.getenv('LANG') or 'en_US').split('.')[0]}
 
     if args.model and domain and client.user:
-        context = {'lang': (os.environ.get('LANG') or 'en_US').split('.')[0]}
-        data = client.execute(args.model, 'read', domain, args.fields, context)
+        data = client.execute(args.model, 'read', domain, args.fields)
         if not args.fields:
             args.fields = ['id']
             if data:
