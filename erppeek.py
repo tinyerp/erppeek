@@ -442,7 +442,7 @@ class Client(object):
         client.login(user, password=password, database=db)
         return client
 
-    def reset(self, force=False):
+    def reset(self):
         self.user = self._environment = None
         self._db, self._models = (), {}
         self._execute = self._exec_workflow = None
