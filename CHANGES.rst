@@ -13,6 +13,8 @@ Changelog
 * Remove the ``search+name_get`` undocumented feature which has
   wrong behavior when applied to an empty ``RecordList``.
 
+* Do not prevent login if access to ``Client.db.list()`` is denied.
+
 
 1.6b1 (2014-06-09)
 ~~~~~~~~~~~~~~~~~~
