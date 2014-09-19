@@ -656,10 +656,8 @@ class Client(object):
                 return ids
             if len(params) > 1:
                 params = (ids,) + params[1:]
-            elif method == 'read':
-                params = (ids, kwargs.pop('fields', None))
             else:
-                params = (ids,)
+                params = (ids, kwargs.pop('fields', None))
         elif method == 'search':
             # Accept keyword arguments for the search method
             params = searchargs(params, kwargs, context)
