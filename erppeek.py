@@ -635,7 +635,7 @@ class Client(object):
         assert isinstance(method, basestring) and method != 'browse'
         context = kwargs.pop('context', None)
         ordered = single_id = False
-        if method in ('read', 'name_get'):
+        if method == 'read':
             assert params
             if issearchdomain(params[0]):
                 # Combine search+read

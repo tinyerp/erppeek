@@ -7,6 +7,9 @@ Changelog
 
 * Remove a duplicate ``Logged in as ...`` line in interactive mode.
 
+* Remove the ``search+name_get`` undocumented feature which has
+  wrong behavior when applied to an empty ``RecordList``.
+
 
 1.6b1 (2014-06-09)
 ~~~~~~~~~~~~~~~~~~
