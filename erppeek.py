@@ -1553,7 +1553,7 @@ def _interact(global_vars, use_pprint=True, usage=USAGE):
     Console().interact('\033[A')
 
 
-def main():
+def main(interact=_interact):
     description = ('Inspect data on Odoo objects.  Use interactively '
                    'or query a model (-m) and pass search terms or '
                    'ids as positional parameters after the options.')
@@ -1626,7 +1626,7 @@ def main():
         if not client.user:
             client.connect()
         # Enter interactive mode
-        _interact(global_vars)
+        return interact(global_vars) if interact else global_vars
 
 if __name__ == '__main__':
     main()

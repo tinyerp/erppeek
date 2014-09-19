@@ -8,6 +8,9 @@ Changelog
 * New attribute ``Client.context`` to set the default context for
   all RPC calls.
 
+* Return the interactive namespace with ``main(interact=False)``.
+  It helps to integrate with third-party libraries, such as IPython.
+
 * Remove a duplicate ``Logged in as ...`` line in interactive mode.
 
 * Remove the ``search+name_get`` undocumented feature which has
