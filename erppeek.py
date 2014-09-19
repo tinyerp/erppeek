@@ -436,8 +436,9 @@ class Client(object):
         See :func:`read_config` for details of the configuration file format.
         """
         (server, db, user, password) = read_config(environment)
-        client = cls(server, db, user, password, verbose=verbose)
-        client._environment = environment
+        client = cls(server, verbose=verbose)
+        (client._db, client._environment) = (db, environment)
+        client.login(user, password=password, database=db)
         return client
 
     def reset(self):
