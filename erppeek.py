@@ -437,11 +437,11 @@ class Client(object):
         """
         (server, db, user, password) = read_config(environment)
         client = cls(server, verbose=verbose)
-        (client._db, client._environment) = (db, environment)
+        client._environment = environment
         client.login(user, password=password, database=db)
         return client
 
-    def reset(self):
+    def reset(self, force=False):
         self.user = self._environment = None
         self._db, self._models = (), {}
         self._execute = self._exec_workflow = None
@@ -471,7 +471,8 @@ class Client(object):
                 self._db = database
             raise Error('Invalid username or password')
         if self._db != database:
-            self.reset()
+            if self._db:
+                self.reset()
             self._db = database
         self.user = user
 
