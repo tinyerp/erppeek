@@ -460,20 +460,20 @@ class Client(object):
             if database not in dbs:
                 raise Error("Database '%s' does not exist: %s" %
                             (database, dbs))
+            if not self._db:
+                self._db = database
+            # Used for logging, copied from openerp.sql_db.db_connect
+            current_thread().dbname = database
         elif self._db:
             database = self._db
         else:
             raise Error('Not connected')
-        # Used for logging, copied from openerp.sql_db.db_connect
-        current_thread().dbname = database
         (uid, password) = self._auth(database, user, password)
         if not uid:
-            if not self._db:
-                self._db = database
+            current_thread().dbname = self._db
             raise Error('Invalid username or password')
         if self._db != database:
-            if self._db:
-                self.reset()
+            self.reset()
             self._db = database
         self.user = user
 
