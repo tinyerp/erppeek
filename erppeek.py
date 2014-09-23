@@ -90,24 +90,27 @@ _fields_re = re.compile(r'(?:[^%]|^)%\(([^)]+)\)')
 
 # Published object methods
 _methods = {
-    'db': ['create', 'drop', 'dump', 'restore', 'rename',
-           'get_progress', 'list', 'list_lang',
+    'db': ['create_database', 'duplicate_database', 'db_exist',
+           'drop', 'dump', 'restore', 'rename', 'list', 'list_lang',
            'change_admin_password', 'server_version', 'migrate_databases'],
-    'common': ['about', 'login', 'timezone_get', 'get_server_environment',
-               'login_message', 'check_connectivity'],
-    'object': ['execute', 'exec_workflow'],
-    'report': ['report', 'report_get'],
-    'wizard': ['execute', 'create'],
+    'common': ['about', 'login', 'timezone_get',
+               'authenticate', 'version', 'set_loglevel'],
+    'object': ['execute', 'execute_kw', 'exec_workflow'],
+    'report': ['render_report', 'report', 'report_get'],
 }
-_methods_6_1 = {
-    'db': ['create_database', 'db_exist'],
-    'common': ['get_stats', 'list_http_services', 'version',
-               'authenticate', 'get_os_time', 'get_sqlcount'],
-    'object': ['execute_kw'],
-    'report': ['render_report'],
+# New 6.1: (db) create_database db_exist,
+#          (common) authenticate version set_loglevel
+#          (object) execute_kw,  (report) render_report
+# New 7.0: (db) duplicate_database
+
+_obsolete_methods = {
+    'db': ['create', 'get_progress'],                   # < 8.0
+    'common': ['check_connectivity', 'get_available_updates', 'get_os_time',
+               'get_migration_scripts', 'get_server_environment',
+               'get_sqlcount', 'get_stats',
+               'list_http_services', 'login_message'],  # < 8.0
+    'wizard': ['execute', 'create'],                    # < 7.0
 }
-# Hidden methods:
-#  - common: get_available_updates, get_migration_scripts, set_loglevel
 _cause_message = ("\nThe above exception was the direct cause "
                   "of the following exception:\n\n")
 
@@ -405,23 +408,22 @@ class Client(object):
             appname = os.path.basename(__file__).rstrip('co')
             server = start_odoo_services(server, appname=appname)
         self._server = server
-        major_version = None
+        float_version = 999
 
         def get_proxy(name):
-            if major_version in ('5.0', None) or name == 'wizard':
-                methods = _methods[name]
-            else:
-                # Only for Odoo and OpenERP >= 6
-                methods = _methods[name] + _methods_6_1[name]
+            methods = list(_methods[name]) if (name in _methods) else []
+            if float_version < 8.0:
+                methods += _obsolete_methods.get(name) or ()
             return Service(server, name, methods, verbose=verbose)
         self.server_version = ver = get_proxy('db').server_version()
-        self.major_version = major_version = '.'.join(ver.split('.', 2)[:2])
+        self.major_version = re.match('\d+\.?\d*', ver).group()
+        float_version = float(self.major_version)
         # Create the XML-RPC proxies
         self.db = get_proxy('db')
         self.common = get_proxy('common')
         self._object = get_proxy('object')
         self._report = get_proxy('report')
-        self._wizard = get_proxy('wizard') if major_version < '7.0' else None
+        self._wizard = get_proxy('wizard') if float_version < 7.0 else None
         self.reset()
         self.context = None
         if db:

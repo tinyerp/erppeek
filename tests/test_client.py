@@ -72,15 +72,16 @@ class TestService(XmlRpcTestCase):
         else:
             self.assertIsInstance(client._wizard, erppeek.Service)
 
-        self.assertIn('/xmlrpc/db', str(client.db.create))
-        if server_version == '5.0':
+        self.assertIn('/xmlrpc/db', str(client.db.create_database))
+        self.assertIn('/xmlrpc/db', str(client.db.db_exist))
+        if server_version == '8.0':
             self.assertRaises(AttributeError, getattr,
-                              client.db, 'create_database')
+                              client.db, 'create')
             self.assertRaises(AttributeError, getattr,
-                              client.db, 'db_exist')
+                              client.db, 'get_progress')
         else:
-            self.assertIn('/xmlrpc/db', str(client.db.create_database))
-            self.assertIn('/xmlrpc/db', str(client.db.db_exist))
+            self.assertIn('/xmlrpc/db', str(client.db.create))
+            self.assertIn('/xmlrpc/db', str(client.db.get_progress))
 
         self.assertCalls(ANY, ANY, ANY)
         self.assertOutput('')
