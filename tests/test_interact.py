@@ -31,6 +31,7 @@ class TestInteract(XmlRpcTestCase):
         mock.patch('erppeek.Client._set_interactive', wraps=erppeek.Client._set_interactive).start()
         self.interact = mock.patch('erppeek._interact', wraps=erppeek._interact).start()
         self.infunc = mock.patch('code.InteractiveConsole.raw_input').start()
+        mock.patch('erppeek.main.__defaults__', (self.interact,)).start()
 
     def test_main(self):
         env_tuple = ('http://127.0.0.1:8069', 'database', 'usr', None)

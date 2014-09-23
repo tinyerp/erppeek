@@ -13,6 +13,9 @@ Changelog
 * Use blocking RPC call in ``Client.create_database``.  Asynchronous
   method is removed in Odoo.
 
+* Return the interactive namespace with ``main(interact=False)``.
+  It helps to integrate with third-party libraries, such as IPython.
+
 * Remove a duplicate ``Logged in as ...`` line in interactive mode.
 
 * Remove the ``search+name_get`` undocumented feature which has
