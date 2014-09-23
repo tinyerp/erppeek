@@ -5,8 +5,13 @@ Changelog
 1.x (unreleased)
 ~~~~~~~~~~~~~~~~
 
+* Compatible with Odoo 8.0.
+
 * New attribute ``Client.context`` to set the default context for
-  all RPC calls.
+  high-level ``Model`` and ``Record`` methods.
+
+* Use blocking RPC call in ``Client.create_database``.  Asynchronous
+  method is removed in Odoo.
 
 * Remove a duplicate ``Logged in as ...`` line in interactive mode.
 

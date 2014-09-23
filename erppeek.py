@@ -616,18 +616,19 @@ class Client(object):
         By default, `demo` data are not loaded and `lang` is ``en_US``.
         Wait for the thread to finish and login if successful.
         """
-        thread_id = self.db.create(passwd, database, demo, lang, user_password)
-        progress = 0
-        try:
-            while progress < 1:
-                time.sleep(3)
-                progress, users = self.db.get_progress(passwd, thread_id)
-            # [1.0, [{'login': 'admin', 'password': 'admin',
-            #         'name': 'Administrator'}]]
-            self.login(users[0]['login'], users[0]['password'],
-                       database=database)
-        except KeyboardInterrupt:
-            print({'id': thread_id, 'progress': progress})
+        if self.major_version in ('5.0', '6.0'):
+            thread_id = self.db.create(passwd, database, demo, lang, user_password)
+            progress = 0
+            try:
+                while progress < 1:
+                    time.sleep(3)
+                    progress, users = self.db.get_progress(passwd, thread_id)
+            except KeyboardInterrupt:
+                return {'id': thread_id, 'progress': progress}
+        else:
+            self.db.create_database(passwd, database, demo, lang,
+                                    user_password)
+        return self.login('admin', user_password, database=database)
 
     def execute(self, obj, method, *params, **kwargs):
         """Wrapper around ``object.execute`` RPC method.

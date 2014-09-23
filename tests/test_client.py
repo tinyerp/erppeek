@@ -295,24 +295,18 @@ class TestClientApi(XmlRpcTestCase):
 
     def test_create_database(self):
         create_database = self.client.create_database
-        mock.patch('time.sleep').start()
-        self.client.db.create.return_value = ID1
-        self.client.db.get_progress.return_value = \
-            [1, [{'login': 'LL', 'password': 'PP'}]]
         self.client.db.list.side_effect = [['db1'], ['db2']]
 
         create_database('abc', 'db1')
         create_database('xyz', 'db2', user_password='secret', lang='fr_FR')
 
         self.assertCalls(
-            call.db.create('abc', 'db1', False, 'en_US', 'admin'),
-            call.db.get_progress('abc', ID1),
+            call.db.create_database('abc', 'db1', False, 'en_US', 'admin'),
             call.db.list(),
-            call.common.login('db1', 'LL', 'PP'),
-            call.db.create('xyz', 'db2', False, 'fr_FR', 'secret'),
-            call.db.get_progress('xyz', ID1),
+            call.common.login('db1', 'admin', 'admin'),
+            call.db.create_database('xyz', 'db2', False, 'fr_FR', 'secret'),
             call.db.list(),
-            call.common.login('db2', 'LL', 'PP'),
+            call.common.login('db2', 'admin', 'secret'),
         )
         self.assertOutput('')
 
@@ -741,6 +735,29 @@ class TestClientApi50(TestClientApi):
         # raise self.skipTest('Not supported with OpenERP 5')
         pass
     test_execute_kw = test_render_report = _skip
+
+    def test_create_database(self):
+        create_database = self.client.create_database
+        mock.patch('time.sleep').start()
+        self.client.db.create.return_value = ID1
+        self.client.db.get_progress.return_value = \
+            [1, [{'login': 'admin', 'password': 'PP'}]]
+        self.client.db.list.side_effect = [['db1'], ['db2']]
+
+        create_database('abc', 'db1')
+        create_database('xyz', 'db2', user_password='secret', lang='fr_FR')
+
+        self.assertCalls(
+            call.db.create('abc', 'db1', False, 'en_US', 'admin'),
+            call.db.get_progress('abc', ID1),
+            call.db.list(),
+            call.common.login('db1', 'admin', 'admin'),
+            call.db.create('xyz', 'db2', False, 'fr_FR', 'secret'),
+            call.db.get_progress('xyz', ID1),
+            call.db.list(),
+            call.common.login('db2', 'admin', 'secret'),
+        )
+        self.assertOutput('')
 
     def _module_upgrade(self, button='upgrade'):
         self.service.object.execute.side_effect = [
