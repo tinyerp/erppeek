@@ -458,10 +458,14 @@ class Client(object):
         If the `password` is not available, it will be asked.
         """
         if database:
-            dbs = self.db.list()
-            if database not in dbs:
-                raise Error("Database '%s' does not exist: %s" %
-                            (database, dbs))
+            try:
+                dbs = self.db.list()
+            except Fault:
+                pass    # AccessDenied: simply ignore this check
+            else:
+                if database not in dbs:
+                    raise Error("Database '%s' does not exist: %s" %
+                                (database, dbs))
             if not self._db:
                 self._db = database
             # Used for logging, copied from openerp.sql_db.db_connect
