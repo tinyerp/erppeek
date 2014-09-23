@@ -639,8 +639,6 @@ class Client(object):
         assert isinstance(obj, basestring)
         assert isinstance(method, basestring) and method != 'browse'
         context = kwargs.pop('context', None)
-        if context is None:
-            context = self.context
         ordered = single_id = False
         if method == 'read':
             assert params
@@ -1019,7 +1017,7 @@ class Model(object):
         Be careful when passing a list of ids, because an empty list will be
         considered an empty domain and will find all records in the database.
         """
-        context = kwargs.pop('context', None)
+        context = kwargs.pop('context', self.client.context)
         if isinstance(domain, int_types):
             assert not params and not kwargs
             return Record(self, domain, context=context)
@@ -1041,6 +1039,8 @@ class Model(object):
         :class:`Record` or None.  If multiple records are found,
         a ``ValueError`` is raised.
         """
+        if context is None:
+            context = self.client.context
         if isinstance(domain, int_types):   # a single id
             return Record(self, domain, context=context)
         if isinstance(domain, basestring):  # lookup the xml_id
@@ -1145,6 +1145,8 @@ class Model(object):
 
         def wrapper(self, *params, **kwargs):
             """Wrapper for client.execute(%r, %r, *params, **kwargs)."""
+            if 'context' not in kwargs:
+                kwargs['context'] = self.client.context
             return self._execute(attr, *params, **kwargs)
         wrapper.__name__ = attr
         wrapper.__doc__ %= (self._name, attr)

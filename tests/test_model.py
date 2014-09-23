@@ -371,16 +371,18 @@ class TestModel(TestCase):
         # with default context
         value = FooBar.get(['name = Morice'])
         self.assertEqual(type(value), erppeek.Record)
+        self.assertIsInstance(value.name, str)
 
         self.assertCalls(
             OBJ('foo.bar', 'search', [('name', '=', 'Morice')]),
             OBJ('foo.bar', 'search', [('name', '=', 'Blinky'), ('missing', '=', False)]),
             OBJ('foo.bar', 'search', [('name', 'like', 'Morice')]),
             OBJ('foo.bar', 'search', [('name', '=', 'Morice')], 0, None, None, {'lang': 'fr_FR'}),
-            OBJ('foo.bar', 'fields_get_keys', ctx),
+            OBJ('foo.bar', 'fields_get_keys'),
             OBJ('foo.bar', 'read', [1003], ['name'], {'lang': 'fr_FR'}),
-            OBJ('foo.bar', 'fields_get', ctx),
+            OBJ('foo.bar', 'fields_get'),
             OBJ('foo.bar', 'search', [('name', '=', 'Morice')], 0, None, None, ctx),
+            OBJ('foo.bar', 'read', [1003], ['name'], ctx),
         )
         self.assertOutput('')
 

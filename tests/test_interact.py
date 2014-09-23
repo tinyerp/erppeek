@@ -124,13 +124,13 @@ class TestInteract(XmlRpcTestCase):
         expected_calls = self.startup_calls + (
             ('common.login', 'database', 'usr', 'passwd'),
             usr17 + ('ir.model', 'search',
-                     [('model', 'like', 'res.company')], 0, None, None, cx),
-            usr17 + ('ir.model', 'read', 42, ('model',), cx),
+                     [('model', 'like', 'res.company')]),
+            usr17 + ('ir.model', 'read', 42, ('model',)),
             usr17 + ('ir.model.access', 'check', 'res.users', 'write'),
             ('common.login', 'database', 'gaspard', 'x'),
             usr17 + ('ir.model', 'search',
-                     [('model', 'like', 'res.company')], 0, None, None, cx),
-            usr17 + ('ir.model', 'read', 42, ('model',), cx),
+                     [('model', 'like', 'res.company')]),
+            usr17 + ('ir.model', 'read', 42, ('model',)),
         )
         self.assertCalls(*expected_calls)
         outlines = self.stdout.popvalue().splitlines()
