@@ -2,7 +2,7 @@ Changelog
 ---------
 
 
-1.x (unreleased)
+1.6 (2014-09-23)
 ~~~~~~~~~~~~~~~~
 
 * Compatible with Odoo 8.0.
