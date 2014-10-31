@@ -259,6 +259,9 @@ def start_odoo_services(options=None, appname=None):
 
         def close_all():
             for db in odoo.modules.registry.RegistryManager.registries:
+                # Since Odoo 8.0 cc4fba60 db is a Registry
+                if isinstance(db, odoo.modules.registry.Registry):
+                    db = db.db_name
                 odoo.sql_db.close_db(db)
         atexit.register(close_all)
 
