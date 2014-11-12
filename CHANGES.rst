@@ -8,6 +8,8 @@ Changelog
 * Support using ``--env`` and ``--user`` together to connect with a
   different user.
 
+* Adapt for Odoo 8.0 after change ``cc4fba6`` on October 2014.
+
 
 1.6 (2014-09-23)
 ~~~~~~~~~~~~~~~~

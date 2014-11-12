@@ -253,15 +253,13 @@ def start_odoo_services(options=None, appname=None):
             odoo.service.start_internal()
         else:   # Odoo v8
             try:
-                odoo.api.Environment._local.environments = odoo.api.Environments()
+                odoo.api.Environment._local.environments = \
+                    odoo.api.Environments()
             except AttributeError:
                 pass
 
         def close_all():
-            for db in odoo.modules.registry.RegistryManager.registries:
-                # Since Odoo 8.0 cc4fba60 db is a Registry
-                if isinstance(db, odoo.modules.registry.Registry):
-                    db = db.db_name
+            for db in odoo.modules.registry.RegistryManager.registries.keys():
                 odoo.sql_db.close_db(db)
         atexit.register(close_all)
 
