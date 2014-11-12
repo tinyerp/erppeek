@@ -434,17 +434,19 @@ class Client(object):
             self.login(user, password=password, database=db)
 
     @classmethod
-    def from_config(cls, environment, verbose=False):
+    def from_config(cls, environment, user=None, verbose=False):
         """Create a connection to a defined environment.
 
         Read the settings from the section ``[environment]`` in the
         ``erppeek.ini`` file and return a connected :class:`Client`.
         See :func:`read_config` for details of the configuration file format.
         """
-        (server, db, user, password) = read_config(environment)
+        (server, db, conf_user, password) = read_config(environment)
+        if user and user != conf_user:
+            password = None
         client = cls(server, verbose=verbose)
         client._environment = environment
-        client.login(user, password=password, database=db)
+        client.login(user or conf_user, password=password, database=db)
         return client
 
     def reset(self):
@@ -1586,7 +1588,7 @@ def main(interact=_interact):
         '--server', default=None,
         help='full URL to the XML-RPC server (default: %s)' % DEFAULT_URL)
     parser.add_option('-d', '--db', default=DEFAULT_DB, help='database')
-    parser.add_option('-u', '--user', default=DEFAULT_USER, help='username')
+    parser.add_option('-u', '--user', default=None, help='username')
     parser.add_option(
         '-p', '--password', default=None,
         help='password, or it will be requested on login')
@@ -1615,10 +1617,12 @@ def main(interact=_interact):
         print(USAGE)
 
     if args.env:
-        client = Client.from_config(args.env, verbose=args.verbose)
+        client = Client.from_config(args.env, user=args.user, verbose=args.verbose)
     else:
         if not args.server:
             args.server = ['-c', args.config] if args.config else DEFAULT_URL
+        if not args.user:
+            args.user = DEFAULT_USER
         client = Client(args.server, args.db, args.user, args.password,
                         verbose=args.verbose)
     client.context = {'lang': (os.getenv('LANG') or 'en_US').split('.')[0]}
