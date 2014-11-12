@@ -121,7 +121,6 @@ class TestInteract(XmlRpcTestCase):
         erppeek.main()
 
         usr17 = ('object.execute', 'database', 17, 'passwd')
-        cx = {'lang': 'fr_FR'}
         expected_calls = self.startup_calls + (
             ('common.login', 'database', 'usr', 'passwd'),
             usr17 + ('ir.model', 'search',
