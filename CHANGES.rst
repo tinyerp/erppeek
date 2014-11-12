@@ -2,8 +2,8 @@ Changelog
 ---------
 
 
-1.x (unreleased)
-~~~~~~~~~~~~~~~~
+1.6.1 (2014-11-12)
+~~~~~~~~~~~~~~~~~~
 
 * Support using ``--env`` and ``--user`` together to connect with a
   different user.
