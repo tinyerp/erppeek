@@ -626,7 +626,8 @@ class Client(object):
         Wait for the thread to finish and login if successful.
         """
         if self.major_version in ('5.0', '6.0'):
-            thread_id = self.db.create(passwd, database, demo, lang, user_password)
+            thread_id = self.db.create(passwd, database, demo, lang,
+                                       user_password)
             progress = 0
             try:
                 while progress < 1:
@@ -1617,7 +1618,8 @@ def main(interact=_interact):
         print(USAGE)
 
     if args.env:
-        client = Client.from_config(args.env, user=args.user, verbose=args.verbose)
+        client = Client.from_config(args.env,
+                                    user=args.user, verbose=args.verbose)
     else:
         if not args.server:
             args.server = ['-c', args.config] if args.config else DEFAULT_URL
