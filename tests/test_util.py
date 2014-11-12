@@ -73,6 +73,15 @@ class TestUtils(unittest2.TestCase):
         self.assertEqual(searchargs((['port_nr != 122-2'],)),
                          ([('port_nr', '!=', '122-2')],))
 
+    def test_searchargs_digits(self):
+        # Do not convert digits to octal
+        self.assertEqual(searchargs((['code = 042'],)), ([('code', '=', '042')],))
+        self.assertEqual(searchargs((['code > 042'],)), ([('code', '>', '042')],))
+        self.assertEqual(searchargs((['code > 420'],)), ([('code', '>', 420)],))
+
+        # Standard octal notation is supported
+        self.assertEqual(searchargs((['code = 0o42'],)), ([('code', '=', 34)],))
+
     def test_searchargs_invalid(self):
 
         # No longer recognized as a search domain, since 1.6

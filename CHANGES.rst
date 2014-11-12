@@ -10,6 +10,8 @@ Changelog
 
 * Adapt for Odoo 8.0 after change ``cc4fba6`` on October 2014.
 
+* Do not interpret digits with leading ``0`` as octal in search domain.
+
 
 1.6 (2014-09-23)
 ~~~~~~~~~~~~~~~~

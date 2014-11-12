@@ -135,8 +135,10 @@ def _convert(node, _consts={'None': None, 'True': True, 'False': False}):
     raise ValueError('malformed or disallowed expression')
 
 
-def literal_eval(expression):
+def literal_eval(expression, _octal_digits=frozenset('01234567')):
     node = compile(expression, '<unknown>', 'eval', _ast.PyCF_ONLY_AST)
+    if expression[:1] == '0' and expression[1:2] in _octal_digits:
+        raise SyntaxError('unsupported octal notation')
     return _convert(node.body)
 
 
