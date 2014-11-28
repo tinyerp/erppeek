@@ -2,6 +2,13 @@ Changelog
 ---------
 
 
+1.x (unreleased)
+~~~~~~~~~~~~~~~~
+
+* Do not hang when the ``Client`` constructor receives invalid
+  arguments.
+
+
 1.6.1 (2014-11-12)
 ~~~~~~~~~~~~~~~~~~
 

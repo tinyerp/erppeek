@@ -187,6 +187,13 @@ class TestCreateClient(XmlRpcTestCase):
         self.assertEqual(read_config.call_count, 1)
         self.assertEqual(getpass.call_count, 1)
 
+    def test_create_invalid(self):
+        # Without mock
+        self.service.stop()
+
+        self.assertRaises(EnvironmentError, erppeek.Client, 'dsadas')
+        self.assertOutput('')
+
 
 class TestSampleSession(XmlRpcTestCase):
     server_version = '6.1'

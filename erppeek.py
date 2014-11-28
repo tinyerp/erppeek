@@ -329,6 +329,7 @@ class Service(object):
     instance to list them.
     """
     _rpcpath = ''
+    _methods = ()
 
     def __init__(self, server, endpoint, methods, verbose=False):
         if isinstance(server, basestring):
