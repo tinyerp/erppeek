@@ -243,9 +243,9 @@ def start_odoo_services(options=None, appname=None):
     import openerp as odoo
     odoo._api_v7 = odoo.release.version_info < (8,)
     if not (odoo._api_v7 and odoo.osv.osv.service):
-        os.environ['TZ'] = 'UTC'
+        os.putenv('TZ', 'UTC')
         if appname is not None:
-            os.environ['PGAPPNAME'] = appname
+            os.putenv('PGAPPNAME', appname)
         odoo.tools.config.parse_config(options or [])
         if odoo.release.version_info < (7,):
             odoo.netsvc.init_logger()
@@ -1547,7 +1547,7 @@ def _interact(global_vars, use_pprint=True, usage=USAGE):
         pass
     else:
         if rl.get_history_length() < 0:
-            rl.set_history_length(int(os.environ.get('HISTSIZE', 500)))
+            rl.set_history_length(int(os.getenv('HISTSIZE', 500)))
         # better append instead of replace?
         atexit.register(rl.write_history_file, HIST_FILE)
 
