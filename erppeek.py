@@ -115,6 +115,16 @@ _cause_message = ("\nThe above exception was the direct cause "
                   "of the following exception:\n\n")
 
 
+def _memoize(inst, attr, value, doc_values=None):
+    if hasattr(value, '__get__') and not hasattr(value, '__self__'):
+        value.__name__ = attr
+        if doc_values is not None:
+            value.__doc__ %= doc_values
+        value = value.__get__(inst, type(inst))
+    inst.__dict__[attr] = value
+    return value
+
+
 # Simplified ast.literal_eval which does not parse operators
 def _convert(node, _consts={'None': None, 'True': True, 'False': False}):
     if isinstance(node, _ast.Str):
@@ -382,8 +392,7 @@ class Service(object):
                 return res
         else:
             wrapper = lambda s, *args: s._dispatch(name, args)
-        wrapper.__name__ = name
-        return wrapper.__get__(self, type(self))
+        return _memoize(self, name, wrapper)
 
     def __del__(self):
         if hasattr(self, 'close'):
@@ -942,9 +951,7 @@ class Client(object):
 
     def __getattr__(self, method):
         if not method.islower():
-            rv = self.model(lowercase(method))
-            self.__dict__[method] = rv
-            return rv
+            return _memoize(self, method, self.model(lowercase(method)))
         if method.startswith('_'):
             errmsg = "'Client' object has no attribute %r" % method
             raise AttributeError(errmsg)
@@ -953,9 +960,7 @@ class Client(object):
         def wrapper(self, obj, *params, **kwargs):
             """Wrapper for client.execute(obj, %r, *params, **kwargs)."""
             return self.execute(obj, method, *params, **kwargs)
-        wrapper.__name__ = method
-        wrapper.__doc__ %= method
-        return wrapper.__get__(self, type(self))
+        return _memoize(self, method, wrapper, method)
 
     def __enter__(self):
         return self
@@ -1148,12 +1153,10 @@ class Model(object):
 
     def __getattr__(self, attr):
         if attr in ('_keys', '_fields'):
-            self.__dict__[attr] = rv = getattr(self, '_get' + attr)()
-            return rv
+            return _memoize(self, attr, getattr(self, '_get' + attr)())
         if attr.startswith('_imd_'):
             imd = self.client.model('ir.model.data')
-            self.__dict__[attr] = imd_method = getattr(imd, attr[5:])
-            return imd_method
+            return _memoize(self, attr, getattr(imd, attr[5:]))
         if attr.startswith('_'):
             raise AttributeError("'Model' object has no attribute %r" % attr)
 
@@ -1162,10 +1165,7 @@ class Model(object):
             if 'context' not in kwargs:
                 kwargs['context'] = self.client.context
             return self._execute(attr, *params, **kwargs)
-        wrapper.__name__ = attr
-        wrapper.__doc__ %= (self._name, attr)
-        self.__dict__[attr] = mobj = wrapper.__get__(self, type(self))
-        return mobj
+        return _memoize(self, attr, wrapper, (self._name, attr))
 
 
 class RecordList(object):
@@ -1303,10 +1303,7 @@ class RecordList(object):
             if context is not None and 'context' not in kwargs:
                 kwargs['context'] = context
             return self._execute(attr, self.id, *params, **kwargs)
-        wrapper.__name__ = attr
-        wrapper.__doc__ %= (self._model_name, attr)
-        self.__dict__[attr] = mobj = wrapper.__get__(self, type(self))
-        return mobj
+        return _memoize(self, attr, wrapper, (self._model_name, attr))
 
     def __setattr__(self, attr, value):
         if attr in self._model._keys or attr == 'id':
@@ -1357,8 +1354,7 @@ class Record(object):
             name = '%s' % (id_name[1],)
         except Exception:
             name = '%s,%d' % (self._model_name, self.id)
-        self.__dict__['_name'] = name
-        return name
+        return _memoize(self, '_name', name)
 
     @property
     def _keys(self):
@@ -1493,10 +1489,7 @@ class Record(object):
             if isinstance(res, list) and len(res) == 1:
                 return res[0]
             return res
-        wrapper.__name__ = attr
-        wrapper.__doc__ %= (self._model_name, attr, self.id)
-        self.__dict__[attr] = mobj = wrapper.__get__(self, type(self))
-        return mobj
+        return _memoize(self, attr, wrapper, (self._model_name, attr, self.id))
 
     def __setattr__(self, attr, value):
         if attr == '_external_id':
