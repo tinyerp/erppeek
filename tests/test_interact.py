@@ -11,13 +11,13 @@ from ._common import XmlRpcTestCase
 class TestInteract(XmlRpcTestCase):
     server_version = '6.1'
     startup_calls = (
-        call(ANY, 'db', ANY, verbose=ANY),
+        call(ANY, 'db', ANY, verbose=ANY, timeout=10),
         'db.server_version',
-        call(ANY, 'db', ANY, verbose=ANY),
-        call(ANY, 'common', ANY, verbose=ANY),
-        call(ANY, 'object', ANY, verbose=ANY),
-        call(ANY, 'report', ANY, verbose=ANY),
-        call(ANY, 'wizard', ANY, verbose=ANY),
+        call(ANY, 'db', ANY, verbose=ANY, timeout=10),
+        call(ANY, 'common', ANY, verbose=ANY, timeout=10),
+        call(ANY, 'object', ANY, verbose=ANY, timeout=10),
+        call(ANY, 'report', ANY, verbose=ANY, timeout=10),
+        call(ANY, 'wizard', ANY, verbose=ANY, timeout=10),
         'db.list',
     )
 
