@@ -5,6 +5,8 @@ Changelog
 1.x (unreleased)
 ~~~~~~~~~~~~~~~~
 
+* Add an optional ``transport`` argument to the ``Client`` constructor.
+
 * Do not hang when the ``Client`` constructor receives invalid
   arguments.
 
