@@ -1314,7 +1314,7 @@ class RecordList(object):
 
     def __eq__(self, other):
         return (isinstance(other, RecordList) and
-                self.id == other.id and self._model is other._model)
+                set(self.id) == set(other.id) and self._model is other._model)
 
 
 class Record(object):
