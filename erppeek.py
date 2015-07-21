@@ -18,6 +18,7 @@ import shlex
 import sys
 import time
 import traceback
+import ssl
 try:                    # Python 3
     import configparser
     from threading import current_thread
@@ -343,8 +344,14 @@ class Service(object):
 
     def __init__(self, server, endpoint, methods, verbose=False):
         if isinstance(server, basestring):
+            xargs = {}
+            if hasattr(ssl, 'create_default_context'):
+                # compatibility with python 2.7.9 to use system's trusted
+                # certificates
+                xargs['context'] = ssl.create_default_context(
+                    purpose=ssl.Purpose.CLIENT_AUTH)
             self._rpcpath = rpcpath = server + '/xmlrpc/'
-            proxy = ServerProxy(rpcpath + endpoint, allow_none=True)
+            proxy = ServerProxy(rpcpath + endpoint, allow_none=True, **xargs)
             self._dispatch = proxy._ServerProxy__request
             if hasattr(proxy._ServerProxy__transport, 'close'):   # >= 2.7
                 self.close = proxy._ServerProxy__transport.close
