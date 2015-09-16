@@ -10,6 +10,7 @@ import atexit
 import collections
 import csv
 import functools
+import httplib
 import optparse
 import os
 from pprint import pprint
@@ -21,14 +22,14 @@ import traceback
 try:                    # Python 3
     import configparser
     from threading import current_thread
-    from xmlrpc.client import Fault, ServerProxy
+    from xmlrpc.client import Fault, ServerProxy, Transport
     basestring = str
     int_types = int
     _DictWriter = csv.DictWriter
 except ImportError:     # Python 2
     import ConfigParser as configparser
     from threading import currentThread as current_thread
-    from xmlrpclib import Fault, ServerProxy
+    from xmlrpclib import Fault, ServerProxy, Transport
     int_types = int, long
 
     class _DictWriter(csv.DictWriter):
@@ -45,7 +46,7 @@ except ImportError:     # Python 2
                     for cell in rowlst]
 
 
-__version__ = '1.6.1'
+__version__ = '1.6.2'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_odoo_services']
 
@@ -327,6 +328,25 @@ class Error(Exception):
     """An ERPpeek error."""
 
 
+class HTTPWithTimeout(httplib.HTTP):
+    def __init__(self, host, timeout=5):
+        self._setup(
+            self._connection_class(host, port=None, strict=None, timeout=timeout)
+        )
+
+    def getresponse(self, *args, **kw):
+        return self._conn.getresponse(*args, **kw)
+
+
+class TimeoutTransport(Transport):
+    def __init__(self, timeout):
+        Transport.__init__(self)
+        self.timeout = timeout
+
+    def make_connection(self, host):
+        return HTTPWithTimeout(host, timeout=self.timeout)
+
+
 class Service(object):
     """A wrapper around XML-RPC endpoints.
 
@@ -341,10 +361,14 @@ class Service(object):
     _rpcpath = ''
     _methods = ()
 
-    def __init__(self, server, endpoint, methods, verbose=False):
+    def __init__(self, server, endpoint, methods, verbose=False, timeout=10):
         if isinstance(server, basestring):
             self._rpcpath = rpcpath = server + '/xmlrpc/'
-            proxy = ServerProxy(rpcpath + endpoint, allow_none=True)
+            proxy = ServerProxy(
+                rpcpath + endpoint,
+                allow_none=True,
+                transport=TimeoutTransport(timeout)
+            )
             self._dispatch = proxy._ServerProxy__request
             if hasattr(proxy._ServerProxy__transport, 'close'):   # >= 2.7
                 self.close = proxy._ServerProxy__transport.close
@@ -414,7 +438,7 @@ class Client(object):
     _config_file = os.path.join(os.curdir, CONF_FILE)
 
     def __init__(self, server, db=None, user=None, password=None,
-                 verbose=False):
+                 verbose=False, timeout=10):
         if isinstance(server, basestring) and server[-1:] == '/':
             server = server.rstrip('/')
         elif isinstance(server, list):
@@ -427,7 +451,7 @@ class Client(object):
             methods = list(_methods[name]) if (name in _methods) else []
             if float_version < 8.0:
                 methods += _obsolete_methods.get(name) or ()
-            return Service(server, name, methods, verbose=verbose)
+            return Service(server, name, methods, verbose=verbose, timeout=timeout)
         self.server_version = ver = get_proxy('db').server_version()
         self.major_version = re.match('\d+\.?\d*', ver).group()
         float_version = float(self.major_version)
