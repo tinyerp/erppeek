@@ -4,6 +4,11 @@ from mock import sentinel, ANY
 import erppeek
 from ._common import XmlRpcTestCase, OBJ, callable
 
+try:
+    unicode = unicode
+except NameError:   # Python3
+    unicode = str
+
 
 class TestCase(XmlRpcTestCase):
     server_version = '6.1'
@@ -69,9 +74,12 @@ class TestCase(XmlRpcTestCase):
             fields['many_ids'] = {'type': 'many2many', 'relation': 'foo.many'}
             return fields
         if method == 'name_get':
-            if 404 in args[5]:
+            ids = list(args[5])
+            if 404 in ids:
                 1 / 0
-            return [(res_id, 'name_%s' % res_id) for res_id in args[5]]
+            if 8888 in ids:
+                ids[ids.index(8888)] = b'\xdan\xeecode'.decode('latin-1')
+            return [(res_id, unicode('name_%s') % res_id) for res_id in ids]
         if method in ('create', 'copy'):
             return 1999
         return [sentinel.OTHER]
@@ -917,6 +925,22 @@ class TestRecord(TestCase):
 
         self.assertCalls()
         self.assertOutput('')
+
+    def test_str_unicode(self):
+        rec4 = self.model('foo.bar').browse(8888)
+        expected_str = expected_unicode = 'name_\xdan\xeecode'
+        if str is not unicode:
+            expected_unicode = expected_str.decode('latin-1')
+            expected_str = expected_unicode.encode('ascii', 'backslashreplace')
+        self.assertEqual(str(rec4), expected_str)
+        self.assertEqual(unicode(rec4), expected_unicode)
+        self.assertEqual(rec4._name, expected_unicode)
+        self.assertEqual(repr(rec4), "<Record 'foo.bar,8888'>")
+
+        self.assertCalls(
+            OBJ('foo.bar', 'fields_get_keys'),
+            OBJ('foo.bar', 'name_get', [8888]),
+        )
 
     def test_external_id(self):
         records = self.model('foo.bar').browse([13, 17])

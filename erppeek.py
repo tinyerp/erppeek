@@ -1348,6 +1348,12 @@ class Record(object):
     def __str__(self):
         return self._name
 
+    if '' == ''.encode():   # Python2
+        __unicode__ = __str__
+
+        def __str__(self):
+            return self._name.encode('ascii', 'backslashreplace')
+
     def _get_name(self):
         try:
             (id_name,) = self._execute('name_get', [self.id])

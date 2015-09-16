@@ -8,6 +8,8 @@ Changelog
 * Do not hang when the ``Client`` constructor receives invalid
   arguments.
 
+* Fix ``str(record)`` and ``print(record)`` with non-ASCII names.
+
 
 1.6.1 (2014-11-12)
 ~~~~~~~~~~~~~~~~~~
