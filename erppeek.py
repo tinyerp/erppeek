@@ -22,27 +22,12 @@ try:                    # Python 3
     import configparser
     from threading import current_thread
     from xmlrpc.client import Fault, ServerProxy
-    basestring = str
-    int_types = int
-    _DictWriter = csv.DictWriter
+    PY2 = False
 except ImportError:     # Python 2
     import ConfigParser as configparser
     from threading import currentThread as current_thread
     from xmlrpclib import Fault, ServerProxy
-    int_types = int, long
-
-    class _DictWriter(csv.DictWriter):
-        """Unicode CSV Writer, which encodes output to UTF-8."""
-
-        def writeheader(self):
-            # Method 'writeheader' does not exist in Python 2.6
-            header = dict(zip(self.fieldnames, self.fieldnames))
-            self.writerow(header)
-
-        def _dict_to_list(self, rowdict):
-            rowlst = csv.DictWriter._dict_to_list(self, rowdict)
-            return [cell.encode('utf-8') if hasattr(cell, 'encode') else cell
-                    for cell in rowlst]
+    PY2 = True
 
 
 __version__ = '1.6.1'
@@ -113,6 +98,26 @@ _obsolete_methods = {
 }
 _cause_message = ("\nThe above exception was the direct cause "
                   "of the following exception:\n\n")
+
+if PY2:
+    int_types = int, long
+
+    class _DictWriter(csv.DictWriter):
+        """Unicode CSV Writer, which encodes output to UTF-8."""
+
+        def writeheader(self):
+            # Method 'writeheader' does not exist in Python 2.6
+            header = dict(zip(self.fieldnames, self.fieldnames))
+            self.writerow(header)
+
+        def _dict_to_list(self, rowdict):
+            rowlst = csv.DictWriter._dict_to_list(self, rowdict)
+            return [cell.encode('utf-8') if hasattr(cell, 'encode') else cell
+                    for cell in rowlst]
+else:   # Python 3
+    basestring = str
+    int_types = int
+    _DictWriter = csv.DictWriter
 
 
 def _memoize(inst, attr, value, doc_values=None):
@@ -1348,7 +1353,7 @@ class Record(object):
     def __str__(self):
         return self._name
 
-    if '' == ''.encode():   # Python2
+    if PY2:
         __unicode__ = __str__
 
         def __str__(self):
