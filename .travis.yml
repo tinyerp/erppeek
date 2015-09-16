@@ -5,6 +5,7 @@ python:
   - 3.2
   - 3.3
   - 3.4
+  - 3.5
   - pypy
 install:
   - pip list
@@ -13,3 +14,4 @@ script:
 matrix:
   allow_failures:
     - python: pypy
+sudo: false
