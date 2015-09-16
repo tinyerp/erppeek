@@ -5,6 +5,10 @@ Changelog
 1.x (unreleased)
 ~~~~~~~~~~~~~~~~
 
+* Add an optional ``transport`` argument to the ``Client`` constructor.
+  This is useful for tweaking the SSL context or adding an optional
+  timeout parameter.
+
 * Do not hang when the ``Client`` constructor receives invalid
   arguments.
 

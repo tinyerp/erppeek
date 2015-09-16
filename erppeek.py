@@ -346,13 +346,15 @@ class Service(object):
     _rpcpath = ''
     _methods = ()
 
-    def __init__(self, server, endpoint, methods, verbose=False):
+    def __init__(self, server, endpoint, methods,
+                 transport=None, verbose=False):
         if isinstance(server, basestring):
             self._rpcpath = rpcpath = server + '/xmlrpc/'
-            proxy = ServerProxy(rpcpath + endpoint, allow_none=True)
-            self._dispatch = proxy._ServerProxy__request
+            proxy = ServerProxy(rpcpath + endpoint,
+                                transport=transport, allow_none=True)
             if hasattr(proxy._ServerProxy__transport, 'close'):   # >= 2.7
                 self.close = proxy._ServerProxy__transport.close
+            self._dispatch = proxy._ServerProxy__request
         elif server._api_v7:
             proxy = server.netsvc.ExportService.getService(endpoint)
             self._dispatch = proxy.dispatch
@@ -419,7 +421,7 @@ class Client(object):
     _config_file = os.path.join(os.curdir, CONF_FILE)
 
     def __init__(self, server, db=None, user=None, password=None,
-                 verbose=False):
+                 transport=None, verbose=False):
         if isinstance(server, basestring) and server[-1:] == '/':
             server = server.rstrip('/')
         elif isinstance(server, list):
@@ -432,7 +434,7 @@ class Client(object):
             methods = list(_methods[name]) if (name in _methods) else []
             if float_version < 8.0:
                 methods += _obsolete_methods.get(name) or ()
-            return Service(server, name, methods, verbose=verbose)
+            return Service(server, name, methods, transport, verbose=verbose)
         self.server_version = ver = get_proxy('db').server_version()
         self.major_version = re.match('\d+\.?\d*', ver).group()
         float_version = float(self.major_version)
