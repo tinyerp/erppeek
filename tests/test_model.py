@@ -4,10 +4,7 @@ from mock import sentinel, ANY
 import erppeek
 from ._common import XmlRpcTestCase, OBJ, callable
 
-try:
-    unicode = unicode
-except NameError:   # Python3
-    unicode = str
+PY2 = ('' == ''.encode())
 
 
 class TestCase(XmlRpcTestCase):
@@ -79,7 +76,7 @@ class TestCase(XmlRpcTestCase):
                 1 / 0
             if 8888 in ids:
                 ids[ids.index(8888)] = b'\xdan\xeecode'.decode('latin-1')
-            return [(res_id, unicode('name_%s') % res_id) for res_id in ids]
+            return [(res_id, b'name_%s'.decode() % res_id) for res_id in ids]
         if method in ('create', 'copy'):
             return 1999
         return [sentinel.OTHER]
@@ -929,11 +926,11 @@ class TestRecord(TestCase):
     def test_str_unicode(self):
         rec4 = self.model('foo.bar').browse(8888)
         expected_str = expected_unicode = 'name_\xdan\xeecode'
-        if str is not unicode:
+        if PY2:
             expected_unicode = expected_str.decode('latin-1')
             expected_str = expected_unicode.encode('ascii', 'backslashreplace')
+            self.assertEqual(unicode(rec4), expected_unicode)
         self.assertEqual(str(rec4), expected_str)
-        self.assertEqual(unicode(rec4), expected_unicode)
         self.assertEqual(rec4._name, expected_unicode)
         self.assertEqual(repr(rec4), "<Record 'foo.bar,8888'>")
 
