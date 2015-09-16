@@ -1319,6 +1319,10 @@ class RecordList(object):
             msg = "has no attribute %r"
         raise AttributeError("'RecordList' object %s" % msg % attr)
 
+    def __eq__(self, other):
+        return (isinstance(other, RecordList) and
+                set(self.id) == set(other.id) and self._model is other._model)
+
 
 class Record(object):
     """A class for all Odoo records.

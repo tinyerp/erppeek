@@ -814,7 +814,10 @@ class TestRecord(TestCase):
         rec2 = self.model('foo.bar').get(42)
         rec3 = self.model('foo.bar').get(2)
         rec4 = self.model('foo.other').get(42)
-        records = self.model('foo.bar').browse([42])
+        records1 = self.model('foo.bar').browse([42])
+        records2 = self.model('foo.bar').browse([2, 4])
+        records3 = self.model('foo.bar').browse([2, 4])
+        records4 = self.model('foo.bar').browse([4, 2])
 
         self.assertEqual(rec1.id, rec2.id)
         self.assertEqual(rec1, rec2)
@@ -824,8 +827,10 @@ class TestRecord(TestCase):
         self.assertNotEqual(rec1, rec3)
         self.assertNotEqual(rec1, rec4)
 
-        self.assertEqual(records.id, [42])
-        self.assertNotEqual(rec1, records)
+        self.assertEqual(records1.id, [42])
+        self.assertNotEqual(rec1, records1)
+        self.assertEqual(records2, records3)
+        self.assertEqual(records2, records4)
 
         # if client is different, records do not compare equal
         rec2.__dict__['_model'] = sentinel.OTHER_MODEL
