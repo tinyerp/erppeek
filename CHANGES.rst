@@ -2,8 +2,8 @@ Changelog
 ---------
 
 
-1.x (unreleased)
-~~~~~~~~~~~~~~~~
+1.6.2 (2015-09-17)
+~~~~~~~~~~~~~~~~~~
 
 * Add an optional ``transport`` argument to the ``Client`` constructor.
   This is useful for tweaking the SSL context or adding an optional

@@ -9,6 +9,7 @@ AUTH = sentinel.AUTH
 ID1, ID2 = 4001, 4002
 STABLE = ('uninstallable', 'uninstalled', 'installed')
 
+
 class IdentDict(object):
     def __init__(self, _id):
         self._id = _id
