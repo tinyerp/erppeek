@@ -11,6 +11,10 @@ Changelog
 
 * Implement ``==`` comparison for ``RecordList`` instances.
 
+* Uninstall dependent add-ons in a single call.
+
+* Do not install/uninstall add-ons if other actions are pending.
+
 * Do not hang when the ``Client`` constructor receives invalid
   arguments.
 

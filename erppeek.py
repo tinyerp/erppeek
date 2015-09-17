@@ -755,17 +755,34 @@ class Client(object):
 
     def _upgrade(self, modules, button):
         # First, update the list of modules
-        updated, added = self.execute('ir.module.module', 'update_list')
+        ir_module = self.model('ir.module.module', False)
+        updated, added = ir_module.update_list()
         if added:
             print('%s module(s) added to the list' % added)
         # Find modules
-        ids = modules and self.search('ir.module.module',
-                                      [('name', 'in', modules)])
+        ids = modules and ir_module.search([('name', 'in', modules)])
         if ids:
-            # Click upgrade/install/uninstall button
-            self.execute('ir.module.module', button, ids)
-        mods = self.read('ir.module.module',
-                         [('state', 'not in', STABLE_STATES)], 'name state')
+            # Safety check
+            mods = ir_module.read([('state', 'not in', STABLE_STATES)], 'name state')
+            if mods:
+                raise Error('Pending actions:\n' + '\n'.join(
+                    ('  %(state)s\t%(name)s' % mod) for mod in mods))
+            if button == 'button_uninstall':
+                # Safety check
+                names = ir_module.read([('id', 'in', ids),
+                                        'state != installed'], 'name')
+                if names:
+                    raise Error('Not installed: %s' % ', '.join(names))
+                # A trick to uninstall dependent add-ons
+                ir_module.write(ids, {'state': 'to remove'})
+            try:
+                # Click upgrade/install/uninstall button
+                self.execute('ir.module.module', button, ids)
+            except Exception:
+                if button == 'button_uninstall':
+                    ir_module.write(ids, {'state': 'installed'})
+                raise
+        mods = ir_module.read([('state', 'not in', STABLE_STATES)], 'name state')
         if not mods:
             if ids:
                 print('Already up-to-date: %s' %

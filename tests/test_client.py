@@ -7,7 +7,7 @@ from ._common import XmlRpcTestCase, OBJ
 
 AUTH = sentinel.AUTH
 ID1, ID2 = 4001, 4002
-
+STABLE = ('uninstallable', 'uninstalled', 'installed')
 
 class IdentDict(object):
     def __init__(self, _id):
@@ -239,7 +239,7 @@ class TestSampleSession(XmlRpcTestCase):
 
     def test_module_upgrade(self):
         self.service.object.execute.side_effect = [
-            (42, 0), [42], ANY, [42],
+            (42, 0), [42], [], ANY, [42],
             [{'id': 42, 'state': ANY, 'name': ANY}], ANY]
 
         result = self.client.upgrade('dummy')
@@ -249,9 +249,9 @@ class TestSampleSession(XmlRpcTestCase):
         self.assertCalls(
             imm + ('update_list',),
             imm + ('search', [('name', 'in', ('dummy',))]),
+            imm + ('search', [('state', 'not in', STABLE)]),
             imm + ('button_upgrade', [42]),
-            imm + ('search', [('state', 'not in',
-                              ('uninstallable', 'uninstalled', 'installed'))]),
+            imm + ('search', [('state', 'not in', STABLE)]),
             imm + ('read', [42], ['name', 'state']),
             bmu + ('upgrade_module', []),
         )
@@ -263,7 +263,7 @@ class TestSampleSession50(TestSampleSession):
 
     def test_module_upgrade(self):
         self.service.object.execute.side_effect = [
-            (42, 0), [42], ANY, [42],
+            (42, 0), [42], [], ANY, [42],
             [{'id': 42, 'state': ANY, 'name': ANY}]]
         self.service.wizard.create.return_value = 17
         self.service.wizard.execute.return_value = {'state': (['config'],)}
@@ -274,9 +274,9 @@ class TestSampleSession50(TestSampleSession):
         self.assertCalls(
             imm + ('update_list',),
             imm + ('search', [('name', 'in', ('dummy',))]),
+            imm + ('search', [('state', 'not in', STABLE)]),
             imm + ('button_upgrade', [42]),
-            imm + ('search', [('state', 'not in',
-                              ('uninstallable', 'uninstalled', 'installed'))]),
+            imm + ('search', [('state', 'not in', STABLE)]),
             imm + ('read', [42], ['name', 'state']),
             ('wizard.create', AUTH, 'module.upgrade'),
             ('wizard.execute', AUTH, 17, {}, 'start', None),
@@ -704,26 +704,35 @@ class TestClientApi(XmlRpcTestCase):
         self.assertOutput('')
 
     def _module_upgrade(self, button='upgrade'):
-        self.service.object.execute.side_effect = [
-            [7, 0], [42], {'name': 'Upgrade'}, [4, 42, 5],
+        execute_return = [
+            [7, 0], [42], [], {'name': 'Upgrade'}, [4, 42, 5],
             [{'id': 4, 'state': ANY, 'name': ANY},
              {'id': 5, 'state': ANY, 'name': ANY},
              {'id': 42, 'state': ANY, 'name': ANY}], ANY]
         action = getattr(self.client, button)
 
-        result = action('dummy', 'spam')
-        self.assertIsNone(result)
         imm = ('object.execute', AUTH, 'ir.module.module')
         bmu = ('object.execute', AUTH, 'base.module.upgrade')
-        self.assertCalls(
+        expected_calls = [
             imm + ('update_list',),
             imm + ('search', [('name', 'in', ('dummy', 'spam'))]),
+            imm + ('search', [('state', 'not in', STABLE)]),
             imm + ('button_' + button, [42]),
-            imm + ('search', [('state', 'not in',
-                              ('uninstallable', 'uninstalled', 'installed'))]),
+            imm + ('search', [('state', 'not in', STABLE)]),
             imm + ('read', [4, 42, 5], ['name', 'state']),
             bmu + ('upgrade_module', []),
-        )
+        ]
+        if button == 'uninstall':
+            execute_return[3:3] = [[], ANY]
+            expected_calls[3:3] = [
+                imm + ('search', [('id', 'in', [42]), ('state', '!=', 'installed')]),
+                imm + ('write', [42], {'state': 'to remove'}),
+            ]
+
+        self.service.object.execute.side_effect = execute_return
+        result = action('dummy', 'spam')
+        self.assertIsNone(result)
+        self.assertCalls(*expected_calls)
 
         self.assertIn('to process', self.stdout.popvalue())
         self.assertOutput('')
@@ -767,8 +776,8 @@ class TestClientApi50(TestClientApi):
         self.assertOutput('')
 
     def _module_upgrade(self, button='upgrade'):
-        self.service.object.execute.side_effect = [
-            [7, 0], [42], {'name': 'Upgrade'}, [4, 42, 5],
+        execute_return = [
+            [7, 0], [42], [], {'name': 'Upgrade'}, [4, 42, 5],
             [{'id': 4, 'state': ANY, 'name': ANY},
              {'id': 5, 'state': ANY, 'name': ANY},
              {'id': 42, 'state': ANY, 'name': ANY}]]
@@ -776,19 +785,28 @@ class TestClientApi50(TestClientApi):
         self.service.wizard.execute.return_value = {'state': (['config'],)}
         action = getattr(self.client, button)
 
-        result = action('dummy', 'spam')
-        self.assertIsNone(result)
         imm = ('object.execute', AUTH, 'ir.module.module')
-        self.assertCalls(
+        expected_calls = [
             imm + ('update_list',),
             imm + ('search', [('name', 'in', ('dummy', 'spam'))]),
+            imm + ('search', [('state', 'not in', STABLE)]),
             imm + ('button_' + button, [42]),
-            imm + ('search', [('state', 'not in',
-                              ('uninstallable', 'uninstalled', 'installed'))]),
+            imm + ('search', [('state', 'not in', STABLE)]),
             imm + ('read', [4, 42, 5], ['name', 'state']),
             ('wizard.create', AUTH, 'module.upgrade'),
             ('wizard.execute', AUTH, 17, {}, 'start', None),
-        )
+        ]
+        if button == 'uninstall':
+            execute_return[3:3] = [[], ANY]
+            expected_calls[3:3] = [
+                imm + ('search', [('id', 'in', [42]), ('state', '!=', 'installed')]),
+                imm + ('write', [42], {'state': 'to remove'}),
+            ]
+
+        self.service.object.execute.side_effect = execute_return
+        result = action('dummy', 'spam')
+        self.assertIsNone(result)
+        self.assertCalls(*expected_calls)
 
         self.assertIn('to process', self.stdout.popvalue())
         self.assertOutput('')
