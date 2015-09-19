@@ -7,12 +7,10 @@ Author: Florent Xicluna
 """
 import _ast
 import atexit
-import collections
 import csv
 import functools
 import optparse
 import os
-from pprint import pprint
 import re
 import shlex
 import sys
@@ -63,7 +61,6 @@ Usage (some commands):
                                     # Upgrade the modules
 """
 
-STABLE_STATES = ('uninstallable', 'uninstalled', 'installed')
 DOMAIN_OPERATORS = frozenset('!|&')
 # Supported operators are:
 #   =, !=, >, >=, <, <=, like, ilike, in, not like, not ilike, not in,
@@ -98,6 +95,8 @@ _obsolete_methods = {
 }
 _cause_message = ("\nThe above exception was the direct cause "
                   "of the following exception:\n\n")
+_pending_state = ('state', 'not in',
+                  ['uninstallable', 'uninstalled', 'installed'])
 
 if PY2:
     int_types = int, long
@@ -354,13 +353,12 @@ class Service(object):
                                 transport=transport, allow_none=True)
             if hasattr(proxy._ServerProxy__transport, 'close'):   # >= 2.7
                 self.close = proxy._ServerProxy__transport.close
-            self._dispatch = proxy._ServerProxy__request
+            rpc = proxy._ServerProxy__request
         elif server._api_v7:
-            proxy = server.netsvc.ExportService.getService(endpoint)
-            self._dispatch = proxy.dispatch
+            rpc = server.netsvc.ExportService.getService(endpoint).dispatch
         else:   # Odoo v8
-            self._dispatch = functools.partial(server.http.dispatch_rpc,
-                                               endpoint)
+            rpc = functools.partial(server.http.dispatch_rpc, endpoint)
+        self._dispatch = rpc
         self._endpoint = endpoint
         self._methods = methods
         self._verbose = verbose
@@ -422,13 +420,13 @@ class Client(object):
 
     def __init__(self, server, db=None, user=None, password=None,
                  transport=None, verbose=False):
-        if isinstance(server, basestring) and server[-1:] == '/':
-            server = server.rstrip('/')
-        elif isinstance(server, list):
+        if isinstance(server, list):
             appname = os.path.basename(__file__).rstrip('co')
             server = start_odoo_services(server, appname=appname)
+        elif isinstance(server, basestring) and server[-1:] == '/':
+            server = server.rstrip('/')
         self._server = server
-        float_version = 999
+        float_version = 99.0
 
         def get_proxy(name):
             methods = list(_methods[name]) if (name in _methods) else []
@@ -763,7 +761,7 @@ class Client(object):
         ids = modules and ir_module.search([('name', 'in', modules)])
         if ids:
             # Safety check
-            mods = ir_module.read([('state', 'not in', STABLE_STATES)], 'name state')
+            mods = ir_module.read([_pending_state], 'name state')
             if mods:
                 raise Error('Pending actions:\n' + '\n'.join(
                     ('  %(state)s\t%(name)s' % mod) for mod in mods))
@@ -782,7 +780,7 @@ class Client(object):
                 if button == 'button_uninstall':
                     ir_module.write(ids, {'state': 'installed'})
                 raise
-        mods = ir_module.read([('state', 'not in', STABLE_STATES)], 'name state')
+        mods = ir_module.read([_pending_state], 'name state')
         if not mods:
             if ids:
                 print('Already up-to-date: %s' %
@@ -948,10 +946,12 @@ class Client(object):
             domain.append(('state', op, ['uninstalled', 'uninstallable']))
         mods = self.read('ir.module.module', domain, 'name state')
         if mods:
-            res = collections.defaultdict(list)
+            res = {}
             for mod in mods:
+                if mod['state'] not in res:
+                    res[mod['state']] = []
                 res[mod['state']].append(mod['name'])
-            return dict(res)
+            return res
 
     def keys(self, obj):
         """Wrapper for :meth:`Model.keys` method."""
@@ -1541,16 +1541,18 @@ class Record(object):
 
 def _interact(global_vars, use_pprint=True, usage=USAGE):
     import code
-    try:
-        import builtins
-        _exec = getattr(builtins, 'exec')
-    except ImportError:
-        def _exec(code, g):
-            exec('exec code in g')
+    import pprint
+    if PY2:
         import __builtin__ as builtins
 
+        def _exec(code, g):
+            exec('exec code in g')
+    else:
+        import builtins
+        _exec = getattr(builtins, 'exec')
+
     if use_pprint:
-        def displayhook(value, _printer=pprint, _builtins=builtins):
+        def displayhook(value, _printer=pprint.pprint, _builtins=builtins):
             # Pretty-format the output
             if value is None:
                 return
