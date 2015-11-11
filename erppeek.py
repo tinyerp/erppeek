@@ -1672,11 +1672,11 @@ def main(interact=_interact):
         if not client.user:
             client.connect()
         # Enter interactive mode
-        return interact(global_vars) if interact else global_vars
+        try:
+            import IPython
+            IPython.start_ipython(user_ns=global_vars, argv=[])
+        except ImportError:
+            return interact(global_vars) if interact else global_vars
 
 if __name__ == '__main__':
-    try:
-        import IPython
-        IPython.start_ipython(user_ns=main(interact=False), argv=[])
-    except ImportError:
         main()
