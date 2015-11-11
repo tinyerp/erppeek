@@ -1675,4 +1675,8 @@ def main(interact=_interact):
         return interact(global_vars) if interact else global_vars
 
 if __name__ == '__main__':
-    main()
+    try:
+        import IPython
+        IPython.start_ipython(user_ns=main(interact=False), argv=[])
+    except ImportError:
+        main()
