@@ -154,7 +154,7 @@ def literal_eval(expression, _octal_digits=frozenset('01234567')):
     if expression[:1] == '0' and expression[1:2] in _octal_digits:
         raise SyntaxError('unsupported octal notation')
     value = _convert(node.body)
-    if isinstance(value, int_types) and not MININT < value < MAXINT:
+    if isinstance(value, int_types) and not MININT <= value <= MAXINT:
          raise ValueError('overflow, int exceeds XML-RPC limits')
     return value
 
