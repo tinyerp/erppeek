@@ -19,16 +19,16 @@ import traceback
 try:                    # Python 3
     import configparser
     from threading import current_thread
-    from xmlrpc.client import Fault, ServerProxy
+    from xmlrpc.client import Fault, ServerProxy, MININT, MAXINT
     PY2 = False
 except ImportError:     # Python 2
     import ConfigParser as configparser
     from threading import currentThread as current_thread
-    from xmlrpclib import Fault, ServerProxy
+    from xmlrpclib import Fault, ServerProxy, MININT, MAXINT
     PY2 = True
 
 
-__version__ = '1.6.2'
+__version__ = '1.6.3'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_odoo_services']
 
@@ -153,7 +153,10 @@ def literal_eval(expression, _octal_digits=frozenset('01234567')):
     node = compile(expression, '<unknown>', 'eval', _ast.PyCF_ONLY_AST)
     if expression[:1] == '0' and expression[1:2] in _octal_digits:
         raise SyntaxError('unsupported octal notation')
-    return _convert(node.body)
+    value = _convert(node.body)
+    if isinstance(value, int_types) and not MININT < value < MAXINT:
+         raise ValueError('overflow, int exceeds XML-RPC limits')
+    return value
 
 
 def is_list_of_dict(iterator):
