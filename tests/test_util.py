@@ -86,6 +86,12 @@ class TestUtils(unittest2.TestCase):
         self.assertEqual(searchargs((['duration = 0'],)), ([('duration', '=', 0)],))
         self.assertEqual(searchargs((['price < 0.42'],)), ([('price', '<', 0.42)],))
 
+        # Overflow for integers, not for float
+        self.assertEqual(searchargs((['phone = 41261234567'],)),
+                         ([('phone', '=', '41261234567')],))
+        self.assertEqual(searchargs((['elapsed = 67891234567.0'],)),
+                         ([('elapsed', '=', 67891234567.0)],))
+
     def test_searchargs_invalid(self):
 
         # No longer recognized as a search domain, since 1.6

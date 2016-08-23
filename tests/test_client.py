@@ -7,7 +7,7 @@ from ._common import XmlRpcTestCase, OBJ
 
 AUTH = sentinel.AUTH
 ID1, ID2 = 4001, 4002
-STABLE = ('uninstallable', 'uninstalled', 'installed')
+STABLE = ['uninstallable', 'uninstalled', 'installed']
 
 
 class IdentDict(object):

@@ -2,6 +2,12 @@ Changelog
 ---------
 
 
+1.6.3 (2015-12-30)
+~~~~~~~~~~~~~~~~~~
+
+* Do not parse long integers which overflow in XML-RPC.
+
+
 1.6.2 (2015-09-17)
 ~~~~~~~~~~~~~~~~~~
 
