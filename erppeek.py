@@ -1662,7 +1662,7 @@ def main(interact=_interact):
                         verbose=args.verbose)
     client.context = {'lang': (os.getenv('LANG') or 'en_US').split('.')[0]}
 
-    if args.model and domain and client.user:
+    if args.model and client.user:
         data = client.execute(args.model, 'read', domain, args.fields)
         if not args.fields:
             args.fields = ['id']
