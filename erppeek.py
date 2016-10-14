@@ -350,7 +350,7 @@ class Service(object):
 
     def __init__(self, server, endpoint, methods,
                  transport=None, verbose=False):
-        if isinstance(server, basestring):
+        if isinstance(server, (basestring, unicode)):
             self._rpcpath = rpcpath = server + '/xmlrpc/'
             proxy = ServerProxy(rpcpath + endpoint,
                                 transport=transport, allow_none=True)
