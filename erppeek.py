@@ -267,6 +267,10 @@ def start_odoo_services(options=None, appname=None):
         if appname is not None:
             os.putenv('PGAPPNAME', appname)
         odoo.tools.config.parse_config(options or [])
+        if odoo.release.version_info < (10,):
+            odoo._registry = odoo.modules.registry.RegistryManager
+        else:
+            odoo._registry = odoo.modules.registry.Registry
         if odoo.release.version_info < (7,):
             odoo.netsvc.init_logger()
             odoo.osv.osv.start_object_proxy()
@@ -281,7 +285,7 @@ def start_odoo_services(options=None, appname=None):
                 pass
 
         def close_all():
-            for db in odoo.modules.registry.RegistryManager.registries.keys():
+            for db in odoo._registry.registries.keys():
                 odoo.sql_db.close_db(db)
         atexit.register(close_all)
 
@@ -592,7 +596,8 @@ class Client(object):
             """
             client = global_vars['client']
             registry = client._server.modules.registry
-            return registry.RegistryManager.get(db_name or client._db)
+            _registry = getattr(registry, 'RegistryManager', registry)
+            return _registry.get(db_name or client._db)
 
         def connect(self, env=None):
             """Connect to another environment and replace the globals()."""
