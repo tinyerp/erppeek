@@ -658,6 +658,12 @@ class Client(object):
                                     user_password)
         return self.login('admin', user_password, database=database)
 
+    def duplicate_database(self, passwd, db_original_name, db_name,
+                           user_password='admin'):
+        """Duplicate an existing database."""
+        self.db.duplicate_database(passwd, db_original_name, db_name)
+        return self.login('admin', user_password, database=db_name)
+
     def execute(self, obj, method, *params, **kwargs):
         """Wrapper around ``object.execute`` RPC method.
 
