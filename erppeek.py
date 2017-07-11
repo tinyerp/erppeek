@@ -636,7 +636,7 @@ class Client(object):
         return global_vars
 
     def create_database(self, passwd, database, demo=False, lang='en_US',
-                        user_password='admin'):
+                        user_password='admin', country_code=None):
         """Create a new database.
 
         The superadmin `passwd` and the `database` name are mandatory.
@@ -653,9 +653,12 @@ class Client(object):
                     progress, users = self.db.get_progress(passwd, thread_id)
             except KeyboardInterrupt:
                 return {'id': thread_id, 'progress': progress}
-        else:
+        elif self.major_version in ('7.0', '8.0'):
             self.db.create_database(passwd, database, demo, lang,
                                     user_password)
+        else:
+            self.db.create_database(passwd, database, demo, lang,
+                                    user_password, 'admin', country_code)
         return self.login('admin', user_password, database=database)
 
     def execute(self, obj, method, *params, **kwargs):
