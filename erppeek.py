@@ -656,7 +656,7 @@ class Client(object):
         return global_vars
 
     def create_database(self, passwd, database, demo=False, lang='en_US',
-                        user_password='admin', country_code=None):
+                        user_password='admin', login='admin', country_code=None):
         """Create a new database.
 
         The superadmin `passwd` and the `database` name are mandatory.
@@ -678,7 +678,7 @@ class Client(object):
                                     user_password)
         else:
             self.db.create_database(passwd, database, demo, lang,
-                                    user_password, 'admin', country_code)
+                                    user_password, login, country_code)
         return self.login('admin', user_password, database=database)
 
     def clone_database(self, passwd, db_name):
