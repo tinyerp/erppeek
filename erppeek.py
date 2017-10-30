@@ -636,7 +636,7 @@ class Client(object):
         return global_vars
 
     def create_database(self, passwd, database, demo=False, lang='en_US',
-                        user_password='admin'):
+                        user_password='admin', login='admin', country_code='en_US'):
         """Create a new database.
 
         The superadmin `passwd` and the `database` name are mandatory.
@@ -645,7 +645,7 @@ class Client(object):
         """
         if self.major_version in ('5.0', '6.0'):
             thread_id = self.db.create(passwd, database, demo, lang,
-                                       user_password)
+                                       user_password, login, country_code)
             progress = 0
             try:
                 while progress < 1:
@@ -655,7 +655,7 @@ class Client(object):
                 return {'id': thread_id, 'progress': progress}
         else:
             self.db.create_database(passwd, database, demo, lang,
-                                    user_password)
+                                    user_password, login, country_code)
         return self.login('admin', user_password, database=database)
 
     def execute(self, obj, method, *params, **kwargs):
