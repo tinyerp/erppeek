@@ -123,7 +123,7 @@ Default password is ``"admin"``.
 Duplicate a database
 --------------------
 
-It is sometimes useful to duplicate a databases (testing, backup,
+It is sometimes useful to duplicate a database (testing, backup,
 migration, ...). A shortcut is available for that, the required
 parameters are the original database name, the new database name and
 the superadmin password (this is the ``admin_passwd`` in the
