@@ -660,7 +660,12 @@ class Client(object):
 
     def duplicate_database(self, passwd, db_original_name, db_name,
                            user_password='admin'):
-        """Duplicate an existing database."""
+        """Duplicate an existing database.
+
+        The superadmin `passwd`, `db_original_name` and `db_name` are
+        mandatory.
+        Wait for the thread to finish and login if successful.
+        """
         self.db.duplicate_database(passwd, db_original_name, db_name)
         return self.login('admin', user_password, database=db_name)
 
