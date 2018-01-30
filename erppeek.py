@@ -640,7 +640,8 @@ class Client(object):
         """Create a new database.
 
         The superadmin `passwd` and the `database` name are mandatory.
-        By default, `demo` data are not loaded and `lang` is ``en_US``.
+        By default, `demo` data are not loaded, `lang` is ``en_US``
+        and no country is set into the database.
         Wait for the thread to finish and login if successful.
         """
         if self.major_version in ('5.0', '6.0'):

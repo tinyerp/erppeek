@@ -30,7 +30,14 @@ list or install Odoo add-ons.
 
 .. automethod:: Client.from_config
 
-.. automethod:: Client.create_database
+.. automethod:: Client.create_database(passwd, database, demo=False, lang='en_US', user_password='admin', country_code=None)
+
+   Create a new database.
+  
+   The superadmin `passwd` and the `database` name are mandatory.
+   By default, `demo` data are not loaded, `lang` is ``en_US``,
+   and no country is set into the database.
+   Wait for the thread to finish and login if successful.
 
 .. automethod:: Client.login
 
