@@ -120,6 +120,35 @@ Default password is ``"admin"``.
    Then we connect to any environment with ``erppeek --env demo`` or switch
    during an interactive session with ``client.connect('demo')``.
 
+Duplicate a database
+--------------------
+
+It is sometimes useful to duplicate a database (testing, backup,
+migration, ...). A shortcut is available for that, the required
+parameters are the original database name, the new database name and
+the superadmin password (this is the ``admin_passwd`` in the
+``openerp-server.conf`` file). Default password is ``"admin"``.
+
+.. note:: This password gives full control on the databases. Set a strong
+          password in the configuration to prevent unauthorized access.
+
+
+.. sourcecode:: pycon
+
+    >>> client.duplicate_database('super_password', 'demo', 'demo_test')
+    Logged in as 'admin'
+    >>> client
+    <Client 'http://localhost:8069#demo_test'>
+    >>> client.db.list()
+    ['demo_test']
+    >>> client.user
+    'admin'
+    >>> client.modules(installed=True)
+    {'installed': ['base', 'web', 'web_mobile', 'web_tests']}
+    >>> len(client.modules()['uninstalled'])
+    202
+    >>> #
+
 
 Find the users
 --------------

@@ -32,6 +32,8 @@ list or install Odoo add-ons.
 
 .. automethod:: Client.create_database
 
+.. automethod:: Client.duplicate_database
+
 .. automethod:: Client.login
 
 .. attribute:: Client.context
