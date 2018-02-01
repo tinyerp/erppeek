@@ -31,7 +31,6 @@ except ImportError:     # Python 2
 __version__ = '1.6.3'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_odoo_services']
-
 CONF_FILE = 'erppeek.ini'
 HIST_FILE = os.path.expanduser('~/.erppeek_history')
 DEFAULT_URL = 'http://localhost:8069'
@@ -640,7 +639,8 @@ class Client(object):
         """Create a new database.
 
         The superadmin `passwd` and the `database` name are mandatory.
-        By default, `demo` data are not loaded and `lang` is ``en_US``.
+        By default, `demo` data are not loaded, `lang` is ``en_US``
+        and no country is set into the database.
         Wait for the thread to finish and login if successful.
         """
         if self.major_version in ('5.0', '6.0'):
@@ -653,6 +653,9 @@ class Client(object):
                     progress, users = self.db.get_progress(passwd, thread_id)
             except KeyboardInterrupt:
                 return {'id': thread_id, 'progress': progress}
+        elif self.major_version in ('7.0', '8.0'):
+            self.db.create_database(passwd, database, demo, lang,
+                                    user_password)
         else:
             self.db.create_database(passwd, database, demo, lang,
                                     user_password, login, country_code)

@@ -306,13 +306,13 @@ class TestClientApi(XmlRpcTestCase):
         self.client.db.list.side_effect = [['db1'], ['db2']]
 
         create_database('abc', 'db1')
-        create_database('xyz', 'db2', user_password='secret', lang='fr_FR')
+        create_database('xyz', 'db2', user_password='secret', lang='fr_FR', country_code='CA')
 
         self.assertCalls(
-            call.db.create_database('abc', 'db1', False, 'en_US', 'admin'),
+            call.db.create_database('abc', 'db1', False, 'en_US', 'admin', 'admin', None),
             call.db.list(),
             call.common.login('db1', 'admin', 'admin'),
-            call.db.create_database('xyz', 'db2', False, 'fr_FR', 'secret'),
+            call.db.create_database('xyz', 'db2', False, 'fr_FR', 'secret', 'admin', 'CA'),
             call.db.list(),
             call.common.login('db2', 'admin', 'secret'),
         )
