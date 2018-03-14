@@ -16,16 +16,18 @@ import shlex
 import sys
 import time
 import traceback
-try:                    # Python 3
+
+PY2 = (sys.version_info[0] == 2)
+# don't use import error to distinguish Python 2 & 3
+
+if (not PY2):                    # Python 3
     import configparser
     from threading import current_thread
     from xmlrpc.client import Fault, ServerProxy, MININT, MAXINT
-    PY2 = False
-except ImportError:     # Python 2
+else:     # Python 2
     import ConfigParser as configparser
     from threading import currentThread as current_thread
     from xmlrpclib import Fault, ServerProxy, MININT, MAXINT
-    PY2 = True
 
 
 __version__ = '1.6.3'
