@@ -5,7 +5,6 @@
 Author: Florent Xicluna
 (derived from a script by Alan Bell)
 """
-import _ast
 import atexit
 import csv
 import functools
@@ -16,6 +15,18 @@ import shlex
 import sys
 import time
 import traceback
+
+import _ast
+
+try:
+    from ptpython.ipython import embed
+    from ptpython.prompt_style import PromptStyle
+    from pygments.token import Token
+    PTPYTHON = True
+except ImportError:
+    print('INstall ptpython')
+    PTPYTHON = False
+
 try:                    # Python 3
     import configparser
     from threading import current_thread
@@ -155,7 +166,7 @@ def literal_eval(expression, _octal_digits=frozenset('01234567')):
         raise SyntaxError('unsupported octal notation')
     value = _convert(node.body)
     if isinstance(value, int_types) and not MININT <= value <= MAXINT:
-         raise ValueError('overflow, int exceeds XML-RPC limits')
+        raise ValueError('overflow, int exceeds XML-RPC limits')
     return value
 
 
@@ -1356,6 +1367,7 @@ class Record(object):
     The attributes are evaluated lazily, and they are cached in the record.
     The Record's cache is invalidated if any attribute is changed.
     """
+
     def __init__(self, res_model, res_id, context=None):
         if isinstance(res_id, (list, tuple)):
             (res_id, res_name) = res_id
@@ -1566,7 +1578,8 @@ def _interact(global_vars, use_pprint=True, usage=USAGE):
     class Usage(object):
         def __call__(self):
             print(usage)
-        __repr__ = lambda s: usage
+
+        def __repr__(s): return usage
     builtins.usage = Usage()
 
     try:
@@ -1677,11 +1690,11 @@ def main(interact=_interact):
         if not client.user:
             client.connect()
         # Enter interactive mode
-        try:
-            import IPython
-            IPython.start_ipython(user_ns=global_vars, argv=[])
-        except ImportError:
+        if PTPYTHON:
+            embed()
+        else:
             return interact(global_vars) if interact else global_vars
 
+
 if __name__ == '__main__':
-        main()
+    main()
