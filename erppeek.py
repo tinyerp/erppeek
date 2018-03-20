@@ -19,12 +19,9 @@ import traceback
 import _ast
 
 try:
-    from ptpython.ipython import embed
-    from ptpython.prompt_style import PromptStyle
-    from pygments.token import Token
+    from ptpython.relp import embed
     PTPYTHON = True
 except ImportError:
-    print('INstall ptpython')
     PTPYTHON = False
 
 try:                    # Python 3
@@ -1702,7 +1699,7 @@ def main(interact=_interact):
             client.connect()
         # Enter interactive mode
         if PTPYTHON:
-            embed()
+            embed(global_vars, locals(), vi_mode=False)
         else:
             return interact(global_vars) if interact else global_vars
 
