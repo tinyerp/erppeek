@@ -1698,8 +1698,6 @@ def main(interact=_interact):
         if not client.user:
             client.connect()
         # Enter interactive mode
-        import pudb
-        pudb.set_trace()
         if PTPYTHON:
             embed(global_vars, locals(), vi_mode=False)
         else:
