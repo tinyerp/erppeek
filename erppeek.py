@@ -19,7 +19,7 @@ import traceback
 import _ast
 
 try:
-    from ptpython.relp import embed
+    from ptpython.repl import embed
     PTPYTHON = True
 except ImportError:
     PTPYTHON = False
@@ -1698,6 +1698,8 @@ def main(interact=_interact):
         if not client.user:
             client.connect()
         # Enter interactive mode
+        import pudb
+        pudb.set_trace()
         if PTPYTHON:
             embed(global_vars, locals(), vi_mode=False)
         else:
