@@ -315,15 +315,33 @@ class TestClientApi(XmlRpcTestCase):
         self.client.db.list.side_effect = [['db1'], ['db2']]
 
         create_database('abc', 'db1')
+        create_database('xyz', 'db2', user_password='secret', lang='fr_FR')
+
+        self.assertCalls(
+            call.db.create_database('abc', 'db1', False, 'en_US', 'admin'),
+            call.db.list(),
+            call.common.login('db1', 'admin', 'admin'),
+            call.db.create_database('xyz', 'db2', False, 'fr_FR', 'secret'),
+            call.db.list(),
+            call.common.login('db2', 'admin', 'secret'),
+        )
+        self.assertOutput('')
+
+        if float(self.server_version) < 9.0:
+            self.assertRaises(erppeek.Error, create_database, 'xyz', 'db2', user_password='secret', lang='fr_FR', login='other_login', country_code='CA')
+            self.assertRaises(erppeek.Error, create_database, 'xyz', 'db2', login='other_login')
+            self.assertRaises(erppeek.Error, create_database, 'xyz', 'db2', country_code='CA')
+            self.assertOutput('')
+            return
+
+        # Odoo 9
+        self.client.db.list.side_effect = [['db2']]
         create_database('xyz', 'db2', user_password='secret', lang='fr_FR', login='other_login', country_code='CA')
 
         self.assertCalls(
-            call.db.create_database('abc', 'db1', False, 'en_US', 'admin', 'admin', None),
-            call.db.list(),
-            call.common.login('db1', 'admin', 'admin'),
             call.db.create_database('xyz', 'db2', False, 'fr_FR', 'secret', 'other_login', 'CA'),
             call.db.list(),
-            call.common.login('db2', 'admin', 'secret'),
+            call.common.login('db2', 'other_login', 'secret'),
         )
         self.assertOutput('')
 

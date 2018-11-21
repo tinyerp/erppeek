@@ -664,7 +664,12 @@ class Client(object):
         and no country is set into the database.
         Login if successful.
         """
-        if self.major_version in ('5.0', '6.0'):
+        float_version = float(self.major_version)
+        customize = (login != 'admin' or country_code)
+        if customize and float_version < 9.0:
+            raise Error("Custom 'login' and 'country_code' are not supported")
+
+        if float_version < 6.1:
             thread_id = self.db.create(passwd, database, demo, lang,
                                        user_password)
             progress = 0
@@ -674,13 +679,13 @@ class Client(object):
                     progress, users = self.db.get_progress(passwd, thread_id)
             except KeyboardInterrupt:
                 return {'id': thread_id, 'progress': progress}
-        elif self.major_version in ('7.0', '8.0'):
+        elif not customize:
             self.db.create_database(passwd, database, demo, lang,
                                     user_password)
         else:
             self.db.create_database(passwd, database, demo, lang,
                                     user_password, login, country_code)
-        return self.login('admin', user_password, database=database)
+        return self.login(login, user_password, database=database)
 
     def clone_database(self, passwd, db_name):
         """Clone the current database.

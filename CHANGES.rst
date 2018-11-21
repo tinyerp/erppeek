@@ -9,6 +9,9 @@ Changelog
 
 * New method ``Client.clone_database`` based on ``Client.db.duplicate_database``.
 
+* Optional ``login`` and ``country_code`` arguments for
+  ``Client.create_database`` in Odoo 9+.
+
 * Use the ``context`` for the ``search`` methods.
 
 * More robust Python 2 detection logic.
