@@ -10,6 +10,10 @@ ID1, ID2 = 4001, 4002
 STABLE = ['uninstallable', 'uninstalled', 'installed']
 
 
+def _skip_test(test_case):
+    pass
+
+
 class IdentDict(object):
     def __init__(self, _id):
         self._id = _id
@@ -58,9 +62,9 @@ class TestService(XmlRpcTestCase):
         self.assertCalls(call('login', ('aaa',)), 'call().__str__')
         self.assertOutput('')
 
-    def test_service_openerp_client(self, server_version='8.0'):
+    def test_service_openerp_client(self, server_version=11.0):
         server = 'http://127.0.0.1:8069'
-        self.service.side_effect = [server_version, ['newdb'], 1]
+        self.service.side_effect = [str(server_version), ['newdb'], 1]
         client = erppeek.Client(server, 'newdb', 'usr', 'pss')
 
         self.service.return_value = ANY
@@ -68,14 +72,14 @@ class TestService(XmlRpcTestCase):
         self.assertIsInstance(client.common, erppeek.Service)
         self.assertIsInstance(client._object, erppeek.Service)
         self.assertIsInstance(client._report, erppeek.Service)
-        if server_version >= '7.0':
+        if server_version >= 7.0:
             self.assertNotIsInstance(client._wizard, erppeek.Service)
         else:
             self.assertIsInstance(client._wizard, erppeek.Service)
 
         self.assertIn('/xmlrpc/db', str(client.db.create_database))
         self.assertIn('/xmlrpc/db', str(client.db.db_exist))
-        if server_version == '8.0':
+        if server_version >= 8.0:
             self.assertRaises(AttributeError, getattr,
                               client.db, 'create')
             self.assertRaises(AttributeError, getattr,
@@ -87,14 +91,19 @@ class TestService(XmlRpcTestCase):
         self.assertCalls(ANY, ANY, ANY)
         self.assertOutput('')
 
-    def test_service_openerp_50(self):
-        self.test_service_openerp_client(server_version='5.0')
+    def test_service_openerp_50_to_70(self):
+        self.test_service_openerp_client(server_version=7.0)
+        self.test_service_openerp_client(server_version=6.1)
+        self.test_service_openerp_client(server_version=6.0)
+        self.test_service_openerp_client(server_version=5.0)
 
-    def test_service_openerp_61(self):
-        self.test_service_openerp_client(server_version='6.1')
+    def test_service_odoo_80_90(self):
+        self.test_service_openerp_client(server_version=9.0)
+        self.test_service_openerp_client(server_version=8.0)
 
-    def test_service_openerp_70(self):
-        self.test_service_openerp_client(server_version='7.0')
+    def test_service_odoo_10_11(self):
+        self.test_service_openerp_client(server_version=11.0)
+        self.test_service_openerp_client(server_version=10.0)
 
 
 class TestCreateClient(XmlRpcTestCase):
@@ -338,9 +347,9 @@ class TestClientApi(XmlRpcTestCase):
         domain2 = [('name', '=', 'mushroom'), ('state', '!=', 'draft')]
         self.assertCalls(
             OBJ('foo.bar', 'search', domain),
-            OBJ('foo.bar', 'search', domain, 0, 2, None, None),
-            OBJ('foo.bar', 'search', domain, 80, 99, None, None),
-            OBJ('foo.bar', 'search', domain, 0, None, 'name ASC', None),
+            OBJ('foo.bar', 'search', domain, 0, 2),
+            OBJ('foo.bar', 'search', domain, 80, 99),
+            OBJ('foo.bar', 'search', domain, 0, None, 'name ASC'),
             OBJ('foo.bar', 'search', domain2),
             OBJ('foo.bar', 'search', domain),
             OBJ('foo.bar', 'search', domain),
@@ -354,7 +363,7 @@ class TestClientApi(XmlRpcTestCase):
         self.assertCalls(OBJ('foo.bar', 'search', 'name like Morice'))
 
         search('foo.bar', ['name like Morice'], missingkey=42)
-        self.assertCalls(OBJ('foo.bar', 'search', domain, 0, None, None, None))
+        self.assertCalls(OBJ('foo.bar', 'search', domain))
         self.assertOutput('Ignoring: missingkey = 42\n')
 
         self.assertRaises(TypeError, search)
@@ -452,21 +461,21 @@ class TestClientApi(XmlRpcTestCase):
         domain2 = [('name', '=', 'mushroom'), ('state', '!=', 'draft')]
         self.assertCalls(
             OBJ('foo.bar', 'search', domain), call_read(),
-            OBJ('foo.bar', 'search', domain, 0, 2, None, None), call_read(),
-            OBJ('foo.bar', 'search', domain, 80, 99, None, None), call_read(),
-            OBJ('foo.bar', 'search', domain, 0, None, 'name ASC', None),
+            OBJ('foo.bar', 'search', domain, 0, 2), call_read(),
+            OBJ('foo.bar', 'search', domain, 80, 99), call_read(),
+            OBJ('foo.bar', 'search', domain, 0, None, 'name ASC'),
             call_read(),
             OBJ('foo.bar', 'search', domain), call_read(['birthdate', 'city']),
-            OBJ('foo.bar', 'search', domain, 0, 2, None, None),
+            OBJ('foo.bar', 'search', domain, 0, 2),
             call_read(['birthdate', 'city']),
-            OBJ('foo.bar', 'search', domain, 0, 2, None, None),
+            OBJ('foo.bar', 'search', domain, 0, 2),
             call_read(['birthdate', 'city']),
-            OBJ('foo.bar', 'search', domain, 0, None, 'name ASC', None),
+            OBJ('foo.bar', 'search', domain, 0, None, 'name ASC'),
             call_read(),
             OBJ('foo.bar', 'search', domain2), call_read(),
             OBJ('foo.bar', 'search', domain), call_read(),
             OBJ('foo.bar', 'search', domain), call_read(),
-            OBJ('foo.bar', 'search', domain, 80, 99, None, None),
+            OBJ('foo.bar', 'search', domain, 80, 99),
             call_read(['birthdate', 'city']),
         )
         self.assertOutput('')
@@ -523,7 +532,7 @@ class TestClientApi(XmlRpcTestCase):
 
         self.assertCalls(
             OBJ('foo.bar', 'read', ['name like Morice'], None),
-            OBJ('foo.bar', 'search', domain, 0, None, None, None),
+            OBJ('foo.bar', 'search', domain),
             OBJ('foo.bar', 'read', ANY, None))
         self.assertOutput('Ignoring: missingkey = 42\n')
 
@@ -748,10 +757,7 @@ class TestClientApi50(TestClientApi):
     """Test the Client API for OpenERP 5."""
     server_version = '5.0'
 
-    def _skip(self):
-        # raise self.skipTest('Not supported with OpenERP 5')
-        pass
-    test_execute_kw = test_render_report = _skip
+    test_execute_kw = test_render_report = _skip_test
 
     def test_create_database(self):
         create_database = self.client.create_database
@@ -811,3 +817,15 @@ class TestClientApi50(TestClientApi):
 
         self.assertIn('to process', self.stdout.popvalue())
         self.assertOutput('')
+
+
+class TestClientApi90(TestClientApi):
+    """Test the Client API for Odoo 9."""
+    server_version = '9.0'
+    test_wizard = _skip_test
+
+
+class TestClientApi11(TestClientApi):
+    """Test the Client API for Odoo 11."""
+    server_version = '11.0'
+    test_wizard = _skip_test

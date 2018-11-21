@@ -9,6 +9,8 @@ Changelog
 
 * New method ``Client.clone_database`` based on ``Client.db.duplicate_database``.
 
+* Use the ``context`` for the ``search`` methods.
+
 
 1.6.3 (2015-12-30)
 ~~~~~~~~~~~~~~~~~~

@@ -31,6 +31,14 @@ def OBJ(*args):
     return ('object.execute', sentinel.AUTH) + args
 
 
+def OBJ_v9(*args):
+    if len(args) == 8 and args[1] == 'search':
+        args = args[:6] + args[7:5:-1]
+        if not args[-1]:
+            args = args[:-1]
+    return OBJ(*args)
+
+
 class XmlRpcTestCase(unittest2.TestCase):
     server_version = None
     server = None
@@ -66,6 +74,10 @@ class XmlRpcTestCase(unittest2.TestCase):
         svcs.db.list.return_value = [self.database]
         svcs.common.login.return_value = self.uid
         return svcs
+
+    def get_OBJ(self):
+        self.assertTrue(self.server_version)
+        return OBJ if (float(self.server_version) >= 10.0) else OBJ_v9
 
     def assertCalls(self, *expected_args):
         expected_calls = []

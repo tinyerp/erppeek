@@ -38,6 +38,7 @@ DEFAULT_URL = 'http://localhost:8069'
 DEFAULT_DB = 'odoo'
 DEFAULT_USER = 'admin'
 MAXCOL = [79, 179, 9999]    # Line length in verbose mode
+_DEFAULT = object()
 
 USAGE = """\
 Usage (some commands):
@@ -286,7 +287,7 @@ def start_odoo_services(options=None, appname=None):
         try:
             odoo._manager_class = odoo.modules.registry.RegistryManager
             odoo._get_pool = odoo._manager_class.get
-        except AttributeError:  # Odoo >= v10
+        except AttributeError:  # Odoo >= 10
             odoo._manager_class = odoo.modules.registry.Registry
             odoo._get_pool = odoo._manager_class
 
@@ -313,7 +314,7 @@ def issearchdomain(arg):
         (isinstance(arg[0], basestring) and arg[0].isdigit())))
 
 
-def searchargs(params, kwargs=None, context=None):
+def searchargs(params, kwargs=None, context=None, odd=False):
     """Compute the 'search' parameters."""
     if not params:
         return ([],)
@@ -332,14 +333,20 @@ def searchargs(params, kwargs=None, context=None):
                 # Interpret the value as a string
                 pass
             domain[idx] = (field, operator, value)
+    params = (domain,) + params[1:]
     if (kwargs or context) and len(params) == 1:
-        params = (domain,
-                  kwargs.pop('offset', 0),
-                  kwargs.pop('limit', None),
-                  kwargs.pop('order', None),
-                  context)
-    else:
-        params = (domain,) + params[1:]
+        args = (kwargs.pop('offset', 0),
+                kwargs.pop('limit', None),
+                kwargs.pop('order', None),
+                kwargs.pop('count', False),
+                context)
+        if odd:
+            # The order of the arguments was different with Odoo 9 and older
+            args = args[:3] + args[4:2:-1]
+        for idx in range(4, -1, -1):
+            if args[idx]:
+                params += args[:idx + 1]
+                break
     return params
 
 
@@ -458,6 +465,7 @@ class Client(object):
         self._object = get_proxy('object')
         self._report = get_proxy('report')
         self._wizard = get_proxy('wizard') if float_version < 7.0 else None
+        self._searchargs = functools.partial(searchargs, odd=(float_version < 10.0))
         self.reset()
         self.context = None
         if db:
@@ -701,7 +709,7 @@ class Client(object):
             assert params
             if issearchdomain(params[0]):
                 # Combine search+read
-                search_params = searchargs(params[:1], kwargs, context)
+                search_params = self._searchargs(params[:1], kwargs, context)
                 ordered = len(search_params) > 3 and search_params[3]
                 ids = self._execute(obj, 'search', *search_params)
             elif isinstance(params[0], list):
@@ -722,10 +730,10 @@ class Client(object):
                 params = (ids, kwargs.pop('fields', None))
         elif method == 'search':
             # Accept keyword arguments for the search method
-            params = searchargs(params, kwargs, context)
+            params = self._searchargs(params, kwargs, context)
             context = None
         elif method == 'search_count':
-            params = searchargs(params)
+            params = self._searchargs(params)
         elif method == 'perm_read':
             # broken with a single id (verified with 5.0 and 6.1)
             if params and isinstance(params[0], int_types):
@@ -755,7 +763,7 @@ class Client(object):
         assert isinstance(obj, basestring) and isinstance(signal, basestring)
         return self._exec_workflow(obj, signal, obj_id)
 
-    def wizard(self, name, datas=None, action='init', context=None):
+    def wizard(self, name, datas=None, action='init', context=_DEFAULT):
         """Wrapper around ``wizard.create`` and ``wizard.execute``
         RPC methods.
 
@@ -776,7 +784,7 @@ class Client(object):
             if action == 'init' and name != wiz_id:
                 return wiz_id
             datas = {}
-        if context is None:
+        if context is _DEFAULT:
             context = self.context
         return self._wizard_execute(wiz_id, datas, action, context)
 
@@ -1094,16 +1102,13 @@ class Model(object):
             assert not params and not kwargs
             return Record(self, domain, context=context)
         if issearchdomain(domain):
-            params = searchargs((domain,) + params, kwargs, context)
-            domain = self._execute('search', *params)
-            # Ignore extra keyword arguments
-            for item in kwargs.items():
-                print('Ignoring: %s = %r' % item)
+            kwargs['context'] = context
+            domain = self._execute('search', domain, *params, **kwargs)
         else:
             assert not params and not kwargs
         return RecordList(self, domain, context=context)
 
-    def get(self, domain, context=None):
+    def get(self, domain, context=_DEFAULT):
         """Return a single :class:`Record`.
 
         The argument `domain` accepts a single integer ``id`` or a
@@ -1111,7 +1116,7 @@ class Model(object):
         :class:`Record` or None.  If multiple records are found,
         a ``ValueError`` is raised.
         """
-        if context is None:
+        if context is _DEFAULT:
             context = self.client.context
         if isinstance(domain, int_types):   # a single id
             return Record(self, domain, context=context)
@@ -1123,13 +1128,12 @@ class Model(object):
             ids = [res['res_id'] for res in data]
         else:                               # a search domain
             assert issearchdomain(domain)
-            params = searchargs((domain,), {}, context)
-            ids = self._execute('search', *params)
+            ids = self._execute('search', domain, context=context)
         if len(ids) > 1:
             raise ValueError('domain matches too many records (%d)' % len(ids))
         return Record(self, ids[0], context=context) if ids else None
 
-    def create(self, values, context=None):
+    def create(self, values, context=_DEFAULT):
         """Create a :class:`Record`.
 
         The argument `values` is a dictionary of values which are used to
@@ -1140,13 +1144,13 @@ class Model(object):
 
         The newly created :class:`Record` is returned.
         """
-        if context is None:
+        if context is _DEFAULT:
             context = self.client.context
         values = self._unbrowse_values(values)
         new_id = self._execute('create', values, context=context)
         return Record(self, new_id, context=context)
 
-    def _browse_values(self, values, context=None):
+    def _browse_values(self, values, context=_DEFAULT):
         """Wrap the values of a Record.
 
         The argument `values` is a dictionary of values read from a Record.
@@ -1232,13 +1236,13 @@ class RecordList(object):
     to assign a single value to all the selected records.
     """
 
-    def __init__(self, res_model, ids, context=None):
+    def __init__(self, res_model, ids, context=_DEFAULT):
         idnames = list(ids)
         for (index, id_) in enumerate(ids):
             if isinstance(id_, (list, tuple)):
                 ids[index] = id_ = id_[0]
             assert isinstance(id_, int_types), repr(id_)
-        if context is None:
+        if context is _DEFAULT:
             context = res_model.client.context
         # Bypass the __setattr__ method
         self.__dict__.update({
@@ -1270,9 +1274,9 @@ class RecordList(object):
         ids = self._idnames + other._idnames
         return RecordList(self._model, ids, self._context)
 
-    def read(self, fields=None, context=None):
+    def read(self, fields=None, context=_DEFAULT):
         """Wrapper for :meth:`Record.read` method."""
-        if context is None:
+        if context is _DEFAULT:
             context = self._context
 
         client = self._model.client
@@ -1305,21 +1309,21 @@ class RecordList(object):
                     return records
         return values
 
-    def write(self, values, context=None):
+    def write(self, values, context=_DEFAULT):
         """Wrapper for :meth:`Record.write` method."""
         if not self.id:
             return True
-        if context is None:
+        if context is _DEFAULT:
             context = self._context
         values = self._model._unbrowse_values(values)
         rv = self._execute('write', self.id, values, context=context)
         return rv
 
-    def unlink(self, context=None):
+    def unlink(self, context=_DEFAULT):
         """Wrapper for :meth:`Record.unlink` method."""
         if not self.id:
             return True
-        if context is None:
+        if context is _DEFAULT:
             context = self._context
         rv = self._execute('unlink', self.id, context=context)
         return rv
@@ -1382,12 +1386,12 @@ class Record(object):
     The attributes are evaluated lazily, and they are cached in the record.
     The Record's cache is invalidated if any attribute is changed.
     """
-    def __init__(self, res_model, res_id, context=None):
+    def __init__(self, res_model, res_id, context=_DEFAULT):
         if isinstance(res_id, (list, tuple)):
             (res_id, res_name) = res_id
             self.__dict__['_name'] = res_name
         assert isinstance(res_id, int_types), repr(res_id)
-        if context is None:
+        if context is _DEFAULT:
             context = res_model.client.context
         # Bypass the __setattr__ method
         self.__dict__.update({
@@ -1440,13 +1444,13 @@ class Record(object):
         self._cached_keys.update(new_values)
         return new_values
 
-    def read(self, fields=None, context=None):
+    def read(self, fields=None, context=_DEFAULT):
         """Read the `fields` of the :class:`Record`.
 
         The argument `fields` accepts different kinds of values.
         See :meth:`Client.read` for details.
         """
-        if context is None:
+        if context is _DEFAULT:
             context = self._context
         rv = self._model.read(self.id, fields, context=context)
         if isinstance(rv, dict):
@@ -1455,45 +1459,45 @@ class Record(object):
             return self._update({fields: rv})[fields]
         return rv
 
-    def perm_read(self, context=None):
+    def perm_read(self, context=_DEFAULT):
         """Read the metadata of the :class:`Record`.
 
         Return a dictionary of values.
         See :meth:`Client.perm_read` for details.
         """
-        if context is None:
+        if context is _DEFAULT:
             context = self._context
         rv = self._execute('perm_read', [self.id], context=context)
         return rv[0] if rv else None
 
-    def write(self, values, context=None):
+    def write(self, values, context=_DEFAULT):
         """Write the `values` in the :class:`Record`.
 
         `values` is a dictionary of values.
         See :meth:`Model.create` for details.
         """
-        if context is None:
+        if context is _DEFAULT:
             context = self._context
         values = self._model._unbrowse_values(values)
         rv = self._execute('write', [self.id], values, context=context)
         self.refresh()
         return rv
 
-    def unlink(self, context=None):
+    def unlink(self, context=_DEFAULT):
         """Delete the current :class:`Record` from the database."""
-        if context is None:
+        if context is _DEFAULT:
             context = self._context
         rv = self._execute('unlink', [self.id], context=context)
         self.refresh()
         return rv
 
-    def copy(self, default=None, context=None):
+    def copy(self, default=None, context=_DEFAULT):
         """Copy a record and return the new :class:`Record`.
 
         The optional argument `default` is a mapping which overrides some
         values of the new record.
         """
-        if context is None:
+        if context is _DEFAULT:
             context = self._context
         if default:
             default = self._model._unbrowse_values(default)
