@@ -277,12 +277,14 @@ def start_odoo_services(options=None, appname=None):
             odoo.api.Environment.reset()
 
         try:
-            manager_class = odoo.modules.registry.RegistryManager
+            odoo._manager_class = odoo.modules.registry.RegistryManager
+            odoo._get_pool = odoo._manager_class.get
         except AttributeError:  # Odoo >= v10
-            manager_class = odoo.modules.registry.Registry
+            odoo._manager_class = odoo.modules.registry.Registry
+            odoo._get_pool = odoo._manager_class
 
         def close_all():
-            for db in manager_class.registries.keys():
+            for db in odoo._manager_class.registries.keys():
                 odoo.sql_db.close_db(db)
         atexit.register(close_all)
 
@@ -587,12 +589,11 @@ class Client(object):
         def get_pool(db_name=None):
             """Return a model registry.
 
-            Use get_pool(db_name).db.cursor() to grab a cursor.
-            With Odoo v8, use get_pool(db_name).cursor() instead.
+            Use get_pool().cursor() to grab a cursor on an Odoo database.
+            With OpenERP, use get_pool().db.cursor() instead.
             """
             client = global_vars['client']
-            registry = client._server.modules.registry
-            return registry.RegistryManager.get(db_name or client._db)
+            return client._server._get_pool(db_name or client._db)
 
         def connect(self, env=None):
             """Connect to another environment and replace the globals()."""
