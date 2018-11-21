@@ -274,14 +274,15 @@ def start_odoo_services(options=None, appname=None):
         elif odoo._api_v7:
             odoo.service.start_internal()
         else:   # Odoo v8
-            try:
-                odoo.api.Environment._local.environments = \
-                    odoo.api.Environments()
-            except AttributeError:
-                pass
+            odoo.api.Environment.reset()
+
+        try:
+            manager_class = odoo.modules.registry.RegistryManager
+        except AttributeError:  # Odoo >= v10
+            manager_class = odoo.modules.registry.Registry
 
         def close_all():
-            for db in odoo.modules.registry.RegistryManager.registries.keys():
+            for db in manager_class.registries.keys():
                 odoo.sql_db.close_db(db)
         atexit.register(close_all)
 
