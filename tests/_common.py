@@ -89,13 +89,19 @@ class XmlRpcTestCase(unittest2.TestCase):
         # Reset
         self.service.reset_mock()
 
-    def assertOutput(self, stdout='', stderr=''):
+    def assertOutput(self, stdout='', stderr='', startswith=False):
         # compare with ANY to make sure output is not empty
         if stderr is mock.ANY:
             self.assertTrue(self.stderr.popvalue())
         else:
-            self.assertMultiLineEqual(self.stderr.popvalue(), stderr)
+            stderr_value = self.stderr.popvalue()
+            if startswith and stderr:
+                stderr_value = stderr_value[:len(stderr)]
+            self.assertMultiLineEqual(stderr_value, stderr)
         if stdout is mock.ANY:
             self.assertTrue(self.stdout.popvalue())
         else:
-            self.assertMultiLineEqual(self.stdout.popvalue(), stdout)
+            stdout_value = self.stdout.popvalue()
+            if startswith and stdout:
+                stdout_value = stdout_value[:len(stdout)]
+            self.assertMultiLineEqual(stdout_value, stdout)

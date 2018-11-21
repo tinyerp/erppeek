@@ -74,7 +74,7 @@ class TestInteract(XmlRpcTestCase):
             "Logged in as 'gaspard'",
             "42",
         ])
-        self.assertOutput(stderr='\x1b[A\n\n')
+        self.assertOutput(stderr='\x1b[A\n\n', startswith=True)
 
     def test_no_database(self):
         env_tuple = ('http://127.0.0.1:8069', 'missingdb', 'usr', None)
