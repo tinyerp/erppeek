@@ -7,13 +7,15 @@ python:
   - 3.4
   - 3.5
   - 3.6
-  - 3.7
+  - 3.7-dev
+  - 3.8-dev
   - pypy
+  - pypy3.5
 install:
   - pip list
 script:
   - python setup.py test
 matrix:
   allow_failures:
-    - python: pypy
+    - python: 3.8-dev pypy pypy3.5
 sudo: false
