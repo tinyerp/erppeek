@@ -257,7 +257,10 @@ def start_odoo_services(options=None, appname=None):
       ``['-c', '/path/to/openerp-server.conf', '--without-demo', 'all']``.
     Return the ``openerp`` package.
     """
-    import openerp as odoo
+    try:
+        import openerp as odoo
+    except ImportError:
+        import odoo
     odoo._api_v7 = odoo.release.version_info < (8,)
     if not (odoo._api_v7 and odoo.osv.osv.service):
         os.putenv('TZ', 'UTC')
