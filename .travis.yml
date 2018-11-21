@@ -28,4 +28,5 @@ matrix:
     - python: 3.8-dev
     - python: pypy
     - python: pypy3.5
+  fast_finish: true
 sudo: false
