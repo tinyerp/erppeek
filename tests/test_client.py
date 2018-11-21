@@ -338,9 +338,9 @@ class TestClientApi(XmlRpcTestCase):
         domain2 = [('name', '=', 'mushroom'), ('state', '!=', 'draft')]
         self.assertCalls(
             OBJ('foo.bar', 'search', domain),
-            OBJ('foo.bar', 'search', domain, 0, 2, None, None),
-            OBJ('foo.bar', 'search', domain, 80, 99, None, None),
-            OBJ('foo.bar', 'search', domain, 0, None, 'name ASC', None),
+            OBJ('foo.bar', 'search', domain, 0, 2, None),
+            OBJ('foo.bar', 'search', domain, 80, 99, None),
+            OBJ('foo.bar', 'search', domain, 0, None, 'name ASC'),
             OBJ('foo.bar', 'search', domain2),
             OBJ('foo.bar', 'search', domain),
             OBJ('foo.bar', 'search', domain),
@@ -354,7 +354,7 @@ class TestClientApi(XmlRpcTestCase):
         self.assertCalls(OBJ('foo.bar', 'search', 'name like Morice'))
 
         search('foo.bar', ['name like Morice'], missingkey=42)
-        self.assertCalls(OBJ('foo.bar', 'search', domain, 0, None, None, None))
+        self.assertCalls(OBJ('foo.bar', 'search', domain, 0, None, None))
         self.assertOutput('Ignoring: missingkey = 42\n')
 
         self.assertRaises(TypeError, search)
@@ -452,21 +452,21 @@ class TestClientApi(XmlRpcTestCase):
         domain2 = [('name', '=', 'mushroom'), ('state', '!=', 'draft')]
         self.assertCalls(
             OBJ('foo.bar', 'search', domain), call_read(),
-            OBJ('foo.bar', 'search', domain, 0, 2, None, None), call_read(),
-            OBJ('foo.bar', 'search', domain, 80, 99, None, None), call_read(),
-            OBJ('foo.bar', 'search', domain, 0, None, 'name ASC', None),
+            OBJ('foo.bar', 'search', domain, 0, 2, None), call_read(),
+            OBJ('foo.bar', 'search', domain, 80, 99, None), call_read(),
+            OBJ('foo.bar', 'search', domain, 0, None, 'name ASC'),
             call_read(),
             OBJ('foo.bar', 'search', domain), call_read(['birthdate', 'city']),
-            OBJ('foo.bar', 'search', domain, 0, 2, None, None),
+            OBJ('foo.bar', 'search', domain, 0, 2, None),
             call_read(['birthdate', 'city']),
-            OBJ('foo.bar', 'search', domain, 0, 2, None, None),
+            OBJ('foo.bar', 'search', domain, 0, 2, None),
             call_read(['birthdate', 'city']),
-            OBJ('foo.bar', 'search', domain, 0, None, 'name ASC', None),
+            OBJ('foo.bar', 'search', domain, 0, None, 'name ASC'),
             call_read(),
             OBJ('foo.bar', 'search', domain2), call_read(),
             OBJ('foo.bar', 'search', domain), call_read(),
             OBJ('foo.bar', 'search', domain), call_read(),
-            OBJ('foo.bar', 'search', domain, 80, 99, None, None),
+            OBJ('foo.bar', 'search', domain, 80, 99, None),
             call_read(['birthdate', 'city']),
         )
         self.assertOutput('')
@@ -523,7 +523,7 @@ class TestClientApi(XmlRpcTestCase):
 
         self.assertCalls(
             OBJ('foo.bar', 'read', ['name like Morice'], None),
-            OBJ('foo.bar', 'search', domain, 0, None, None, None),
+            OBJ('foo.bar', 'search', domain, 0, None, None),
             OBJ('foo.bar', 'read', ANY, None))
         self.assertOutput('Ignoring: missingkey = 42\n')
 
