@@ -11,6 +11,8 @@ Changelog
 
 * Use the ``context`` for the ``search`` methods.
 
+* More robust Python 2 detection logic.
+
 
 1.6.3 (2015-12-30)
 ~~~~~~~~~~~~~~~~~~
