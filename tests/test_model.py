@@ -1007,7 +1007,7 @@ class TestModel90(TestModel):
     server_version = '9.0'
 
 
-class TestRecord90(TestModel):
+class TestRecord90(TestRecord):
     server_version = '9.0'
 
 
@@ -1015,5 +1015,5 @@ class TestModel11(TestModel):
     server_version = '11.0'
 
 
-class TestRecord11(TestModel):
+class TestRecord11(TestRecord):
     server_version = '11.0'
