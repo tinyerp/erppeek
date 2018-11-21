@@ -656,14 +656,20 @@ class Client(object):
         return global_vars
 
     def create_database(self, passwd, database, demo=False, lang='en_US',
-                        user_password='admin'):
+                        user_password='admin', login='admin', country_code=None):
         """Create a new database.
 
         The superadmin `passwd` and the `database` name are mandatory.
-        By default, `demo` data are not loaded and `lang` is ``en_US``.
+        By default, `demo` data are not loaded, `lang` is ``en_US``
+        and no country is set into the database.
         Login if successful.
         """
-        if self.major_version in ('5.0', '6.0'):
+        float_version = float(self.major_version)
+        customize = (login != 'admin' or country_code)
+        if customize and float_version < 9.0:
+            raise Error("Custom 'login' and 'country_code' are not supported")
+
+        if float_version < 6.1:
             thread_id = self.db.create(passwd, database, demo, lang,
                                        user_password)
             progress = 0
@@ -673,10 +679,13 @@ class Client(object):
                     progress, users = self.db.get_progress(passwd, thread_id)
             except KeyboardInterrupt:
                 return {'id': thread_id, 'progress': progress}
-        else:
+        elif not customize:
             self.db.create_database(passwd, database, demo, lang,
                                     user_password)
-        return self.login('admin', user_password, database=database)
+        else:
+            self.db.create_database(passwd, database, demo, lang,
+                                    user_password, login, country_code)
+        return self.login(login, user_password, database=database)
 
     def clone_database(self, passwd, db_name):
         """Clone the current database.
