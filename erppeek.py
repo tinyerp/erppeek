@@ -66,8 +66,8 @@ DOMAIN_OPERATORS = frozenset('!|&')
 #   =, !=, >, >=, <, <=, like, ilike, in, not like, not ilike, not in,
 #   child_of, =like, =ilike, =?
 _term_re = re.compile(
-    '([\w._]+)\s*'  '(=(?:like|ilike|\?)|[<>]=?|!?=(?!=)'
-    '|(?<= )(?:like|ilike|in|not like|not ilike|not in|child_of))'  '\s*(.*)')
+    r'([\w._]+)\s*'   r'(=(?:like|ilike|\?)|[<>]=?|!?=(?!=)'
+    r'|(?<= )(?:like|ilike|in|not like|not ilike|not in|child_of))' r'\s*(.*)')
 _fields_re = re.compile(r'(?:[^%]|^)%\(([^)]+)\)')
 
 # Published object methods
@@ -128,13 +128,22 @@ def _memoize(inst, attr, value, doc_values=None):
     inst.__dict__[attr] = value
     return value
 
+_ast_node_attrs = []
+for (cls, attr) in [('Constant', 'value'),      # Python >= 3.7
+                    ('NameConstant', 'value'),  # Python >= 3.4 (singletons)
+                    ('Str', 's'),               # Python <= 3.7
+                    ('Num', 'n')]:              # Python <= 3.7
+    if hasattr(_ast, cls):
+        _ast_node_attrs.append((getattr(_ast, cls), attr))
+
 
 # Simplified ast.literal_eval which does not parse operators
-def _convert(node, _consts={'None': None, 'True': True, 'False': False}):
-    if isinstance(node, _ast.Str):
-        return node.s
-    if isinstance(node, _ast.Num):
-        return node.n
+def _convert(node,
+             _consts={'None': None, 'True': True, 'False': False},
+             _ast_node_attrs=_ast_node_attrs):
+    for (ast_class, node_attr) in _ast_node_attrs:
+        if isinstance(node, ast_class):
+            return getattr(node, node_attr)
     if isinstance(node, _ast.Tuple):
         return tuple(map(_convert, node.elts))
     if isinstance(node, _ast.List):
@@ -142,8 +151,6 @@ def _convert(node, _consts={'None': None, 'True': True, 'False': False}):
     if isinstance(node, _ast.Dict):
         return dict([(_convert(k), _convert(v))
                      for (k, v) in zip(node.keys, node.values)])
-    if hasattr(node, 'value') and str(node.value) in _consts:
-        return node.value         # Python 3.4+
     if isinstance(node, _ast.Name) and node.id in _consts:
         return _consts[node.id]   # Python <= 3.3
     raise ValueError('malformed or disallowed expression')
@@ -155,7 +162,7 @@ def literal_eval(expression, _octal_digits=frozenset('01234567')):
         raise SyntaxError('unsupported octal notation')
     value = _convert(node.body)
     if isinstance(value, int_types) and not MININT <= value <= MAXINT:
-         raise ValueError('overflow, int exceeds XML-RPC limits')
+        raise ValueError('overflow, int exceeds XML-RPC limits')
     return value
 
 
@@ -442,7 +449,7 @@ class Client(object):
                 methods += _obsolete_methods.get(name) or ()
             return Service(server, name, methods, transport, verbose=verbose)
         self.server_version = ver = get_proxy('db').server_version()
-        self.major_version = re.match('\d+\.?\d*', ver).group()
+        self.major_version = re.match(r'\d+\.?\d*', ver).group()
         float_version = float(self.major_version)
         # Create the XML-RPC proxies
         self.db = get_proxy('db')
