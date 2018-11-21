@@ -313,7 +313,7 @@ def issearchdomain(arg):
         (isinstance(arg[0], basestring) and arg[0].isdigit())))
 
 
-def searchargs(params, kwargs=None):
+def searchargs(params, kwargs=None, context=None):
     """Compute the 'search' parameters."""
     if not params:
         return ([],)
@@ -332,11 +332,12 @@ def searchargs(params, kwargs=None):
                 # Interpret the value as a string
                 pass
             domain[idx] = (field, operator, value)
-    if kwargs and len(params) == 1:
+    if (kwargs or context) and len(params) == 1:
         params = (domain,
                   kwargs.pop('offset', 0),
                   kwargs.pop('limit', None),
-                  kwargs.pop('order', None))
+                  kwargs.pop('order', None),
+                  context)
     else:
         params = (domain,) + params[1:]
     return params
@@ -700,7 +701,7 @@ class Client(object):
             assert params
             if issearchdomain(params[0]):
                 # Combine search+read
-                search_params = searchargs(params[:1], kwargs)
+                search_params = searchargs(params[:1], kwargs, context)
                 ordered = len(search_params) > 3 and search_params[3]
                 ids = self._execute(obj, 'search', *search_params)
             elif isinstance(params[0], list):
@@ -721,7 +722,7 @@ class Client(object):
                 params = (ids, kwargs.pop('fields', None))
         elif method == 'search':
             # Accept keyword arguments for the search method
-            params = searchargs(params, kwargs)
+            params = searchargs(params, kwargs, context)
             context = None
         elif method == 'search_count':
             params = searchargs(params)
@@ -1093,7 +1094,7 @@ class Model(object):
             assert not params and not kwargs
             return Record(self, domain, context=context)
         if issearchdomain(domain):
-            params = searchargs((domain,) + params, kwargs)
+            params = searchargs((domain,) + params, kwargs, context)
             domain = self._execute('search', *params)
             # Ignore extra keyword arguments
             for item in kwargs.items():
@@ -1122,7 +1123,7 @@ class Model(object):
             ids = [res['res_id'] for res in data]
         else:                               # a search domain
             assert issearchdomain(domain)
-            params = searchargs((domain,), {})
+            params = searchargs((domain,), {}, context)
             ids = self._execute('search', *params)
         if len(ids) > 1:
             raise ValueError('domain matches too many records (%d)' % len(ids))
