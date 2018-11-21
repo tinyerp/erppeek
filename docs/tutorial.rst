@@ -65,7 +65,7 @@ wrappers.
 And it confirms that the default database is not available::
 
     ...
-    Error: Database 'openerp' does not exist: []
+    Error: Database 'odoo' does not exist: []
 
 Though, we have a connected client, ready to use::
 
@@ -81,7 +81,7 @@ Create a database
 
 We create the database ``"demo"`` for this tutorial.
 We need to know the superadmin password before to continue.
-This is the ``admin_passwd`` in the ``openerp-server.conf`` file.
+This is the ``admin_passwd`` in the ``odoo-server.conf`` file.
 Default password is ``"admin"``.
 
 .. note:: This password gives full control on the databases. Set a strong
@@ -127,7 +127,7 @@ It is sometimes useful to duplicate a database (testing, backup,
 migration, ...). A shortcut is available for that, the required
 parameters are the original database name, the new database name and
 the superadmin password (this is the ``admin_passwd`` in the
-``openerp-server.conf`` file). Default password is ``"admin"``.
+``odoo-server.conf`` file). Default password is ``"admin"``.
 
 .. note:: This password gives full control on the databases. Set a strong
           password in the configuration to prevent unauthorized access.

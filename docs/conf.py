@@ -45,7 +45,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'ERPpeek'
-copyright = u'2015, Florent Xicluna'
+copyright = u'2018, Florent Xicluna'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

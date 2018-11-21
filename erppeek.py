@@ -35,7 +35,7 @@ __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
 CONF_FILE = 'erppeek.ini'
 HIST_FILE = os.path.expanduser('~/.erppeek_history')
 DEFAULT_URL = 'http://localhost:8069'
-DEFAULT_DB = 'openerp'
+DEFAULT_DB = 'odoo'
 DEFAULT_USER = 'admin'
 MAXCOL = [79, 179, 9999]    # Line length in verbose mode
 
@@ -251,11 +251,11 @@ def read_config(section=None):
 def start_odoo_services(options=None, appname=None):
     """Initialize the Odoo services.
 
-    Import the ``openerp`` package and load the Odoo services.
+    Import the ``odoo`` Python package and load the Odoo services.
     The argument `options` receives the command line arguments
-    for ``openerp``.  Example:
-      ``['-c', '/path/to/openerp-server.conf', '--without-demo', 'all']``.
-    Return the ``openerp`` package.
+    for ``odoo``.  Example:
+      ``['-c', '/path/to/odoo-server.conf', '--without-demo', 'all']``.
+    Return the ``odoo`` package.
     """
     try:
         import openerp as odoo
@@ -344,7 +344,7 @@ class Service(object):
 
     The connected endpoints are exposed on the Client instance.
     The `server` argument is the URL of the server (scheme+host+port).
-    If `server` is an ``openerp`` module, it is used to connect to the
+    If `server` is an ``odoo`` Python package, it is used to connect to the
     local server.  The `endpoint` argument is the name of the service
     (examples: ``"object"``, ``"db"``).  The `methods` is the list of methods
     which should be exposed on this endpoint.  Use ``dir(...)`` on the
@@ -417,8 +417,8 @@ class Client(object):
 
     This is the top level object.
     The `server` is the URL of the instance, like ``http://localhost:8069``.
-    If `server` is an ``openerp`` module, it is used to connect to the local
-    server (>= 6.1).
+    If `server` is an ``odoo`` Python package, it is used to connect to the
+    local server (>= 6.1).
 
     The `db` is the name of the database and the `user` should exist in the
     table ``res.users``.  If the `password` is not provided, it will be
@@ -496,7 +496,7 @@ class Client(object):
                                 (database, dbs))
             if not self._db:
                 self._db = database
-            # Used for logging, copied from openerp.sql_db.db_connect
+            # Used for logging, copied from odoo.sql_db.db_connect
             current_thread().dbname = database
         elif self._db:
             database = self._db

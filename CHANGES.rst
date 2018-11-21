@@ -2,6 +2,12 @@ Changelog
 ---------
 
 
+1.x (unreleased)
+~~~~~~~~~~~~~~~~
+
+* Fully support Odoo 10 and Odoo 11.
+
+
 1.6.3 (2015-12-30)
 ~~~~~~~~~~~~~~~~~~
 

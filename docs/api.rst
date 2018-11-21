@@ -213,7 +213,7 @@ object itself.  Please refer to `the Odoo documentation`_ for more details.
    :undoc-members:
 
 .. _the Odoo documentation:
-.. _the Odoo XML-RPC API: http://doc.openerp.com/v6.1/developer/12_api.html#api
+.. _the Odoo XML-RPC API: http://doc.odoo.com/v6.1/developer/12_api.html#api
 
 
 Manage addons

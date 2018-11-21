@@ -28,7 +28,7 @@ Key features:
 - single executable ``erppeek.py``, no external dependency
 - wrappers for ``search+read``, for data model introspection, etc...
 - simpler syntax for ``domain`` and ``fields``
-- full API accessible on the ``Client`` object for OpenERP 5.0 through Odoo 8.0
+- full API accessible on the ``Client`` object for OpenERP 5.0 through Odoo 11.0
 - the module can be imported and used as a library: ``from erppeek import Client``
 - supports Python 3 and Python 2 (>= 2.6)
 
@@ -102,9 +102,9 @@ Edit ``erppeek.ini`` and declare the environment(s)::
     scheme = http
     host = localhost
     port = 8069
-    database = openerp
+    database = odoo
     username = admin
-    options = -c /path/to/openerp-server.conf --without-demo all
+    options = -c /path/to/odoo-server.conf --without-demo all
 
     [demo]
     username = demo
