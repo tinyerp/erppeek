@@ -7,6 +7,8 @@ Changelog
 
 * Fully support Odoo 10 and Odoo 11.
 
+* New method ``Client.clone_database`` based on ``Client.db.duplicate_database``.
+
 
 1.6.3 (2015-12-30)
 ~~~~~~~~~~~~~~~~~~

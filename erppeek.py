@@ -645,7 +645,7 @@ class Client(object):
 
         The superadmin `passwd` and the `database` name are mandatory.
         By default, `demo` data are not loaded and `lang` is ``en_US``.
-        Wait for the thread to finish and login if successful.
+        Login if successful.
         """
         if self.major_version in ('5.0', '6.0'):
             thread_id = self.db.create(passwd, database, demo, lang,
@@ -662,16 +662,19 @@ class Client(object):
                                     user_password)
         return self.login('admin', user_password, database=database)
 
-    def duplicate_database(self, passwd, db_original_name, db_name,
-                           user_password='admin'):
-        """Duplicate an existing database.
+    def clone_database(self, passwd, db_name):
+        """Clone the current database.
 
-        The superadmin `passwd`, `db_original_name` and `db_name` are
-        mandatory.
-        Wait for the thread to finish and login if successful.
+        The superadmin `passwd` and `db_name` are mandatory.
+        Login if successful.
+
+        Supported since OpenERP 7.
         """
-        self.db.duplicate_database(passwd, db_original_name, db_name)
-        return self.login('admin', user_password, database=db_name)
+        self.db.duplicate_database(passwd, self._db, db_name)
+
+        # Login with the current user into the new database
+        (uid, password) = self._auth(self._db, self.user, None)
+        return self.login(self.user, password, database=db_name)
 
     def execute(self, obj, method, *params, **kwargs):
         """Wrapper around ``object.execute`` RPC method.
