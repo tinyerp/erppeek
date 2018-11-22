@@ -159,8 +159,8 @@ class TestModel(TestCase):
         domain2 = [('name', '=', 'mushroom'), ('state', '!=', 'draft')]
         self.assertCalls(
             OBJ('foo.bar', 'search', domain),
-            OBJ('foo.bar', 'search', domain, 0, 2),
-            OBJ('foo.bar', 'search', domain, 80, 99),
+            OBJ('foo.bar', 'search', domain, 0, 2, None),
+            OBJ('foo.bar', 'search', domain, 80, 99, None),
             OBJ('foo.bar', 'search', domain, 0, None, 'name ASC'),
             OBJ('foo.bar', 'search', domain2),
             OBJ('foo.bar', 'search', domain),
@@ -263,21 +263,21 @@ class TestModel(TestCase):
         domain2 = [('name', '=', 'mushroom'), ('state', '!=', 'draft')]
         self.assertCalls(
             OBJ('foo.bar', 'search', domain), call_read(),
-            OBJ('foo.bar', 'search', domain, 0, 2), call_read(),
-            OBJ('foo.bar', 'search', domain, 80, 99), call_read(),
+            OBJ('foo.bar', 'search', domain, 0, 2, None), call_read(),
+            OBJ('foo.bar', 'search', domain, 80, 99, None), call_read(),
             OBJ('foo.bar', 'search', domain, 0, None, 'name ASC'),
             call_read(),
             OBJ('foo.bar', 'search', domain), call_read(['birthdate', 'city']),
-            OBJ('foo.bar', 'search', domain, 0, 2),
+            OBJ('foo.bar', 'search', domain, 0, 2, None),
             call_read(['birthdate', 'city']),
-            OBJ('foo.bar', 'search', domain, 0, 2),
+            OBJ('foo.bar', 'search', domain, 0, 2, None),
             call_read(['birthdate', 'city']),
             OBJ('foo.bar', 'search', domain, 0, None, 'name ASC'),
             call_read(),
             OBJ('foo.bar', 'search', domain2), call_read(),
             OBJ('foo.bar', 'search', domain), call_read(),
             OBJ('foo.bar', 'search', domain), call_read(),
-            OBJ('foo.bar', 'search', domain, 80, 99),
+            OBJ('foo.bar', 'search', domain, 80, 99, None),
             call_read(['birthdate', 'city']),
         )
         self.assertOutput('')
@@ -321,10 +321,10 @@ class TestModel(TestCase):
         domain2 = [('name', '=', 'mushroom'), ('state', '!=', 'draft')]
         self.assertCalls(
             OBJ('foo.bar', 'search', domain),
-            OBJ('foo.bar', 'search', domain, 0, 2),
-            OBJ('foo.bar', 'search', domain, 80, 99),
+            OBJ('foo.bar', 'search', domain, 0, 2, None),
+            OBJ('foo.bar', 'search', domain, 80, 99, None),
             OBJ('foo.bar', 'search', domain, 0, None, 'name ASC'),
-            OBJ('foo.bar', 'search', domain, 0, 2),
+            OBJ('foo.bar', 'search', domain, 0, 2, None),
             OBJ('foo.bar', 'search', domain, 0, None, 'name ASC'),
             OBJ('foo.bar', 'search', domain2),
             OBJ('foo.bar', 'search', domain),
@@ -337,7 +337,7 @@ class TestModel(TestCase):
         FooBar.browse([searchterm], limit=2, fields=['birthdate', 'city'])
         FooBar.browse([searchterm], missingkey=42)
         self.assertCalls(
-            OBJ('foo.bar', 'search', domain, 0, 2),
+            OBJ('foo.bar', 'search', domain, 0, 2, None),
             OBJ('foo.bar', 'search', domain))
         self.assertOutput("Ignoring: fields = ['birthdate', 'city']\n"
                           "Ignoring: missingkey = 42\n")

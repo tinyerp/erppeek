@@ -129,6 +129,7 @@ def _memoize(inst, attr, value, doc_values=None):
     inst.__dict__[attr] = value
     return value
 
+
 _ast_node_attrs = []
 for (cls, attr) in [('Constant', 'value'),      # Python >= 3.7
                     ('NameConstant', 'value'),  # Python >= 3.4 (singletons)
@@ -139,9 +140,7 @@ for (cls, attr) in [('Constant', 'value'),      # Python >= 3.7
 
 
 # Simplified ast.literal_eval which does not parse operators
-def _convert(node,
-             _consts={'None': None, 'True': True, 'False': False},
-             _ast_node_attrs=_ast_node_attrs):
+def _convert(node, _consts={'None': None, 'True': True, 'False': False}):
     for (ast_class, node_attr) in _ast_node_attrs:
         if isinstance(node, ast_class):
             return getattr(node, node_attr)
@@ -314,7 +313,7 @@ def issearchdomain(arg):
         (isinstance(arg[0], basestring) and arg[0].isdigit())))
 
 
-def searchargs(params, kwargs=None, context=None, odd=False):
+def searchargs(params, kwargs=None, context=None, api_v9=False):
     """Compute the 'search' parameters."""
     if not params:
         return ([],)
@@ -337,16 +336,12 @@ def searchargs(params, kwargs=None, context=None, odd=False):
     if (kwargs or context) and len(params) == 1:
         args = (kwargs.pop('offset', 0),
                 kwargs.pop('limit', None),
-                kwargs.pop('order', None),
-                kwargs.pop('count', False),
-                context)
-        if odd:
-            # The order of the arguments was different with Odoo 9 and older
-            args = args[:3] + args[4:2:-1]
-        for idx in range(4, -1, -1):
-            if args[idx]:
-                params += args[:idx + 1]
-                break
+                kwargs.pop('order', None))
+        if context:
+            # Order of the arguments was different with Odoo 9 and older
+            params += args + ((context,) if api_v9 else (False, context))
+        elif any(args):
+            params += args
     return params
 
 
@@ -465,7 +460,7 @@ class Client(object):
         self._object = get_proxy('object')
         self._report = get_proxy('report') if float_version < 11.0 else None
         self._wizard = get_proxy('wizard') if float_version < 7.0 else None
-        self._searchargs = functools.partial(searchargs, odd=(float_version < 10.0))
+        self._searchargs = functools.partial(searchargs, api_v9=(float_version < 10.0))
         self.reset()
         self.context = None
         if db:

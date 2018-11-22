@@ -120,8 +120,9 @@ Default password is ``"admin"``.
    Then we connect to any environment with ``erppeek --env demo`` or switch
    during an interactive session with ``client.connect('demo')``.
 
+
 Clone a database
---------------------
+----------------
 
 It is sometimes useful to clone a database (testing, backup, migration, ...).
 A shortcut is available for that, the required parameters are the new
