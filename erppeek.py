@@ -28,7 +28,7 @@ else:                   # Python 2
     from xmlrpclib import Fault, ServerProxy, MININT, MAXINT
 
 
-__version__ = '1.6.3'
+__version__ = '1.7'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_odoo_services']
 

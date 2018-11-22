@@ -2,7 +2,7 @@ Changelog
 ---------
 
 
-1.x (unreleased)
+1.7 (2018-11-22)
 ~~~~~~~~~~~~~~~~
 
 * Fully support Odoo 10 and Odoo 11.
