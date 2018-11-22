@@ -14,6 +14,9 @@ Changelog
 
 * Use the ``context`` for the ``search`` methods.
 
+* Service ``Client._report`` is removed in Odoo 11. Methods ``Client.report``,
+  ``Client.report_get`` and ``Client.render_report`` are removed too.
+
 * More robust Python 2 detection logic.
 
 

@@ -79,7 +79,7 @@ _methods = {
     'common': ['about', 'login', 'timezone_get',
                'authenticate', 'version', 'set_loglevel'],
     'object': ['execute', 'execute_kw', 'exec_workflow'],
-    'report': ['render_report', 'report', 'report_get'],
+    'report': ['render_report', 'report', 'report_get'],    # < 11.0
 }
 # New 6.1: (db) create_database db_exist,
 #          (common) authenticate version set_loglevel
@@ -87,12 +87,12 @@ _methods = {
 # New 7.0: (db) duplicate_database
 
 _obsolete_methods = {
-    'db': ['create', 'get_progress'],                   # < 8.0
+    'db': ['create', 'get_progress'],                       # < 8.0
     'common': ['check_connectivity', 'get_available_updates', 'get_os_time',
                'get_migration_scripts', 'get_server_environment',
                'get_sqlcount', 'get_stats',
-               'list_http_services', 'login_message'],  # < 8.0
-    'wizard': ['execute', 'create'],                    # < 7.0
+               'list_http_services', 'login_message'],      # < 8.0
+    'wizard': ['execute', 'create'],                        # < 7.0
 }
 _cause_message = ("\nThe above exception was the direct cause "
                   "of the following exception:\n\n")
@@ -463,7 +463,7 @@ class Client(object):
         self.db = get_proxy('db')
         self.common = get_proxy('common')
         self._object = get_proxy('object')
-        self._report = get_proxy('report')
+        self._report = get_proxy('report') if float_version < 11.0 else None
         self._wizard = get_proxy('wizard') if float_version < 7.0 else None
         self._searchargs = functools.partial(searchargs, odd=(float_version < 10.0))
         self.reset()
@@ -532,13 +532,15 @@ class Client(object):
             return functools.partial(method, self._db, uid, password)
         self._execute = authenticated(self._object.execute)
         self._exec_workflow = authenticated(self._object.exec_workflow)
-        self.report = authenticated(self._report.report)
-        self.report_get = authenticated(self._report.report_get)
         if self.major_version != '5.0':
             # Only for Odoo and OpenERP >= 6
             self.execute_kw = authenticated(self._object.execute_kw)
-            self.render_report = authenticated(self._report.render_report)
-        if self._wizard:
+        if self._report:        # Odoo <= 10
+            self.report = authenticated(self._report.report)
+            self.report_get = authenticated(self._report.report_get)
+            if self.major_version != '5.0':
+                self.render_report = authenticated(self._report.render_report)
+        if self._wizard:        # Odoo <= 6.1
             self._wizard_execute = authenticated(self._wizard.execute)
             self._wizard_create = authenticated(self._wizard.create)
         return uid

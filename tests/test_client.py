@@ -71,10 +71,14 @@ class TestService(XmlRpcTestCase):
         self.assertIsInstance(client.db, erppeek.Service)
         self.assertIsInstance(client.common, erppeek.Service)
         self.assertIsInstance(client._object, erppeek.Service)
-        self.assertIsInstance(client._report, erppeek.Service)
-        if server_version >= 7.0:
-            self.assertNotIsInstance(client._wizard, erppeek.Service)
+        if server_version >= 11.0:
+            self.assertIs(client._report, None)
+            self.assertIs(client._wizard, None)
+        elif server_version >= 7.0:
+            self.assertIsInstance(client._report, erppeek.Service)
+            self.assertIs(client._wizard, None)
         else:
+            self.assertIsInstance(client._report, erppeek.Service)
             self.assertIsInstance(client._wizard, erppeek.Service)
 
         self.assertIn('/xmlrpc/db', str(client.db.create_database))
@@ -847,3 +851,4 @@ class TestClientApi11(TestClientApi):
     """Test the Client API for Odoo 11."""
     server_version = '11.0'
     test_wizard = _skip_test
+    test_report = test_render_report = test_report_get = _skip_test
