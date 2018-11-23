@@ -869,13 +869,15 @@ class Client(object):
         if ids:
             # Safety check
             mods = ir_module.read([_pending_state], 'name state')
-            if mods:
+            if any(mod['name'] not in modules for mod in mods):
                 raise Error('Pending actions:\n' + '\n'.join(
                     ('  %(state)s\t%(name)s' % mod) for mod in mods))
             if button == 'button_uninstall':
                 # Safety check
                 names = ir_module.read([('id', 'in', ids),
-                                        'state != installed'], 'name')
+                                        'state != installed',
+                                        'state != to upgrade',
+                                        'state != to remove'], 'name')
                 if names:
                     raise Error('Not installed: %s' % ', '.join(names))
                 # A trick to uninstall dependent add-ons

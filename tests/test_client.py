@@ -763,7 +763,10 @@ class TestClientApi(XmlRpcTestCase):
         if button == 'uninstall':
             execute_return[3:3] = [[], ANY]
             expected_calls[3:3] = [
-                imm + ('search', [('id', 'in', [42]), ('state', '!=', 'installed')]),
+                imm + ('search', [('id', 'in', [42]),
+                                  ('state', '!=', 'installed'),
+                                  ('state', '!=', 'to upgrade'),
+                                  ('state', '!=', 'to remove')]),
                 imm + ('write', [42], {'state': 'to remove'}),
             ]
 
@@ -834,7 +837,10 @@ class TestClientApi50(TestClientApi):
         if button == 'uninstall':
             execute_return[3:3] = [[], ANY]
             expected_calls[3:3] = [
-                imm + ('search', [('id', 'in', [42]), ('state', '!=', 'installed')]),
+                imm + ('search', [('id', 'in', [42]),
+                                  ('state', '!=', 'installed'),
+                                  ('state', '!=', 'to upgrade'),
+                                  ('state', '!=', 'to remove')]),
                 imm + ('write', [42], {'state': 'to remove'}),
             ]
 
