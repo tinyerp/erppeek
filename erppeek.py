@@ -235,9 +235,9 @@ def read_config(section=None):
 
     The config file ``erppeek.ini`` contains a `section` for each environment.
     Each section provides parameters for the connection: ``host``, ``port``,
-    ``database``, ``user`` and (optional) ``password``.  Default values are
-    read from the ``[DEFAULT]`` section.  If the ``password`` is not in the
-    configuration file, it is requested on login.
+    ``database``, ``username`` and (optional) ``password``.  Default values
+    are read from the ``[DEFAULT]`` section.  If the ``password`` is not in
+    the configuration file, it is requested on login.
     Return a tuple ``(server, db, user, password or None)``.
     Without argument, it returns the list of configured environments.
     """
@@ -427,8 +427,8 @@ class Client(object):
 
     This is the top level object.
     The `server` is the URL of the instance, like ``http://localhost:8069``.
-    If `server` is an ``odoo`` Python package, it is used to connect to the
-    local server (>= 6.1).
+    If `server` is an ``odoo``/``openerp`` Python package, it is used to
+    connect to the local server (>= 6.1).
 
     The `db` is the name of the database and the `user` should exist in the
     table ``res.users``.  If the `password` is not provided, it will be
@@ -489,7 +489,7 @@ class Client(object):
         self._execute = self._exec_workflow = None
 
     def __repr__(self):
-        return "<Client '%s#%s'>" % (self._server or '', self._db)
+        return "<Client '%s#%s'>" % (self._server, self._db)
 
     def login(self, user, password=None, database=None):
         """Switch `user` and (optionally) `database`.
@@ -535,7 +535,7 @@ class Client(object):
             self.report_get = authenticated(self._report.report_get)
             if self.major_version != '5.0':
                 self.render_report = authenticated(self._report.render_report)
-        if self._wizard:        # Odoo <= 6.1
+        if self._wizard:        # OpenERP <= 6.1
             self._wizard_execute = authenticated(self._wizard.execute)
             self._wizard_create = authenticated(self._wizard.create)
         return uid
@@ -653,7 +653,8 @@ class Client(object):
         return global_vars
 
     def create_database(self, passwd, database, demo=False, lang='en_US',
-                        user_password='admin', login='admin', country_code=None):
+                        user_password='admin', login='admin',
+                        country_code=None):
         """Create a new database.
 
         The superadmin `passwd` and the `database` name are mandatory.
@@ -1656,7 +1657,7 @@ def main(interact=_interact):
         help='specify alternate config file (default: %r)' % CONF_FILE)
     parser.add_option(
         '--server', default=None,
-        help='full URL to the XML-RPC server (default: %s)' % DEFAULT_URL)
+        help='full URL of the XML-RPC server (default: %s)' % DEFAULT_URL)
     parser.add_option('-d', '--db', default=DEFAULT_DB, help='database')
     parser.add_option('-u', '--user', default=None, help='username')
     parser.add_option(
