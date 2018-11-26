@@ -348,13 +348,14 @@ Among these 92 objects, some of them are ``read-only``, others are
        1  <Model 'res.widget.user'>
     >>> #
     >>> # Show the content of a model
-    >>> config_params = model('ir.config_parameter').browse([])
+    >>> config_params = model('ir.config_parameter').browse([], limit=None)
     >>> config_params.read()
     [{'id': 1, 'key': 'web.base.url', 'value': 'http://localhost:8069'},
      {'id': 2, 'key': 'database.create_date', 'value': '2012-09-01 09:01:12'},
      {'id': 3,
       'key': 'database.uuid',
       'value': '52fc9630-f49e-2222-e622-08002763afeb'}]
+
 
 Browse the records
 ------------------
