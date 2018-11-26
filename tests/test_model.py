@@ -350,6 +350,31 @@ class TestModel(TestCase):
         self.assertCalls()
         self.assertOutput('')
 
+    def test_browse_empty(self):
+        FooBar = self.model('foo.bar')
+
+        records = FooBar.browse([])
+        self.assertIsInstance(records, erppeek.RecordList)
+        self.assertFalse(records)
+
+        records = FooBar.browse([], limit=12)
+        self.assertIsInstance(records, erppeek.RecordList)
+        self.assertTrue(records)
+
+        records = FooBar.browse([], context={'lang': 'fr_CA'})
+        self.assertIsInstance(records, erppeek.RecordList)
+        self.assertFalse(records)
+
+        records = FooBar.browse([], limit=None)
+        self.assertIsInstance(records, erppeek.RecordList)
+        self.assertTrue(records)
+
+        self.assertCalls(
+            OBJ('foo.bar', 'search', [], 0, 12, None),
+            OBJ('foo.bar', 'search', []),
+        )
+        self.assertOutput('')
+
     def test_get(self):
         OBJ = self.get_OBJ()
         FooBar = self.model('foo.bar')
