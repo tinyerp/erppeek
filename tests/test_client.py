@@ -521,6 +521,8 @@ class TestClientApi(XmlRpcTestCase):
                          [False, False])
         self.assertEqual(read('foo.bar', [False], 'first_name', order=True),
                          [False])
+        self.assertEqual(read('foo.bar', [], 'first_name'), False)
+        self.assertEqual(read('foo.bar', [], 'first_name', order=True), False)
 
         self.assertCalls()
 

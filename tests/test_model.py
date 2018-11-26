@@ -282,6 +282,13 @@ class TestModel(TestCase):
         )
         self.assertOutput('')
 
+        self.assertEqual(FooBar.read([]), False)
+        self.assertEqual(FooBar.read([], order='name ASC'), False)
+        self.assertEqual(FooBar.read([False]), [])
+        self.assertEqual(FooBar.read([False, False]), [])
+        self.assertCalls()
+        self.assertOutput('')
+
         # No longer supported since 1.6
         FooBar.read(searchterm)
         self.assertCalls(OBJ('foo.bar', 'read', [searchterm], None))

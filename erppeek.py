@@ -778,21 +778,20 @@ class Client(object):
         ordered = single_id = False
         if method == 'read':
             assert params
-            if issearchdomain(params[0]):
+            if not (params[0] and isinstance(params[0], list)):
+                single_id = True
+                ids = [params[0]] if params[0] else False
+            elif issearchdomain(params[0]):
                 # Combine search+read
                 search_params = self._searchargs(params[:1], kwargs, context)
                 ordered = len(search_params) > 3 and search_params[3]
                 ids = self._execute(obj, 'search', *search_params)
-            elif isinstance(params[0], list):
+            else:
                 ordered = kwargs.pop('order', False) and params[0]
-                ids = set(params[0])
-                ids.discard(False)
+                ids = set(params[0]) - {False}
                 if not ids and ordered:
                     return [False] * len(ordered)
                 ids = sorted(ids)
-            else:
-                single_id = True
-                ids = [params[0]] if params[0] else False
             if not ids:
                 return ids
             if len(params) > 1:
