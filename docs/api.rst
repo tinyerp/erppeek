@@ -156,29 +156,38 @@ Please refer to `the Odoo documentation`_ for details.
 
    Wrapper around ``report.report`` RPC method.
 
+   Removed in Odoo 11.
+
 .. method:: Client.render_report(obj, ids, datas=None, context=None)
 
    Wrapper around ``report.render_report`` RPC method.
 
    Does not exist if server is OpenERP 5.
 
+   Removed in Odoo 11.
+
 .. method:: Client.report_get(report_id)
 
    Wrapper around ``report.report_get`` RPC method.
 
+   Removed in Odoo 11.
+
 .. automethod:: Client.wizard
+
+   Removed in OpenERP 7.
 
 
 XML-RPC Services
 ~~~~~~~~~~~~~~~~
 
-The nake XML-RPC services are exposed too.  There are five services.
+The nake XML-RPC services are exposed too.
 The :attr:`~Client.db` and the :attr:`~Client.common` services expose few
 methods which might be helpful for server administration.  Use the
-:func:`dir` function to introspect them.  The three other services should
-not be used directly: they are in the private namespace, starting with
-``_`` because their methods are wrapped and  exposed on the :class:`Client`
-object itself.  Please refer to `the Odoo documentation`_ for more details.
+:func:`dir` function to introspect them.  The :attr:``~Client._object``
+service should not be used directly because its methods are wrapped and
+exposed on the :class:`Client` object itself.
+The two last services are deprecated and removed in recent versions of Odoo.
+Please refer to `the Odoo documentation`_ for more details.
 
 
 .. attribute:: Client.db
@@ -201,6 +210,8 @@ object itself.  Please refer to `the Odoo documentation`_ for more details.
 .. attribute:: Client._report
 
    Expose the ``report`` :class:`Service`.
+
+   Removed in Odoo 11.
 
 .. attribute:: Client._wizard
 
