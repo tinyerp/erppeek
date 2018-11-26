@@ -12,6 +12,8 @@ Download and install the latest release::
 
 Documentation and tutorial: http://erppeek.readthedocs.org
 
+CI tests: https://travis-ci.org/tinyerp/erppeek
+
 
 Overview
 --------
