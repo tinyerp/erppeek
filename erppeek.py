@@ -112,11 +112,6 @@ if PY2:
     class _DictWriter(csv.DictWriter):
         """Unicode CSV Writer, which encodes output to UTF-8."""
 
-        def writeheader(self):
-            # Method 'writeheader' does not exist in Python 2.6
-            header = dict(zip(self.fieldnames, self.fieldnames))
-            self.writerow(header)
-
         def _dict_to_list(self, rowdict):
             rowlst = csv.DictWriter._dict_to_list(self, rowdict)
             return [cell.encode('utf-8') if hasattr(cell, 'encode') else cell

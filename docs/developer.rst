@@ -11,7 +11,7 @@ Source code
 * `Source code <https://github.com/tinyerp/erppeek>`_ and
   `issue tracker <https://github.com/tinyerp/erppeek/issues>`_ on GitHub.
 * `Continuous tests <http://travis-ci.org/tinyerp/erppeek>`_ against Python
-  2.6 through 3.7 and PyPy, on `Travis-CI platform
+  2.7 through 3.7 and PyPy, on `Travis-CI platform
   <http://about.travis-ci.org/>`_.
 
 

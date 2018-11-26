@@ -18,6 +18,8 @@ Changelog
 
 * Refactor the construction of ``Service`` proxies.
 
+* Drop compatibility with Python 2.6.
+
 
 1.7 (2018-11-22)
 ~~~~~~~~~~~~~~~~
