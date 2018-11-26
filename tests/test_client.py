@@ -32,26 +32,33 @@ DIC2 = IdentDict(ID2)
 
 class TestService(XmlRpcTestCase):
     """Test the Service class."""
+    protocol = 'xmlrpc'
 
     def _patch_service(self):
         return mock.patch('erppeek.ServerProxy._ServerProxy__request').start()
 
-    def test_service(self):
+    def _get_client(self):
         client = mock.Mock()
-        client._server = 'http://127.0.0.1:8069/xmlrpc'
-        client._proxy = erppeek.Client._proxy_xmlrpc.__get__(client, erppeek.Client)
+        client._server = 'http://127.0.0.1:8069/%s' % self.protocol
+        proxy = getattr(erppeek.Client, '_proxy_%s' % self.protocol)
+        client._proxy = proxy.__get__(client, erppeek.Client)
+        return client
+
+    def test_service(self):
+        client = self._get_client()
         svc_alpha = erppeek.Service(client, 'alpha', ['beta'])
 
         self.assertIn('alpha', str(svc_alpha.beta))
-        self.assertIn('_ServerProxy__request', str(svc_alpha.beta(42)))
         self.assertRaises(AttributeError, getattr, svc_alpha, 'theta')
-        self.assertCalls(call('beta', (42,)), "().__str__")
+        if self.protocol == 'xmlrpc':
+            self.assertIn('_ServerProxy__request', str(svc_alpha.beta(42)))
+            self.assertCalls(call('beta', (42,)), "().__str__")
+        else:
+            self.assertCalls()
         self.assertOutput('')
 
     def test_service_openerp(self):
-        client = mock.Mock()
-        client._server = 'http://127.0.0.1:8069/xmlrpc'
-        client._proxy = erppeek.Client._proxy_xmlrpc.__get__(client, erppeek.Client)
+        client = self._get_client()
 
         def get_proxy(name, methods=None):
             if methods is None:
@@ -60,15 +67,22 @@ class TestService(XmlRpcTestCase):
 
         self.assertIn('common', str(get_proxy('common').login))
         login = get_proxy('common').login('aaa')
-        self.assertIn('_ServerProxy__request', str(login))
         with self.assertRaises(AttributeError):
             get_proxy('common').non_existent
-        self.assertCalls(call('login', ('aaa',)), 'call().__str__')
+        if self.protocol == 'xmlrpc':
+            self.assertIn('_ServerProxy__request', str(login))
+            self.assertCalls(call('login', ('aaa',)), 'call().__str__')
+        else:
+            self.assertEqual(login, 'JSON_RESULT',)
+            self.assertCalls(ANY)
         self.assertOutput('')
 
     def test_service_openerp_client(self, server_version=11.0):
-        server = 'http://127.0.0.1:8069'
-        self.service.side_effect = [str(server_version), ['newdb'], 1]
+        server = 'http://127.0.0.1:8069/%s' % self.protocol
+        return_values = [str(server_version), ['newdb'], 1]
+        if self.protocol == 'jsonrpc':
+            return_values = [{'result': rv} for rv in return_values]
+        self.service.side_effect = return_values
         client = erppeek.Client(server, 'newdb', 'usr', 'pss')
 
         self.service.return_value = ANY
@@ -85,16 +99,16 @@ class TestService(XmlRpcTestCase):
             self.assertIsInstance(client._report, erppeek.Service)
             self.assertIsInstance(client._wizard, erppeek.Service)
 
-        self.assertIn('/xmlrpc|db', str(client.db.create_database))
-        self.assertIn('/xmlrpc|db', str(client.db.db_exist))
+        self.assertIn('/%s|db' % self.protocol, str(client.db.create_database))
+        self.assertIn('/%s|db' % self.protocol, str(client.db.db_exist))
         if server_version >= 8.0:
             self.assertRaises(AttributeError, getattr,
                               client.db, 'create')
             self.assertRaises(AttributeError, getattr,
                               client.db, 'get_progress')
         else:
-            self.assertIn('/xmlrpc|db', str(client.db.create))
-            self.assertIn('/xmlrpc|db', str(client.db.get_progress))
+            self.assertIn('/%s|db' % self.protocol, str(client.db.create))
+            self.assertIn('/%s|db' % self.protocol, str(client.db.get_progress))
 
         self.assertCalls(ANY, ANY, ANY)
         self.assertOutput('')
@@ -112,6 +126,14 @@ class TestService(XmlRpcTestCase):
     def test_service_odoo_10_11(self):
         self.test_service_openerp_client(server_version=11.0)
         self.test_service_openerp_client(server_version=10.0)
+
+
+class TestServiceJsonRpc(TestService):
+    """Test the Service class with JSON-RPC."""
+    protocol = 'jsonrpc'
+
+    def _patch_service(self):
+        return mock.patch('erppeek.http_post', return_value={'result': 'JSON_RESULT'}).start()
 
 
 class TestCreateClient(XmlRpcTestCase):
