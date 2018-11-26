@@ -5,7 +5,7 @@ ERPpeek API
 .. module:: erppeek
 
 The library provides few objects to access the OpenObject model and the
-associated services provided by `the Odoo XML-RPC API`_.
+associated services of `the Odoo API`_.
 
 The signature of the methods mimics the standard methods provided by the
 :class:`osv.Model` Odoo class.  This is intended to help the developer when
@@ -21,7 +21,7 @@ be portable in the application with little effort.
 Client and Services
 -------------------
 
-The :class:`Client` object provides thin wrappers around XML-RPC services
+The :class:`Client` object provides thin wrappers around Odoo RPC services
 and their methods.  Additional helpers are provided to explore the models and
 list or install Odoo add-ons.
 
@@ -177,10 +177,10 @@ Please refer to `the Odoo documentation`_ for details.
    Removed in OpenERP 7.
 
 
-XML-RPC Services
-~~~~~~~~~~~~~~~~
+Odoo RPC Services
+~~~~~~~~~~~~~~~~~
 
-The nake XML-RPC services are exposed too.
+The nake Odoo services are exposed too.
 The :attr:`~Client.db` and the :attr:`~Client.common` services expose few
 methods which might be helpful for server administration.  Use the
 :func:`dir` function to introspect them.  The :attr:``~Client._object``
@@ -224,7 +224,7 @@ Please refer to `the Odoo documentation`_ for more details.
    :undoc-members:
 
 .. _the Odoo documentation:
-.. _the Odoo XML-RPC API: http://doc.odoo.com/v6.1/developer/12_api.html#api
+.. _the Odoo API: http://doc.odoo.com/v6.1/developer/12_api.html#api
 
 
 Manage addons
@@ -246,7 +246,7 @@ Python script or interactively in a Python session.
    It is not recommended to install or upgrade modules in offline mode when
    any web server is still running: the operation will not be signaled to
    other processes.  This restriction does not apply when connected through
-   XML-RPC.
+   XML-RPC or JSON-RPC.
 
 
 .. _model-and-records:

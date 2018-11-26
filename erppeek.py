@@ -9,6 +9,7 @@ import _ast
 import atexit
 import csv
 import functools
+import json
 import optparse
 import os
 import re
@@ -21,11 +22,18 @@ PY2 = (sys.version_info[0] == 2)
 if not PY2:             # Python 3
     import configparser
     from threading import current_thread
+    from urllib.request import Request, urlopen
     from xmlrpc.client import Fault, ServerProxy, MININT, MAXINT
 else:                   # Python 2
     import ConfigParser as configparser
     from threading import currentThread as current_thread
+    from urllib2 import Request, urlopen
     from xmlrpclib import Fault, ServerProxy, MININT, MAXINT
+
+try:
+    import requests
+except ImportError:
+    requests = None
 
 __version__ = '1.7'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
@@ -205,13 +213,15 @@ def format_exception(exc_type, exc, tb, limit=None, chain=True,
     """Format a stack trace and the exception information.
 
     This wrapper is a replacement of ``traceback.format_exception``
-    which formats the error and traceback received by XML-RPC.
+    which formats the error and traceback received by XML-RPC/JSON-RPC.
     If `chain` is True, then the original exception is printed too.
     """
     values = _format_exception(exc_type, exc, tb, limit=limit)
     server_error = None
     if issubclass(exc_type, Error):
         values = [str(exc) + '\n']
+    elif issubclass(exc_type, ServerError):
+        server_error = exc.args[0]['data']
     elif (issubclass(exc_type, Fault) and
           isinstance(exc.faultCode, basestring)):
         message = exc.faultCode
@@ -227,7 +237,7 @@ def format_exception(exc_type, exc, tb, limit=None, chain=True,
             'debug': exc.faultString,
         }
     if server_error:
-        # Format readable XML-RPC errors
+        # Format readable XML-RPC and JSON-RPC errors
         message = server_error['arguments'][0]
         fault = '%s: %s' % (server_error['name'], message)
         if (server_error['exception_type'] != 'internal_error' or
@@ -264,7 +274,8 @@ def read_config(section=None):
     if scheme == 'local':
         server = shlex.split(env.get('options', ''))
     else:
-        server = '%s://%s:%s/%s' % (scheme, env['host'], env['port'])
+        protocol = env.get('protocol', 'xmlrpc')
+        server = '%s://%s:%s/%s' % (scheme, env['host'], env['port'], protocol)
     return (server, env['database'], env['username'], env.get('password'))
 
 
@@ -358,8 +369,36 @@ def searchargs(params, kwargs=None, context=None, api_v9=False):
     return params
 
 
+if requests:
+    def http_post(url, data, headers={'Content-Type': 'application/json'}):
+        resp = requests.post(url, data=data, headers=headers)
+        return resp.json()
+else:
+    def http_post(url, data, headers={'Content-Type': 'application/json'}):
+        request = Request(url, data=data, headers=headers)
+        resp = urlopen(request)
+        return json.load(resp)
+
+
+def dispatch_jsonrpc(url, service_name, method, args):
+    data = {
+        'jsonrpc': '2.0',
+        'method': 'call',
+        'params': {'service': service_name, 'method': method, 'args': args},
+        'id': '%04x%010x' % (os.getpid(), (int(time.time() * 1E6) % 2**40)),
+    }
+    resp = http_post(url, json.dumps(data))
+    if resp.get('error'):
+        raise ServerError(resp['error'])
+    return resp['result']
+
+
 class Error(Exception):
     """An ERPpeek error."""
+
+
+class ServerError(Exception):
+    """An error received from the server."""
 
 
 class Service(object):
@@ -456,6 +495,9 @@ class Client(object):
         if not isinstance(server, basestring):
             assert not transport, "Not supported"
             self._proxy = self._proxy_dispatch
+        elif '/jsonrpc' in server:
+            assert not transport, "Not supported"
+            self._proxy = self._proxy_jsonrpc
         else:
             if '/xmlrpc' not in server:
                 self._server = server + '/xmlrpc'
@@ -490,6 +532,9 @@ class Client(object):
         proxy = ServerProxy(self._server + '/' + name,
                             transport=self._transport, allow_none=True)
         return proxy._ServerProxy__request
+
+    def _proxy_jsonrpc(self, name):
+        return functools.partial(dispatch_jsonrpc, self._server, name)
 
     @classmethod
     def from_config(cls, environment, user=None, verbose=False):

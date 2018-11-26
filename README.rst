@@ -104,14 +104,20 @@ Edit ``erppeek.ini`` and declare the environment(s)::
     port = 8069
     database = odoo
     username = admin
-    options = -c /path/to/odoo-server.conf --without-demo all
 
     [demo]
     username = demo
     password = demo
+    protocol = xmlrpc
+
+    [demo_jsonrpc]
+    username = demo
+    password = demo
+    protocol = jsonrpc
 
     [local]
     scheme = local
+    options = -c /path/to/odoo-server.conf --without-demo all
 
 
 Connect to the Odoo server::

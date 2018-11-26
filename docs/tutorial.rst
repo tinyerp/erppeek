@@ -32,6 +32,11 @@ If our configuration is different, then we use arguments, like::
 
     $ erppeek --server http://192.168.0.42:8069
 
+It connects using the XML-RPC protocol. If you want to use the JSON-RPC
+protocol instead, then pass the full URL with ``/jsonrpc`` path::
+
+    $ erppeek --server http://127.0.0.1:8069/jsonrpc
+
 
 On login, it prints few lines about the commands available.
 

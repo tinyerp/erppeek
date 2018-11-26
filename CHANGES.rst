@@ -5,6 +5,11 @@ Changelog
 1.x (unreleased)
 ~~~~~~~~~~~~~~~~
 
+* Add support for the JSON-RPC protocol.  It is enabled if the ``--server``
+  argument contains the full path to the ``/jsonrpc`` endpoint.
+  As an alternative, you can specify the ``protocol`` in the configuration
+  file.
+
 * Improve error formatting for recent Odoo versions, in interactive mode.
 
 * Refactor the construction of ``Service`` proxies.

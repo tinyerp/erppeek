@@ -10,7 +10,7 @@ ERPpeek's documentation
 *A versatile tool for browsing Odoo / OpenERP data*
 
 The ERPpeek library communicates with any `Odoo / OpenERP server`_ (>= 5.0)
-using `the standard XML-RPC interface`_.
+using `the standard XML-RPC interface`_ or the new JSON-RPC interface.
 
 It provides both a :ref:`fully featured low-level API <client-and-services>`,
 and an encapsulation of the methods on :ref:`Active Record objects
