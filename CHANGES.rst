@@ -10,6 +10,10 @@ Changelog
   As an alternative, you can specify the ``protocol`` in the configuration
   file.
 
+* Change the return value of ``Model.browse()`` method with an empty list.
+  It returns an empty ``RecordList`` except if some other argument is
+  provided (e.g. ``all_users = model('res.users').browse([], limit=None)``).
+
 * Improve error formatting for recent Odoo versions, in interactive mode.
 
 * Refactor the construction of ``Service`` proxies.

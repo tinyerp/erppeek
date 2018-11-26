@@ -1170,14 +1170,15 @@ class Model(object):
         or a search domain.
         If it is a single integer, the return value is a :class:`Record`.
         Otherwise, the return value is a :class:`RecordList`.
-        Be careful when passing a list of ids, because an empty list will be
-        considered an empty domain and will find all records in the database.
+        To get all the records, pass an empty list along with keyword
+        argument ``limit=None``.
         """
         context = kwargs.pop('context', self.client.context)
         if isinstance(domain, int_types):
             assert not params and not kwargs
             return Record(self, domain, context=context)
-        if issearchdomain(domain):
+        safe = domain or params or set(kwargs) & {'limit', 'offset', 'order'}
+        if safe and issearchdomain(domain):
             kwargs['context'] = context
             domain = self._execute('search', domain, *params, **kwargs)
         else:
