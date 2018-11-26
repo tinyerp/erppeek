@@ -2,6 +2,14 @@ Changelog
 ---------
 
 
+1.x (unreleased)
+~~~~~~~~~~~~~~~~
+
+* Improve error formatting for recent Odoo versions, in interactive mode.
+
+* Refactor the construction of ``Service`` proxies.
+
+
 1.7 (2018-11-22)
 ~~~~~~~~~~~~~~~~
 

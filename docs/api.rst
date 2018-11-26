@@ -95,8 +95,8 @@ Objects
     * ``create_date``: date when the record was created
     * ``write_uid``: last user who changed the record
     * ``write_date``: date of the last change to the record
-    * ``xmlid``: XML ID to use to refer to this record (if there is one), in
-      format ``module.name`` (not available with OpenERP 5)
+    * ``xmlid``: External ID to use to refer to this record (if there is one),
+      in format ``module.name`` (not available with OpenERP 5)
 
    If `details` is True, the ``create_uid`` and ``write_uid`` contain the
    name of the user.

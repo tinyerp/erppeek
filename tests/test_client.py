@@ -37,8 +37,10 @@ class TestService(XmlRpcTestCase):
         return mock.patch('erppeek.ServerProxy._ServerProxy__request').start()
 
     def test_service(self):
-        server = 'http://127.0.0.1:8069'
-        svc_alpha = erppeek.Service(server, 'alpha', ['beta'])
+        client = mock.Mock()
+        client._server = 'http://127.0.0.1:8069/xmlrpc'
+        client._proxy = erppeek.Client._proxy_xmlrpc.__get__(client, erppeek.Client)
+        svc_alpha = erppeek.Service(client, 'alpha', ['beta'])
 
         self.assertIn('alpha', str(svc_alpha.beta))
         self.assertIn('_ServerProxy__request', str(svc_alpha.beta(42)))
@@ -47,12 +49,14 @@ class TestService(XmlRpcTestCase):
         self.assertOutput('')
 
     def test_service_openerp(self):
-        server = 'http://127.0.0.1:8069'
+        client = mock.Mock()
+        client._server = 'http://127.0.0.1:8069/xmlrpc'
+        client._proxy = erppeek.Client._proxy_xmlrpc.__get__(client, erppeek.Client)
 
         def get_proxy(name, methods=None):
             if methods is None:
                 methods = erppeek._methods.get(name, ())
-            return erppeek.Service(server, name, methods, verbose=False)
+            return erppeek.Service(client, name, methods, verbose=False)
 
         self.assertIn('common', str(get_proxy('common').login))
         login = get_proxy('common').login('aaa')
@@ -81,16 +85,16 @@ class TestService(XmlRpcTestCase):
             self.assertIsInstance(client._report, erppeek.Service)
             self.assertIsInstance(client._wizard, erppeek.Service)
 
-        self.assertIn('/xmlrpc/db', str(client.db.create_database))
-        self.assertIn('/xmlrpc/db', str(client.db.db_exist))
+        self.assertIn('/xmlrpc|db', str(client.db.create_database))
+        self.assertIn('/xmlrpc|db', str(client.db.db_exist))
         if server_version >= 8.0:
             self.assertRaises(AttributeError, getattr,
                               client.db, 'create')
             self.assertRaises(AttributeError, getattr,
                               client.db, 'get_progress')
         else:
-            self.assertIn('/xmlrpc/db', str(client.db.create))
-            self.assertIn('/xmlrpc/db', str(client.db.get_progress))
+            self.assertIn('/xmlrpc|db', str(client.db.create))
+            self.assertIn('/xmlrpc|db', str(client.db.get_progress))
 
         self.assertCalls(ANY, ANY, ANY)
         self.assertOutput('')
@@ -114,13 +118,13 @@ class TestCreateClient(XmlRpcTestCase):
     """Test the Client class."""
     server_version = '6.1'
     startup_calls = (
-        call(ANY, 'db', ANY, None, verbose=ANY),
+        call(ANY, 'db', ANY, verbose=ANY),
         'db.server_version',
-        call(ANY, 'db', ANY, None, verbose=ANY),
-        call(ANY, 'common', ANY, None, verbose=ANY),
-        call(ANY, 'object', ANY, None, verbose=ANY),
-        call(ANY, 'report', ANY, None, verbose=ANY),
-        call(ANY, 'wizard', ANY, None, verbose=ANY),
+        call(ANY, 'db', ANY, verbose=ANY),
+        call(ANY, 'common', ANY, verbose=ANY),
+        call(ANY, 'object', ANY, verbose=ANY),
+        call(ANY, 'report', ANY, verbose=ANY),
+        call(ANY, 'wizard', ANY, verbose=ANY),
         'db.list',
     )
 
@@ -135,7 +139,7 @@ class TestCreateClient(XmlRpcTestCase):
         self.assertCalls(*expected_calls)
         self.assertEqual(
             client._login.cache,
-            {('http://127.0.0.1:8069', 'newdb', 'usr'): (1, 'pss')})
+            {('http://127.0.0.1:8069/xmlrpc', 'newdb', 'usr'): (1, 'pss')})
         self.assertOutput('')
 
     def test_create_getpass(self):
@@ -164,7 +168,7 @@ class TestCreateClient(XmlRpcTestCase):
         self.service.db.list.return_value = ['database']
         self.assertFalse(erppeek.Client._login.cache)
         erppeek.Client._login.cache[
-            ('http://127.0.0.1:8069', 'database', 'usr')] = (1, 'password')
+            ('http://127.0.0.1:8069/xmlrpc', 'database', 'usr')] = (1, 'password')
 
         client = erppeek.Client('http://127.0.0.1:8069', 'database', 'usr')
         expected_calls = self.startup_calls + (

@@ -11,13 +11,13 @@ from ._common import XmlRpcTestCase
 class TestInteract(XmlRpcTestCase):
     server_version = '6.1'
     startup_calls = (
-        call(ANY, 'db', ANY, None, verbose=ANY),
+        call(ANY, 'db', ANY, verbose=ANY),
         'db.server_version',
-        call(ANY, 'db', ANY, None, verbose=ANY),
-        call(ANY, 'common', ANY, None, verbose=ANY),
-        call(ANY, 'object', ANY, None, verbose=ANY),
-        call(ANY, 'report', ANY, None, verbose=ANY),
-        call(ANY, 'wizard', ANY, None, verbose=ANY),
+        call(ANY, 'db', ANY, verbose=ANY),
+        call(ANY, 'common', ANY, verbose=ANY),
+        call(ANY, 'object', ANY, verbose=ANY),
+        call(ANY, 'report', ANY, verbose=ANY),
+        call(ANY, 'wizard', ANY, verbose=ANY),
         'db.list',
     )
 
@@ -68,9 +68,9 @@ class TestInteract(XmlRpcTestCase):
         outlines = self.stdout.popvalue().splitlines()
         self.assertSequenceEqual(outlines[-5:], [
             "Logged in as 'usr'",
-            "<Client 'http://127.0.0.1:8069#database'>",
+            "<Client 'http://127.0.0.1:8069/xmlrpc#database'>",
             "<bound method Client.model of "
-            "<Client 'http://127.0.0.1:8069#database'>>",
+            "<Client 'http://127.0.0.1:8069/xmlrpc#database'>>",
             "Logged in as 'gaspard'",
             "42",
         ])
@@ -97,7 +97,7 @@ class TestInteract(XmlRpcTestCase):
         outlines = self.stdout.popvalue().splitlines()
         self.assertSequenceEqual(outlines[-3:], [
             "Error: Database 'missingdb' does not exist: ['database']",
-            "<Client 'http://127.0.0.1:8069#()'>",
+            "<Client 'http://127.0.0.1:8069/xmlrpc#()'>",
             "Error: Not connected",
         ])
         self.assertOutput(stderr=ANY)

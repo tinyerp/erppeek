@@ -70,7 +70,7 @@ And it confirms that the default database is not available::
 Though, we have a connected client, ready to use::
 
     >>> client
-    <Client 'http://localhost:8069#()'>
+    <Client 'http://localhost:8069/xmlrpc#()'>
     >>> client.server_version
     '6.1'
     >>> #
@@ -93,7 +93,7 @@ Default password is ``"admin"``.
     >>> client.create_database('super_password', 'demo')
     Logged in as 'admin'
     >>> client
-    <Client 'http://localhost:8069#demo'>
+    <Client 'http://localhost:8069/xmlrpc#demo'>
     >>> client.db.list()
     ['demo']
     >>> client.user
@@ -134,7 +134,7 @@ database name and the superadmin password.
     >>> client.clone_database('super_password', 'demo_test')
     Logged in as 'admin'
     >>> client
-    <Client 'http://localhost:8069#demo_test'>
+    <Client 'http://localhost:8069/xmlrpc#demo_test'>
     >>> client.db.list()
     ['demo', 'demo_test']
     >>> client.user
@@ -157,7 +157,7 @@ Where is the table for the users?
 .. sourcecode:: pycon
 
     >>> client
-    <Client 'http://localhost:8069#demo'>
+    <Client 'http://localhost:8069/xmlrpc#demo'>
     >>> models('user')
     {'ResUsers': <Model 'res.users'>, 'ResWidgetUser': <Model 'res.widget.user'>}
 

@@ -55,7 +55,7 @@ Although it is quite limited::
       --env=ENV             read connection settings from the given section
       -c CONFIG, --config=CONFIG
                             specify alternate config file (default: 'erppeek.ini')
-      --server=SERVER       full URL of the XML-RPC server (default: http://localhost:8069)
+      --server=SERVER       full URL of the server (default: http://localhost:8069/xmlrpc)
       -d DB, --db=DB        database
       -u USER, --user=USER  username
       -p PASSWORD, --password=PASSWORD

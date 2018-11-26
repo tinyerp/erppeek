@@ -27,14 +27,13 @@ else:                   # Python 2
     from threading import currentThread as current_thread
     from xmlrpclib import Fault, ServerProxy, MININT, MAXINT
 
-
 __version__ = '1.7'
 __all__ = ['Client', 'Model', 'Record', 'RecordList', 'Service',
            'format_exception', 'read_config', 'start_odoo_services']
 
 CONF_FILE = 'erppeek.ini'
 HIST_FILE = os.path.expanduser('~/.erppeek_history')
-DEFAULT_URL = 'http://localhost:8069'
+DEFAULT_URL = 'http://localhost:8069/xmlrpc'
 DEFAULT_DB = 'odoo'
 DEFAULT_USER = 'admin'
 MAXCOL = [79, 179, 9999]    # Line length in verbose mode
@@ -210,18 +209,32 @@ def format_exception(exc_type, exc, tb, limit=None, chain=True,
     If `chain` is True, then the original exception is printed too.
     """
     values = _format_exception(exc_type, exc, tb, limit=limit)
+    server_error = None
     if issubclass(exc_type, Error):
         values = [str(exc) + '\n']
-    elif ((issubclass(exc_type, Fault) and
-           isinstance(exc.faultCode, basestring))):
-        # Format readable 'Fault' errors
-        (etype, __, msg) = exc.faultCode.partition('--')
-        server_tb = None
-        if etype.strip() != 'warning':
-            msg = exc.faultCode
-            if not msg.startswith('FATAL:'):
-                server_tb = exc.faultString
-        fault = '%s: %s\n' % (exc_type.__name__, msg.strip())
+    elif (issubclass(exc_type, Fault) and
+          isinstance(exc.faultCode, basestring)):
+        message = exc.faultCode
+        warning = message.startswith('warning --')
+        if warning:
+            message = re.sub(r'\((.*), None\)$',
+                             lambda m: literal_eval(m.group(1)),
+                             message.split(None, 2)[2])
+        server_error = {
+            'exception_type': 'warning' if warning else 'internal_error',
+            'name': exc_type.__name__,
+            'arguments': (message,),
+            'debug': exc.faultString,
+        }
+    if server_error:
+        # Format readable XML-RPC errors
+        message = server_error['arguments'][0]
+        fault = '%s: %s' % (server_error['name'], message)
+        if (server_error['exception_type'] != 'internal_error' or
+                message.startswith('FATAL:')):
+            server_tb = None
+        else:
+            server_tb = server_error['debug']
         if chain:
             values = [server_tb or fault, _cause_message] + values
             values[-1] = fault
@@ -251,7 +264,7 @@ def read_config(section=None):
     if scheme == 'local':
         server = shlex.split(env.get('options', ''))
     else:
-        server = '%s://%s:%s' % (scheme, env['host'], env['port'])
+        server = '%s://%s:%s/%s' % (scheme, env['host'], env['port'])
     return (server, env['database'], env['username'], env.get('password'))
 
 
@@ -360,29 +373,17 @@ class Service(object):
     which should be exposed on this endpoint.  Use ``dir(...)`` on the
     instance to list them.
     """
-    _rpcpath = ''
     _methods = ()
 
-    def __init__(self, server, endpoint, methods,
-                 transport=None, verbose=False):
-        if isinstance(server, basestring):
-            self._rpcpath = rpcpath = server + '/xmlrpc/'
-            proxy = ServerProxy(rpcpath + endpoint,
-                                transport=transport, allow_none=True)
-            if hasattr(proxy._ServerProxy__transport, 'close'):   # >= 2.7
-                self.close = proxy._ServerProxy__transport.close
-            rpc = proxy._ServerProxy__request
-        elif server._api_v7:
-            rpc = server.netsvc.ExportService.getService(endpoint).dispatch
-        else:   # Odoo v8
-            rpc = functools.partial(server.http.dispatch_rpc, endpoint)
-        self._dispatch = rpc
+    def __init__(self, client, endpoint, methods, verbose=False):
+        self._dispatch = client._proxy(endpoint)
+        self._rpcpath = client._server
         self._endpoint = endpoint
         self._methods = methods
         self._verbose = verbose
 
     def __repr__(self):
-        return "<Service '%s%s'>" % (self._rpcpath, self._endpoint)
+        return "<Service '%s|%s'>" % (self._rpcpath, self._endpoint)
     __str__ = __repr__
 
     def __dir__(self):
@@ -438,34 +439,57 @@ class Client(object):
 
     def __init__(self, server, db=None, user=None, password=None,
                  transport=None, verbose=False):
+        self._set_services(server, transport, verbose)
+        self.reset()
+        self.context = None
+        if db:    # Try to login
+            self.login(user, password=password, database=db)
+
+    def _set_services(self, server, transport, verbose):
         if isinstance(server, list):
             appname = os.path.basename(__file__).rstrip('co')
             server = start_odoo_services(server, appname=appname)
         elif isinstance(server, basestring) and server[-1:] == '/':
             server = server.rstrip('/')
         self._server = server
-        float_version = 99.0
 
-        def get_proxy(name):
+        if not isinstance(server, basestring):
+            assert not transport, "Not supported"
+            self._proxy = self._proxy_dispatch
+        else:
+            if '/xmlrpc' not in server:
+                self._server = server + '/xmlrpc'
+            self._proxy = self._proxy_xmlrpc
+            self._transport = transport
+
+        def get_service(name):
             methods = list(_methods[name]) if (name in _methods) else []
             if float_version < 8.0:
                 methods += _obsolete_methods.get(name) or ()
-            return Service(server, name, methods, transport, verbose=verbose)
-        self.server_version = ver = get_proxy('db').server_version()
+            return Service(self, name, methods, verbose=verbose)
+
+        float_version = 99.0
+        self.server_version = ver = get_service('db').server_version()
         self.major_version = re.match(r'\d+\.?\d*', ver).group()
         float_version = float(self.major_version)
-        # Create the XML-RPC proxies
-        self.db = get_proxy('db')
-        self.common = get_proxy('common')
-        self._object = get_proxy('object')
-        self._report = get_proxy('report') if float_version < 11.0 else None
-        self._wizard = get_proxy('wizard') if float_version < 7.0 else None
-        self._searchargs = functools.partial(searchargs, api_v9=(float_version < 10.0))
-        self.reset()
-        self.context = None
-        if db:
-            # Try to login
-            self.login(user, password=password, database=db)
+        # Create the RPC services
+        self.db = get_service('db')
+        self.common = get_service('common')
+        self._object = get_service('object')
+        self._report = get_service('report') if float_version < 11.0 else None
+        self._wizard = get_service('wizard') if float_version < 7.0 else None
+        self._searchargs = functools.partial(searchargs,
+                                             api_v9=(float_version < 10.0))
+
+    def _proxy_dispatch(self, name):
+        if self._server._api_v7:
+            return self._server.netsvc.ExportService.getService(name).dispatch
+        return functools.partial(self._server.http.dispatch_rpc, name)
+
+    def _proxy_xmlrpc(self, name):
+        proxy = ServerProxy(self._server + '/' + name,
+                            transport=self._transport, allow_none=True)
+        return proxy._ServerProxy__request
 
     @classmethod
     def from_config(cls, environment, user=None, verbose=False):
@@ -1118,8 +1142,8 @@ class Model(object):
     def get(self, domain, context=_DEFAULT):
         """Return a single :class:`Record`.
 
-        The argument `domain` accepts a single integer ``id`` or a
-        search domain, or an ``xml_id``.  The return value is a
+        The argument `domain` accepts a single integer ``id`` or a search
+        domain, or an external ID ``xml_id``.  The return value is a
         :class:`Record` or None.  If multiple records are found,
         a ``ValueError`` is raised.
         """
@@ -1657,7 +1681,7 @@ def main(interact=_interact):
         help='specify alternate config file (default: %r)' % CONF_FILE)
     parser.add_option(
         '--server', default=None,
-        help='full URL of the XML-RPC server (default: %s)' % DEFAULT_URL)
+        help='full URL of the server (default: %s)' % DEFAULT_URL)
     parser.add_option('-d', '--db', default=DEFAULT_DB, help='database')
     parser.add_option('-u', '--user', default=None, help='username')
     parser.add_option(

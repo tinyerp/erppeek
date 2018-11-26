@@ -53,6 +53,9 @@ class XmlRpcTestCase(unittest2.TestCase):
         # Clear the login cache
         mock.patch.dict('erppeek.Client._login.cache', clear=True).start()
 
+        # Avoid hanging on getpass
+        mock.patch('getpass.getpass', side_effect=RuntimeError).start()
+
         self.service = self._patch_service()
         if self.server and self.database:
             # create the client
