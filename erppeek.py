@@ -20,12 +20,12 @@ import traceback
 
 PY2 = (sys.version_info[0] == 2)
 if not PY2:             # Python 3
-    import configparser
+    from configparser import ConfigParser
     from threading import current_thread
     from urllib.request import Request, urlopen
     from xmlrpc.client import Fault, ServerProxy, MININT, MAXINT
 else:                   # Python 2
-    import ConfigParser as configparser
+    from ConfigParser import SafeConfigParser as ConfigParser
     from threading import currentThread as current_thread
     from urllib2 import Request, urlopen
     from xmlrpclib import Fault, ServerProxy, MININT, MAXINT
@@ -151,8 +151,8 @@ def _convert(node, _consts={'None': None, 'True': True, 'False': False}):
     if isinstance(node, _ast.List):
         return list(map(_convert, node.elts))
     if isinstance(node, _ast.Dict):
-        return dict([(_convert(k), _convert(v))
-                     for (k, v) in zip(node.keys, node.values)])
+        return {_convert(k): _convert(v)
+                for (k, v) in zip(node.keys, node.values)}
     if isinstance(node, _ast.Name) and node.id in _consts:
         return _consts[node.id]   # Python <= 3.3
     raise ValueError('malformed or disallowed expression')
@@ -259,9 +259,9 @@ def read_config(section=None):
     Return a tuple ``(server, db, user, password or None)``.
     Without argument, it returns the list of configured environments.
     """
-    p = configparser.SafeConfigParser()
+    p = ConfigParser()
     with open(Client._config_file) as f:
-        p.readfp(f)
+        p.readfp(f) if PY2 else p.read_file(f)
     if section is None:
         return p.sections()
     env = dict(p.items(section))
@@ -382,7 +382,7 @@ def dispatch_jsonrpc(url, service_name, method, args):
         'params': {'service': service_name, 'method': method, 'args': args},
         'id': '%04x%010x' % (os.getpid(), (int(time.time() * 1E6) % 2**40)),
     }
-    resp = http_post(url, json.dumps(data))
+    resp = http_post(url, json.dumps(data).encode('ascii'))
     if resp.get('error'):
         raise ServerError(resp['error'])
     return resp['result']
@@ -777,7 +777,7 @@ class Client(object):
         context = kwargs.pop('context', None)
         ordered = single_id = False
         if method == 'read':
-            assert params
+            assert params, 'Missing parameter'
             if not (params[0] and isinstance(params[0], list)):
                 single_id = True
                 ids = [params[0]] if params[0] else False
@@ -817,7 +817,7 @@ class Client(object):
         if ordered:
             # The results are not in the same order as the ids
             # when received from the server
-            resdic = dict([(val['id'], val) for val in res])
+            resdic = {val['id']: val for val in res}
             if not isinstance(ordered, list):
                 ordered = ids
             res = [resdic.get(id_, False) for id_ in ordered]
@@ -1015,7 +1015,7 @@ class Client(object):
         domain = [('model', 'like', name)]
         models = self.execute('ir.model', 'read', domain, ('model',))
         names = [m['model'] for m in models]
-        return dict([(mixedcase(mod), self._models_get(mod)) for mod in names])
+        return {mixedcase(mod): self._models_get(mod) for mod in names}
 
     def model(self, name, check=True):
         """Return a :class:`Model` instance.
@@ -1144,7 +1144,7 @@ class Model(object):
             return self._fields
         if isinstance(names, basestring):
             names = names.split()
-        return dict([(k, v) for (k, v) in self._fields.items() if k in names])
+        return {k: v for (k, v) in self._fields.items() if k in names}
 
     def field(self, name):
         """Return the field properties for field `name`."""
@@ -1409,8 +1409,8 @@ class RecordList(object):
         False if there's none.  If multiple IDs exist for a record,
         only one of them is returned (randomly).
         """
-        xml_ids = dict([(r.id, xml_id) for (xml_id, r) in
-                        self._model._get_external_ids(self.id).items()])
+        xml_ids = {r.id: xml_id for (xml_id, r) in
+                   self._model._get_external_ids(self.id).items()}
         return [xml_ids.get(res_id, False) for res_id in self.id]
 
     def __getitem__(self, key):
@@ -1774,7 +1774,7 @@ def main(interact=_interact):
         writer = _DictWriter(sys.stdout, args.fields, "", "ignore",
                              quoting=csv.QUOTE_NONNUMERIC)
         writer.writeheader()
-        writer.writerows(data)
+        writer.writerows(data or ())
 
     if client.connect is not None:
         if not client.user:
