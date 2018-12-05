@@ -213,23 +213,31 @@ def format_exception(exc_type, exc, tb, limit=None, chain=True,
     """
     values = _format_exception(exc_type, exc, tb, limit=limit)
     server_error = None
-    if issubclass(exc_type, Error):
+    if issubclass(exc_type, Error):             # Client-side
         values = [str(exc) + '\n']
-    elif issubclass(exc_type, ServerError):
+    elif issubclass(exc_type, ServerError):     # JSON-RPC
         server_error = exc.args[0]['data']
-    elif (issubclass(exc_type, Fault) and
+    elif (issubclass(exc_type, Fault) and       # XML-RPC
           isinstance(exc.faultCode, basestring)):
-        message = exc.faultCode
+        (message, tb) = (exc.faultCode, exc.faultString)
+        exc_name = exc_type.__name__
         warning = message.startswith('warning --')
         if warning:
             message = re.sub(r'\((.*), None\)$',
                              lambda m: literal_eval(m.group(1)),
                              message.split(None, 2)[2])
+        else:       # ValidationError, etc ...
+            parts = message.rsplit('\n', 1)
+            if parts[-1] == 'None':
+                warning, message = True, parts[0]
+                last_line = tb.rstrip().rsplit('\n', 1)[-1]
+                if last_line.startswith('odoo.exceptions'):
+                    exc_name = last_line.split(':', 1)[0]
         server_error = {
             'exception_type': 'warning' if warning else 'internal_error',
-            'name': exc_type.__name__,
+            'name': exc_name,
             'arguments': (message,),
-            'debug': exc.faultString,
+            'debug': tb,
         }
     if server_error:
         # Format readable XML-RPC and JSON-RPC errors
