@@ -2,8 +2,8 @@ Changelog
 ---------
 
 
-1.x (unreleased)
-~~~~~~~~~~~~~~~~
+1.7.1 (2018-12-05)
+~~~~~~~~~~~~~~~~~~
 
 * Add support for the JSON-RPC protocol.  It is enabled if the ``--server``
   argument contains the full path to the ``/jsonrpc`` endpoint.
