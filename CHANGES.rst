@@ -10,10 +10,12 @@ Changelog
   As an alternative, you can specify the ``protocol`` in the configuration
   file.
 
-* Change the return value of ``Model.browse()`` method if search domain is
+* Change the return value of :meth:`Model.browse` method if search domain is
   an empty list.  It returns an empty ``RecordList`` except if some other
   argument is provided (e.g.
   ``all_users = model('res.users').browse([], limit=None)``).
+  Compatibility tip: you can restore the old behavior with
+  ``Model._browse_compat = True``.
 
 * Change the return value of ``Client.read()`` and ``Model.read()`` methods
   if search domain is an empty list:  it returns ``False``.

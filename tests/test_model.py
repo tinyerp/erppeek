@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from mock import sentinel, ANY
+from mock import patch, sentinel, ANY
 
 import erppeek
 from ._common import XmlRpcTestCase, OBJ, callable
@@ -358,7 +358,19 @@ class TestModel(TestCase):
         self.assertOutput('')
 
     def test_browse_empty(self):
+        OBJ = self.get_OBJ()
         FooBar = self.model('foo.bar')
+
+        with patch('erppeek.Model._browse_compat', True):
+            records = FooBar.browse([])
+            self.assertIsInstance(records, erppeek.RecordList)
+            self.assertTrue(records)
+
+            records = FooBar.browse([], context={'lang': 'fr_CA'})
+            self.assertIsInstance(records, erppeek.RecordList)
+            self.assertTrue(records)
+
+        self.assertFalse(erppeek.Model._browse_compat)
 
         records = FooBar.browse([])
         self.assertIsInstance(records, erppeek.RecordList)
@@ -377,6 +389,8 @@ class TestModel(TestCase):
         self.assertTrue(records)
 
         self.assertCalls(
+            OBJ('foo.bar', 'search', []),
+            OBJ('foo.bar', 'search', [], 0, None, None, False, {'lang': 'fr_CA'}),
             OBJ('foo.bar', 'search', [], 0, 12, None),
             OBJ('foo.bar', 'search', []),
         )

@@ -288,7 +288,9 @@ def start_odoo_services(options=None, appname=None):
     Import the ``odoo`` Python package and load the Odoo services.
     The argument `options` receives the command line arguments
     for ``odoo``.  Example:
+
       ``['-c', '/path/to/odoo-server.conf', '--without-demo', 'all']``.
+
     Return the ``odoo`` package.
     """
     try:
@@ -1113,6 +1115,10 @@ class Client(object):
 class Model(object):
     """The class for Odoo models."""
 
+    # Enable Model.browse([]) to return all records.
+    # It was the default behavior before version 1.7.1
+    _browse_compat = False
+
     def __new__(cls, client, name):
         return client.model(name)
 
@@ -1181,7 +1187,8 @@ class Model(object):
         if isinstance(domain, int_types):
             assert not params and not kwargs
             return Record(self, domain, context=context)
-        safe = domain or params or set(kwargs) & {'limit', 'offset', 'order'}
+        safe = (domain or params or self._browse_compat or
+                set(kwargs) & {'limit', 'offset', 'order'})
         if safe and issearchdomain(domain):
             kwargs['context'] = context
             domain = self._execute('search', domain, *params, **kwargs)

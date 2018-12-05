@@ -278,6 +278,12 @@ the same :class:`Model`.
       .. method:: browse(domain, context=None)
    .. automethod:: browse(domain, offset=0, limit=None, order=None, context=None)
 
+   .. note::
+
+      To enable the unsafe behavior (ERPpeek <= 1.7) of ``model.browse([])`` (i.e.
+      return all records), this class attribute can be set:
+      ``Model._browse_compat = True``.
+
    .. automethod:: get(domain, context=None)
 
    .. automethod:: create
