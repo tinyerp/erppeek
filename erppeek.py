@@ -572,13 +572,13 @@ class Client(object):
         """
         if database:
             try:
-                dbs = self.db.list()
+                is_database_exist = self.db.db_exist(database)
             except Fault:
                 pass    # AccessDenied: simply ignore this check
             else:
-                if database not in dbs:
-                    raise Error("Database '%s' does not exist: %s" %
-                                (database, dbs))
+                if not is_database_exist:
+                    raise Error("Database '%s' does not exist" %
+                                (database))
             if not self._db:
                 self._db = database
             # Used for logging, copied from odoo.sql_db.db_connect

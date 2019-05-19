@@ -89,7 +89,18 @@ class XmlRpcTestCase(unittest2.TestCase):
                 if expected[:4] == 'call':
                     expected = expected[4:].lstrip('.')
                 assert expected[-2:] != '()'
-                expected = type_call((expected,))
+                if '(' in expected:
+                    import re
+                    import ast
+                    g = re.search('\((.*?)\)', expected)
+                    if g.groups():
+                        if g.groups()[0]:
+                            params = ast.literal_eval( g.groups()[0] + ',')
+                            expected = type_call((expected.split('(')[0],params))
+                        else:
+                            expected = type_call((expected,))
+                else:
+                    expected = type_call((expected,))
             elif not (expected is mock.ANY or isinstance(expected, type_call)):
                 rpcmethod = expected[0]
                 if len(expected) > 1 and expected[1] == sentinel.AUTH:
