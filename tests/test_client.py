@@ -147,7 +147,7 @@ class TestCreateClient(XmlRpcTestCase):
         call(ANY, 'object', ANY, verbose=ANY),
         call(ANY, 'report', ANY, verbose=ANY),
         call(ANY, 'wizard', ANY, verbose=ANY),
-        'db.list',
+        "call.db.db_exist('database')"
     )
 
     def test_create(self):
@@ -155,7 +155,7 @@ class TestCreateClient(XmlRpcTestCase):
         self.service.common.login.return_value = 1
 
         client = erppeek.Client('http://127.0.0.1:8069', 'newdb', 'usr', 'pss')
-        expected_calls = self.startup_calls + (
+        expected_calls = self.startup_calls[:-1] + ("call.db.db_exist('newdb')",
             ('common.login', 'newdb', 'usr', 'pss'),)
         self.assertIsInstance(client, erppeek.Client)
         self.assertCalls(*expected_calls)
@@ -349,10 +349,10 @@ class TestClientApi(XmlRpcTestCase):
 
         self.assertCalls(
             call.db.create_database('abc', 'db1', False, 'en_US', 'admin'),
-            call.db.list(),
+            call.db.db_exist('db1'),
             call.common.login('db1', 'admin', 'admin'),
             call.db.create_database('xyz', 'db2', False, 'fr_FR', 'secret'),
-            call.db.list(),
+            call.db.db_exist('db2'),
             call.common.login('db2', 'admin', 'secret'),
         )
         self.assertOutput('')
@@ -370,7 +370,7 @@ class TestClientApi(XmlRpcTestCase):
 
         self.assertCalls(
             call.db.create_database('xyz', 'db2', False, 'fr_FR', 'secret', 'other_login', 'CA'),
-            call.db.list(),
+            call.db.db_exist('db2'),
             call.common.login('db2', 'other_login', 'secret'),
         )
         self.assertOutput('')
@@ -826,11 +826,11 @@ class TestClientApi50(TestClientApi):
         self.assertCalls(
             call.db.create('abc', 'db1', False, 'en_US', 'admin'),
             call.db.get_progress('abc', ID1),
-            call.db.list(),
+            call.db.db_exist('db1'),
             call.common.login('db1', 'admin', 'admin'),
             call.db.create('xyz', 'db2', False, 'fr_FR', 'secret'),
             call.db.get_progress('xyz', ID1),
-            call.db.list(),
+            call.db.db_exist('db2'),
             call.common.login('db2', 'admin', 'secret'),
         )
         self.assertOutput('')

@@ -18,7 +18,7 @@ class TestInteract(XmlRpcTestCase):
         call(ANY, 'object', ANY, verbose=ANY),
         call(ANY, 'report', ANY, verbose=ANY),
         call(ANY, 'wizard', ANY, verbose=ANY),
-        'db.list',
+        "call.db.db_exist('database')"
     )
 
     def setUp(self):
