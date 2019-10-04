@@ -483,6 +483,7 @@ class Client(object):
 
     def __init__(self, server, db=None, user=None, password=None,
                  transport=None, verbose=False):
+        self.close_methods = []
         self._set_services(server, transport, verbose)
         self.reset()
         self.context = None
@@ -536,6 +537,7 @@ class Client(object):
     def _proxy_xmlrpc(self, name):
         proxy = ServerProxy(self._server + '/' + name,
                             transport=self._transport, allow_none=True)
+        self.close_methods.append(proxy('close'))
         return proxy._ServerProxy__request
 
     def _proxy_jsonrpc(self, name):
@@ -561,6 +563,7 @@ class Client(object):
         self.user = self._environment = None
         self._db, self._models = (), {}
         self._execute = self._exec_workflow = None
+        map(lambda m: m(), self.close_methods)
 
     def __repr__(self):
         return "<Client '%s#%s'>" % (self._server, self._db)
