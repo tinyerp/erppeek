@@ -362,14 +362,11 @@ def searchargs(params, kwargs=None, context=None, api_v9=False):
                 pass
             domain[idx] = (field, operator, value)
     params = (domain,) + params[1:]
-    if (kwargs or context) and len(params) == 1:
+    if kwargs and len(params) == 1:
         args = (kwargs.pop('offset', 0),
                 kwargs.pop('limit', None),
                 kwargs.pop('order', None))
-        if context:
-            # Order of the arguments was different with Odoo 9 and older
-            params += args + ((context,) if api_v9 else (False, context))
-        elif any(args):
+        if any(args):
             params += args
     return params
 

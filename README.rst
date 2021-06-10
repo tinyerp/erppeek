@@ -2,6 +2,9 @@
 ERPpeek, a versatile tool for browsing Odoo / OpenERP data
 ==========================================================
 
+**This is a quick-and-dirty hack in order to make the tool work with Odoo v.14,
+since we couldn't get the odooly fork to work at all.**
+
 Download and install the latest release::
 
     pip install -U erppeek
