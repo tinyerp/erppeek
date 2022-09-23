@@ -517,7 +517,7 @@ class Client(object):
 
         float_version = 99.0
         self.server_version = ver = get_service('db').server_version()
-        self.major_version = re.match(r'\d+\.?\d*', ver).group()
+        self.major_version = re.search(r'\d+\.?\d*', ver).group()
         float_version = float(self.major_version)
         # Create the RPC services
         self.db = get_service('db')
