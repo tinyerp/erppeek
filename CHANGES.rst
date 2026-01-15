@@ -1,6 +1,17 @@
 Changelog
 ---------
 
+.. important::
+
+   ERPpeek is no longer maintained.
+   Please consider using Odooly instead.
+
+   - https://pypi.org/project/Odooly
+   - https://odooly.rtfd.io
+
+
+----
+
 
 1.7.1 (2018-12-05)
 ~~~~~~~~~~~~~~~~~~

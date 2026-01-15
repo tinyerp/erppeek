@@ -2,6 +2,17 @@
 ERPpeek, a versatile tool for browsing Odoo / OpenERP data
 ==========================================================
 
+.. important::
+
+   ERPpeek is no longer maintained.
+   Please consider using Odooly instead.
+
+   - https://pypi.org/project/Odooly
+   - https://odooly.rtfd.io
+
+
+----
+
 Download and install the latest release::
 
     pip install -U erppeek
